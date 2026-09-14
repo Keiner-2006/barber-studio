@@ -1,0 +1,75 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$navaja-primary: mat.m2-define-palette(mat.$m2-indigo-palette);
+$navaja-accent: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400);
+$navaja-warn: mat.m2-define-palette(mat.$m2-red-palette);
+
+$navaja-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $navaja-primary,
+    accent: $navaja-accent,
+    warn: $navaja-warn,
+  ),
+  typography: mat.m2-define-typography-config(
+    $font-family: '"Inter", sans-serif',
+  ),
+  density: 0,
+));
+
+@include mat.all-component-themes($navaja-theme);
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background-color: #fafaf8;
+  color: #1a1a1a;
+}
+
+:root {
+  --color-charcoal: #2d2d2d;
+  --color-ivory: #fafaf8;
+  --color-copper: #b87333;
+  --color-copper-light: #d4956b;
+  --color-gray: #6b7280;
+  --color-gray-light: #e5e7eb;
+  --color-green: #22c55e;
+  --color-red: #ef4444;
+  --color-amber: #f59e0b;
+
+  --font-serif: 'DM Serif Display', serif;
+  --font-sans: 'Inter', sans-serif;
+
+  --sidebar-width: 264px;
+  --topbar-height: 64px;
+}
+
+::selection {
+  background-color: var(--color-copper);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-light);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray);
+}

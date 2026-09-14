@@ -1,0 +1,21 @@
+{
+  "name": "navaja-studio-os",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter @navaja/api --filter @navaja/web dev",
+    "dev:api": "pnpm --filter @navaja/api dev",
+    "dev:web": "pnpm --filter @navaja/web dev",
+    "build": "pnpm run --parallel build:api build:web",
+    "build:api": "pnpm --filter @navaja/api build",
+    "build:web": "pnpm --filter @navaja/web build",
+    "lint": "pnpm run --parallel lint:api lint:web",
+    "lint:api": "pnpm --filter @navaja/api lint",
+    "lint:web": "pnpm --filter @navaja/web lint",
+    "typecheck": "pnpm run --parallel typecheck:api typecheck:web",
+    "typecheck:api": "pnpm --filter @navaja/api typecheck",
+    "typecheck:web": "pnpm --filter @navaja/web typecheck",
+    "db:generate": "pnpm --filter @navaja/api db:generate",
+    "db:migrate": "pnpm --filter @navaja/api db:migrate",
+    "db:seed": "pnpm --filter @navaja/api db:seed"
+  }
+}
