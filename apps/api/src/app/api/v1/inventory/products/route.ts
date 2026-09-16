@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
-import { inventoryRepository } from '@/modules/inventory/infrastructure/repositories/inventory.repository'
+import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createProductSchema, inventoryAdjustmentSchema } from '@/modules/inventory/presentation/schemas/inventory.schema'
 
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const result = await withTenantRequest(request.headers, async () => {
-      const products = await inventoryRepository.listProducts()
-      return NextResponse.json({ data: products })
+      const products = await ServiceRegistry.inventory.listProducts.execute({})
+      return NextResponse.json({ data: products.map(p => p.toPlain()) })
     })
     if (!result) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const existing = await inventoryRepository.findProductBySku(parsed.data.sku)
+      const existing = await ServiceRegistry.inventoryAdapter.findProductBySku(parsed.data.sku)
       if (existing) {
         return NextResponse.json(
           { error: { code: 'CONFLICT', message: 'Ya existe un producto con ese SKU' }, requestId },
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const product = await inventoryRepository.createProduct(parsed.data)
-      return NextResponse.json({ data: product }, { status: 201 })
+      const product = await ServiceRegistry.inventoryAdapter.createProduct(parsed.data)
+      return NextResponse.json({ data: product.toPlain() }, { status: 201 })
     })
     if (!result) {
       return NextResponse.json(

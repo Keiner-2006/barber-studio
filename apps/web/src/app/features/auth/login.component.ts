@@ -63,7 +63,8 @@ export class LoginComponent {
     if (!this.email || !this.password) return
     this.loading = true
     this.error = ''
-    this.authService.login(this.email, this.password).subscribe({
+    const expectedRole = this.role === 'client' ? 'customer' : 'company_member'
+    this.authService.login(this.email, this.password, expectedRole).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => { this.loading = false; this.error = err.error?.message || 'Credenciales incorrectas' },
     })

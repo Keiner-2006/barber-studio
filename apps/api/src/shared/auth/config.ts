@@ -14,12 +14,12 @@ const trustedOrigins = [
   origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
 ].filter(Boolean) as string[]
 
-const demoAuthEnabled = () =>
+export const demoAuthEnabled = () =>
   process.env.NODE_ENV !== 'production' && process.env.DEMO_AUTH === 'true'
 
-const demoToken = 'navaja-demo-session'
-const demoUser = {
-  id: 'demo-user',
+export const demoToken = 'navaja-demo-session'
+export const demoUser = {
+  id: '00000000-0000-0000-0000-000000000001',
   email: 'admin@navaja.local',
   name: 'Administrador Navaja',
   role: 'admin',

@@ -1,35 +1,48 @@
-import { Injectable, signal } from '@angular/core'
-
-export type Branch = {
-  id: string
-  name: string
-  status: 'active' | 'inactive'
-}
+import { Injectable, signal, computed } from '@angular/core'
+import { Observable, tap, map } from 'rxjs'
+import { ApiClient } from '../http/api-client'
+import { Branch, TenantInfo, TenantMeResponse, BranchesResponse } from './tenant.models'
 
 @Injectable({
   providedIn: 'root',
 })
 export class TenantService {
+  private currentTenant = signal<TenantInfo | null>(null)
   private currentBranch = signal<Branch | null>(null)
   private availableBranches = signal<Branch[]>([])
 
+  readonly tenant = this.currentTenant.asReadonly()
   readonly branch = this.currentBranch.asReadonly()
   readonly branches = this.availableBranches.asReadonly()
+  readonly tenantId = computed(() => this.currentTenant()?.id ?? null)
 
-  setBranches(branches: Branch[]): void {
-    this.availableBranches.set(branches)
-    if (branches.length > 0 && !this.currentBranch()) {
-      const savedBranchId = this.getSavedBranchId()
-      const savedBranch = branches.find((b) => b.id === savedBranchId)
-      this.currentBranch.set(savedBranch ?? branches[0])
-    }
+  constructor(private api: ApiClient) {}
+
+  load(): Observable<void> {
+    return this.api
+      .get<TenantMeResponse>('/tenants/me')
+      .pipe(
+        tap((resp) => {
+          this.currentTenant.set(resp.tenant)
+          this.availableBranches.set(resp.branches)
+          const savedBranchId =
+            typeof localStorage !== 'undefined'
+              ? localStorage.getItem('navaja_branch_id')
+              : null
+          const saved = resp.branches.find((b) => b.id === savedBranchId)
+          this.currentBranch.set(saved ?? resp.branches[0] ?? null)
+        }),
+        map(() => undefined as void)
+      )
   }
 
   selectBranch(branchId: string): void {
     const branch = this.availableBranches().find((b) => b.id === branchId)
     if (branch) {
       this.currentBranch.set(branch)
-      this.saveBranchId(branchId)
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('navaja_branch_id', branchId)
+      }
     }
   }
 
@@ -37,16 +50,25 @@ export class TenantService {
     return this.currentBranch()?.id ?? null
   }
 
-  private getSavedBranchId(): string | null {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem('navaja_branch_id')
-    }
-    return null
+  clear(): void {
+    this.currentTenant.set(null)
+    this.currentBranch.set(null)
+    this.availableBranches.set([])
   }
 
-  private saveBranchId(branchId: string): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('navaja_branch_id', branchId)
-    }
+  refreshBranches(): Observable<Branch[]> {
+    return this.api
+      .get<BranchesResponse>('/branches')
+      .pipe(
+        tap((resp) => {
+          const filtered = (resp.data ?? []).filter((b) => b.status === 'active')
+          this.availableBranches.set(filtered)
+          const currentId = this.currentBranch()?.id
+          if (!filtered.find((b) => b.id === currentId) && filtered.length > 0) {
+            this.currentBranch.set(filtered[0])
+          }
+        }),
+        map((resp) => resp.data ?? [])
+      )
   }
 }

@@ -11,16 +11,20 @@ export class ApiClient {
 
   constructor(private http: HttpClient) {}
 
-  get<T>(path: string, params?: Record<string, string>): Observable<T> {
+  private buildParams(params?: Record<string, string | number | boolean | undefined>): HttpParams {
     let httpParams = new HttpParams()
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          httpParams = httpParams.set(key, value)
+          httpParams = httpParams.set(key, String(value))
         }
       })
     }
-    return this.http.get<T>(`${this.baseUrl}${path}`, { params: httpParams })
+    return httpParams
+  }
+
+  get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Observable<T> {
+    return this.http.get<T>(`${this.baseUrl}${path}`, { params: this.buildParams(params) })
   }
 
   post<T>(path: string, body: unknown): Observable<T> {

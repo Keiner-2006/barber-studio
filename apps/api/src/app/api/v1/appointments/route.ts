@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
-import { appointmentRepository } from '@/modules/appointments/infrastructure/repositories/appointment.repository'
-import { catalogRepository } from '@/modules/catalog/infrastructure/repositories/catalog.repository'
+import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createAppointmentSchema, appointmentQuerySchema } from '@/modules/appointments/presentation/schemas/appointment.schema'
-import { parsePaginationParams, createPaginatedResponse } from '@/shared/pagination'
+import { catalogRepository } from '@/modules/catalog/infrastructure/repositories/catalog.repository'
 
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
@@ -20,13 +19,18 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const appointments = await appointmentRepository.list({
-        ...parsed.data,
+      const appointments = await ServiceRegistry.appointments.list.execute({
+        branchId: parsed.data.branchId,
+        staffId: parsed.data.staffId,
+        customerId: parsed.data.customerId,
+        status: parsed.data.status,
         from: parsed.data.from ? new Date(parsed.data.from) : undefined,
         to: parsed.data.to ? new Date(parsed.data.to) : undefined,
+        cursor: parsed.data.cursor,
+        limit: parsed.data.limit,
       })
 
-      return NextResponse.json({ data: appointments })
+      return NextResponse.json({ data: appointments.map(a => a.toPlain()) })
     })
     if (!result) {
       return NextResponse.json(
@@ -65,7 +69,11 @@ export async function POST(request: NextRequest) {
 
       const startsAt = new Date(parsed.data.startsAt)
       const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60000)
-      const conflicts = await appointmentRepository.findConflicting(parsed.data.staffId, startsAt, endsAt)
+      const conflicts = await ServiceRegistry.appointmentAdapter.findConflicting(
+        parsed.data.staffId,
+        startsAt,
+        endsAt
+      )
 
       if (conflicts.length > 0) {
         return NextResponse.json(
@@ -74,14 +82,20 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const appointment = await appointmentRepository.create({
-        ...parsed.data,
+      const appointment = await ServiceRegistry.appointments.create.execute({
+        branchId: parsed.data.branchId,
+        customerId: parsed.data.customerId,
+        staffId: parsed.data.staffId,
+        serviceId: parsed.data.serviceId,
+        startsAt: new Date(parsed.data.startsAt),
+        notes: parsed.data.notes,
+        idempotencyKey: parsed.data.idempotencyKey,
         serviceNameSnapshot: service.name,
         serviceDurationSnapshot: service.durationMinutes,
         priceSnapshot: service.priceBase,
         currencySnapshot: service.currency,
       })
-      return NextResponse.json({ data: appointment }, { status: 201 })
+      return NextResponse.json({ data: appointment.toPlain() }, { status: 201 })
     })
     if (!result) {
       return NextResponse.json(

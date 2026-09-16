@@ -28,6 +28,15 @@ export const customerRepository = {
     return customer
   },
 
+  async delete(id: string) {
+    const [customer] = await db
+      .update(customers)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(customers.id, id), eq(customers.tenantId, getTenantId())))
+      .returning()
+    return customer
+  },
+
   async search(query?: string, cursor?: string, limit = 50) {
     const conditions = [isNull(customers.deletedAt), eq(customers.tenantId, getTenantId())]
     if (query) {

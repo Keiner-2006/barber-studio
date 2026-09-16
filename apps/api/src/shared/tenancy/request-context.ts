@@ -84,6 +84,7 @@ export function hasPermission(permission: string, userRole: string): boolean {
     ],
     customer: [
       'appointments:read',
+      'customers:read',
     ],
   }
 

@@ -1,4 +1,4 @@
-import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer, numeric } from 'drizzle-orm/pg-core'
+import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer, numeric, index } from 'drizzle-orm/pg-core'
 import { branches } from './branches'
 
 export const paymentPolicyEnum = pgEnum('payment_policy', [
@@ -41,7 +41,9 @@ export const services = pgTable('services', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-})
+}, (table) => [
+  index('services_tenant_active_idx').on(table.tenantId, table.active),
+])
 
 export const branchServices = pgTable('branch_services', {
   id: uuid('id').primaryKey().defaultRandom(),

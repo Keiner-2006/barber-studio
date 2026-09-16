@@ -27,70 +27,53 @@ export const routes: Routes = [
     path: '',
     component: AppShellComponent,
     canActivate: [AuthGuard],
+    data: { roles: ['company_member'] },
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then(
-            (m) => m.DashboardComponent
-          ),
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.routes').then((m) => m.routes),
       },
       {
         path: 'agenda',
-        loadComponent: () =>
-          import('./features/agenda/agenda.component').then(
-            (m) => m.AgendaComponent
-          ),
+        loadChildren: () =>
+          import('./features/agenda/agenda.routes').then((m) => m.routes),
       },
       {
         path: 'customers',
-        loadComponent: () =>
-          import('./features/customers/customers.component').then(
-            (m) => m.CustomersComponent
-          ),
+        loadChildren: () =>
+          import('./features/customers/customers.routes').then((m) => m.routes),
       },
       {
         path: 'catalog',
-        loadComponent: () =>
-          import('./features/catalog/catalog.component').then(
-            (m) => m.CatalogComponent
-          ),
+        loadChildren: () =>
+          import('./features/catalog/catalog.routes').then((m) => m.routes),
       },
       {
         path: 'inventory',
-        loadComponent: () =>
-          import('./features/inventory/inventory.component').then(
-            (m) => m.InventoryComponent
-          ),
+        loadChildren: () =>
+          import('./features/inventory/inventory.routes').then((m) => m.routes),
       },
       {
         path: 'purchasing',
-        loadComponent: () =>
-          import('./features/purchasing/purchasing.component').then(
-            (m) => m.PurchasingComponent
-          ),
+        loadChildren: () =>
+          import('./features/purchasing/purchasing.routes').then((m) => m.routes),
       },
       {
         path: 'cash',
-        loadComponent: () =>
-          import('./features/cash/cash.component').then(
-            (m) => m.CashComponent
-          ),
+        loadChildren: () =>
+          import('./features/cash/cash.routes').then((m) => m.routes),
       },
       {
         path: 'reports',
-        loadComponent: () =>
-          import('./features/reports/reports.component').then(
-            (m) => m.ReportsComponent
-          ),
+        loadChildren: () =>
+          import('./features/reports/reports.routes').then((m) => m.routes),
       },
       {
         path: 'settings',
-        loadComponent: () =>
-          import('./features/settings/settings.component').then(
-            (m) => m.SettingsComponent
-          ),
+        loadChildren: () =>
+          import('./features/settings/settings.routes').then((m) => m.routes),
       },
     ],
   },

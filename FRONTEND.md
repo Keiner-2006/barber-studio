@@ -10,30 +10,51 @@ Principios: claridad antes que densidad, progressive disclosure, feedback inmedi
 
 ```text
 src/app/
-  core/                 # auth, http, tenant, errors, guards, interceptors
+  core/                 # auth, http, rbac (role-resolver, tenant-context, request-context, auth guard, rate limiting)
   layout/               # public shell, app shell, navigation, command menu
-  shared/               # buttons, dialogs, tables, date/currency pipes
+  shared/               # buttons, dialogs, tables, charts, date/currency pipes
   features/
     booking/
+      booking.models.ts   # tipos, enums y constantes del dominio
+      booking.api.ts      # llamadas HTTP tipadas
+      booking.store.ts    # signals de estado y lógica reactiva
+      booking.component.ts
     dashboard/
+      dashboard.models.ts
+      dashboard.api.ts
+      dashboard.store.ts
+      dashboard.component.ts
     agenda/
+      agenda.models.ts
+      agenda.api.ts
+      agenda.store.ts
+      agenda.component.ts
     customers/
     catalog/
     inventory/
     purchasing/
     cash/
     reports/
+      reports.models.ts
+      reports.api.ts
+      reports.store.ts
+      reports.component.ts
+      reports.routes.ts
+      components/
+        bar-chart.component.ts
+        horizontal-bar-chart.component.ts
     settings/
-  state/                # signals/store por feature
 ```
 
-Usar standalone components, lazy routes, formularios reactivos, signals para estado local y un store por feature solo cuando exista sincronización entre vistas. DTOs y enums se generan o validan desde el contrato OpenAPI; no duplicar reglas de dominio en templates.
+Usar standalone components, lazy routes, formularios reactivos, signals para estado local y un store por feature siguiendo el patrón `models → api → store → ui`. DTOs y enums se generan o validan desde el contrato OpenAPI; no duplicar reglas de dominio en templates.
 
 ## 3. Shell, sesión y alcance
 
 El `AppShell` contiene navegación lateral en desktop, barra superior con empresa/sucursal, búsqueda rápida y perfil. El cliente usa `PublicShell` sin datos de otras sucursales. Guards: `authGuard`, `roleGuard`, `branchScopeGuard`; interceptors agregan sesión, request id y manejo uniforme de 401/403.
 
 El selector de sucursal es persistente en memoria/URL, no en localStorage como fuente de verdad. Al cambiar sucursal se limpian queries y se muestra contexto visible. Todos los permisos se reflejan visualmente, pero la autorización real pertenece al backend.
+
+Los guards están centralizados en `core/rbac/`: `role-resolver.ts` resuelve roles del usuario, `tenant-context.ts` y `request-context.ts` encapsulan contexto, `auth.guard.ts` protege rutas verificando autenticación + roles requeridos (definidos en `data: { roles: [...] }` por ruta), y un interceptor aplica rate limiting por request.
 
 ## 4. Flujos principales
 
@@ -67,7 +88,7 @@ Inventario: búsqueda SKU, existencia por sucursal, mínimos, movimientos y tran
 
 ## 5. Componentes reutilizables
 
-`ServiceCard`, `BranchPicker`, `StaffProfileCard`, `AvailabilityCalendar`, `BookingSummary`, `AppointmentStatusBadge`, `AgendaGrid`, `CustomerDrawer`, `InventoryTable`, `StockAlert`, `PurchaseOrderForm`, `CashSessionPanel`, `MetricCard`, `DataTable`, `ConfirmDialog`, `EmptyState`, `ErrorState`, `SkeletonTable` y `AuditTimeline`.
+`ServiceCard`, `BranchPicker`, `StaffProfileCard`, `AvailabilityCalendar`, `BookingSummary`, `AppointmentStatusBadge`, `AgendaGrid`, `CustomerDrawer`, `InventoryTable`, `StockAlert`, `PurchaseOrderForm`, `CashSessionPanel`, `MetricCard`, `BarChart`, `HorizontalBarChart`, `DataTable`, `ConfirmDialog`, `EmptyState`, `ErrorState`, `SkeletonTable` y `AuditTimeline`.
 
 Cada componente debe tener estados loading, vacío, error, disabled y success cuando aplique. Tablas densas ofrecen vista de tarjetas en móvil; formularios largos usan pasos y resumen lateral.
 
@@ -79,7 +100,7 @@ Tipografía: una sans de alta legibilidad para cuerpo y una serif o display sobr
 
 ## 7. Datos, errores y rendimiento
 
-`ApiClient` tipado centraliza requests. Servicios por feature encapsulan endpoints. Usar caching de disponibilidad con expiración corta, invalidar al reservar y cancelar, debounce en búsquedas, paginación server-side y lazy loading de rutas. No hacer fetch dentro de efectos sin control; los streams/signals deben modelar loading y error explícitamente.
+`ApiClient` tipado centraliza requests. El patrón `models → api → store → ui` separa tipos, llamadas HTTP, lógica reactiva y presentación por feature. Usar caching de disponibilidad con expiración corta, invalidar al reservar y cancelar, debounce en búsquedas, paginación server-side y lazy loading de rutas. No hacer fetch dentro de efectos sin control; los streams/signals deben modelar loading y error explícitamente.
 
 Errores de validación se muestran junto al campo. 401 redirige preservando return URL; 403 explica permisos; 409 de reserva propone alternativas; 500 ofrece reintento y request id. Nunca exponer detalles técnicos.
 

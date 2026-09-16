@@ -1,4 +1,5 @@
-import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer, numeric } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer, numeric, index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const cashTransactionTypeEnum = pgEnum('cash_transaction_type', [
   'sale',
@@ -43,7 +44,13 @@ export const cashSessions = pgTable('cash_sessions', {
   isOpen: boolean('is_open').notNull().default(true),
   version: integer('version').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [
+  // Only one open session per register; also powers the open-session lookup.
+  uniqueIndex('cash_sessions_register_open_unique')
+    .on(table.tenantId, table.cashRegisterId)
+    .where(sql`is_open = true`),
+  index('cash_sessions_tenant_register_idx').on(table.tenantId, table.cashRegisterId),
+])
 
 export const cashTransactions = pgTable('cash_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -58,4 +65,7 @@ export const cashTransactions = pgTable('cash_transactions', {
   actorId: uuid('actor_id').notNull(),
   reconciled: boolean('reconciled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [
+  index('cash_transactions_session_idx').on(table.sessionId),
+  index('cash_transactions_tenant_created_idx').on(table.tenantId, table.createdAt),
+])

@@ -67,9 +67,6 @@ import { TenantService } from '../../core/tenancy/tenant.service'
               routerLinkActive="active">
               <span class="nav-icon">{{ item.icon }}</span>
               <span class="nav-label">{{ item.label }}</span>
-              @if (item.badge) {
-                <span class="nav-badge">{{ item.badge }}</span>
-              }
             </a>
           }
 
@@ -446,15 +443,15 @@ export class AppShellComponent {
   menuOpen = signal(false)
   branchOpen = signal(false)
 
-  navItems = [
-    { label: 'Resumen', icon: '📊', route: '/dashboard', badge: null },
-    { label: 'Agenda', icon: '📅', route: '/agenda', badge: '8' },
-    { label: 'Clientes', icon: '👥', route: '/customers', badge: null },
-    { label: 'Servicios', icon: '✂️', route: '/catalog', badge: null },
-    { label: 'Inventario', icon: '📦', route: '/inventory', badge: '3' },
-    { label: 'Compras', icon: '🛒', route: '/purchasing', badge: null },
-    { label: 'Caja y pagos', icon: '💳', route: '/cash', badge: null },
-    { label: 'Reportes', icon: '📈', route: '/reports', badge: null },
+navItems = [
+    { label: 'Resumen', icon: '📊', route: '/dashboard' },
+    { label: 'Agenda', icon: '📅', route: '/agenda' },
+    { label: 'Cliente', icon: '👥', route: '/customers' },
+    { label: 'Servicios', icon: '✂️', route: '/catalog' },
+    { label: 'Inventario', icon: '📦', route: '/inventory' },
+    { label: 'Compras', icon: '🛒', route: '/purchasing' },
+    { label: 'Caja y pagos', icon: '💳', route: '/cash' },
+    { label: 'Reportes', icon: '📈', route: '/reports' },
   ]
 
   get userInitials(): string {

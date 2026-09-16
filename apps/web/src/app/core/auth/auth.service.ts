@@ -1,20 +1,10 @@
 import { Injectable, signal, computed } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Router } from '@angular/router'
-import { Observable, tap, catchError, of } from 'rxjs'
+import { Observable, tap, catchError, of, switchMap, map, throwError } from 'rxjs'
 import { environment } from '../../../environments/environment'
-
-export type User = {
-  id: string
-  email: string
-  name: string
-  role?: string
-}
-
-export type Session = {
-  token: string
-  expiresAt: string
-}
+import { TenantService } from '../tenancy/tenant.service'
+import { User, Session, LoginRequest, LoginResponse, RegisterRequest, SessionResponse } from './auth.models'
 
 @Injectable({
   providedIn: 'root',
@@ -31,12 +21,13 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private tenantService: TenantService
   ) {
     this.loadFromStorage()
-    if (!this.currentSession() && !environment.production && environment.demoAuth) {
+    if (this.currentSession() && !environment.production && environment.demoAuth) {
       this.currentUser.set({
-        id: 'demo-user',
+        id: '00000000-0000-0000-0000-000000000001',
         email: 'admin@navaja.local',
         name: 'Administrador Navaja',
         role: 'admin',
@@ -46,81 +37,82 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
       })
     }
+    if (this.currentSession()) {
+      this.tenantService.load().subscribe({
+        error: () => {
+          this.clearSession()
+        },
+      })
+    }
   }
 
-  login(email: string, password: string): Observable<{ user: User; session: Session }> {
-    return this.http
-      .post<{ user: User; session: Session }>(`${this.apiUrl}/login`, {
-        email,
-        password,
-      })
-      .pipe(
-        tap((response) => {
-          this.currentUser.set(response.user)
-          this.currentSession.set(response.session)
-          this.saveToStorage(response)
-        })
+  login(email: string, password: string, expectedRole?: string): Observable<LoginResponse> {
+    const body: LoginRequest = { email, password, ...(expectedRole ? { expectedRole: expectedRole as any } : {}) }
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, body).pipe(
+      tap((response) => {
+        this.currentUser.set(response.user)
+        this.currentSession.set(response.session)
+        this.saveToStorage(response)
+      }),
+      switchMap((response) =>
+        this.tenantService.load().pipe(
+          map(() => response),
+          catchError(() => {
+            this.clearSession()
+            return throwError(() => new Error('No se pudo cargar la información del estudio'))
+          })
+        )
       )
+    )
   }
 
-  register(email: string, password: string, name: string): Observable<{ user: User; session: Session }> {
-    return this.http
-      .post<{ user: User; session: Session }>(`${this.apiUrl}/register`, {
-        email,
-        password,
-        name,
+  register(email: string, password: string, name: string): Observable<LoginResponse> {
+    const body: RegisterRequest = { email, password, name }
+    return this.http.post<LoginResponse>(`${this.apiUrl}/register`, body).pipe(
+      tap((response) => {
+        this.currentUser.set(response.user)
+        this.currentSession.set(response.session)
+        this.saveToStorage(response)
       })
-      .pipe(
-        tap((response) => {
-          this.currentUser.set(response.user)
-          this.currentSession.set(response.session)
-          this.saveToStorage(response)
-        })
-      )
+    )
   }
 
   logout(): Observable<void> {
-    return this.http
-      .post<void>(`${this.apiUrl}/logout`, {})
-      .pipe(
-        tap(() => {
-          this.clearStorage()
-          this.currentUser.set(null)
-          this.currentSession.set(null)
-          this.router.navigate(['/login'])
-        }),
-        catchError(() => {
-          this.clearStorage()
-          this.currentUser.set(null)
-          this.currentSession.set(null)
-          this.router.navigate(['/login'])
-          return of(void 0)
-        })
-      )
+    return this.http.post<void>(`${this.apiUrl}/logout`, {}).pipe(
+      tap(() => {
+        this.clearSession()
+        this.tenantService.clear()
+        this.router.navigate(['/login'])
+      }),
+      catchError(() => {
+        this.clearSession()
+        this.tenantService.clear()
+        this.router.navigate(['/login'])
+        return of(void 0)
+      })
+    )
   }
 
-  getSession(): Observable<{ user: User; session: Session }> {
-    return this.http
-      .get<{ user: User; session: Session }>(`${this.apiUrl}/session`)
-      .pipe(
-        tap((response) => {
-          this.currentUser.set(response.user)
-          this.currentSession.set(response.session)
-        }),
-        catchError(() => {
-          this.clearStorage()
-          this.currentUser.set(null)
-          this.currentSession.set(null)
-          return of(null as any)
-        })
-      )
+  getSession(): Observable<SessionResponse | null> {
+    return this.http.get<SessionResponse>(`${this.apiUrl}/session`).pipe(
+      tap((response) => {
+        this.currentUser.set(response.user)
+        this.currentSession.set(response.session)
+      }),
+      catchError(() => {
+        this.clearStorage()
+        this.currentUser.set(null)
+        this.currentSession.set(null)
+        return of(null)
+      })
+    )
   }
 
   getToken(): string | null {
     return this.currentSession()?.token ?? null
   }
 
-  private saveToStorage(response: { user: User; session: Session }): void {
+  private saveToStorage(response: LoginResponse): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('navaja_user', JSON.stringify(response.user))
       localStorage.setItem('navaja_session', JSON.stringify(response.session))
@@ -148,6 +140,13 @@ export class AuthService {
         this.clearStorage()
       }
     }
+  }
+
+  private clearSession(): void {
+    this.clearStorage()
+    this.currentUser.set(null)
+    this.currentSession.set(null)
+    this.tenantService.clear()
   }
 
   private clearStorage(): void {

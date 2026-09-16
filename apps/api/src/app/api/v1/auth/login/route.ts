@@ -1,18 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signIn } from '@/shared/auth/config'
+import { signIn, demoAuthEnabled, demoUser } from '@/shared/auth/config'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
+import { resolveUserRole, validateRoleForFlow, getRoleCategory } from '@/shared/auth/role-resolver'
+
+const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin']
+const CUSTOMER_FLOWS = ['customer', 'client']
+
+function mapExpectedRoleToFlow(expectedRole: string): 'company_member' | 'customer' | null {
+  if (COMPANY_MEMBER_FLOWS.includes(expectedRole.toLowerCase())) return 'company_member'
+  if (CUSTOMER_FLOWS.includes(expectedRole.toLowerCase())) return 'customer'
+  return null
+}
 
 export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { email, password } = body
+    const { email, password, expectedRole, tenantId } = body
 
     if (!email || !password) {
       return NextResponse.json(
         { error: { code: 'VALIDATION_ERROR', message: 'Email y contraseña son requeridos' }, requestId },
         { status: 400 }
       )
+    }
+
+    if (expectedRole) {
+      const expectedFlow = mapExpectedRoleToFlow(expectedRole)
+      if (!expectedFlow) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: `expectedRole inválido: ${expectedRole}. Use 'company_member' o 'customer'.`,
+            },
+            requestId,
+          },
+          { status: 400 }
+        )
+      }
+
+      if (demoAuthEnabled()) {
+        const demoCategory = getRoleCategory(demoUser.role)
+        if (demoCategory !== expectedFlow) {
+          const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
+          return NextResponse.json(
+            {
+              error: {
+                code: 'ROLE_MISMATCH',
+                message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
+              },
+              requestId,
+            },
+            { status: 403 }
+          )
+        }
+      } else {
+        const identity = await resolveUserRole(email, tenantId)
+        if (!identity.role) {
+          return NextResponse.json(
+            {
+              error: {
+                code: 'USER_NOT_FOUND',
+                message: 'Usuario no encontrado',
+              },
+              requestId,
+            },
+            { status: 404 }
+          )
+        }
+
+        if (!validateRoleForFlow(identity.role, expectedFlow)) {
+          const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
+          return NextResponse.json(
+            {
+              error: {
+                code: 'ROLE_MISMATCH',
+                message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
+              },
+              requestId,
+            },
+            { status: 403 }
+          )
+        }
+      }
     }
 
     const result = await signIn(

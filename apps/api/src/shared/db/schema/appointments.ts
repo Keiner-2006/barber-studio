@@ -1,4 +1,4 @@
-import { uuid, text, timestamp, pgEnum, pgTable, integer, numeric } from 'drizzle-orm/pg-core'
+import { uuid, text, timestamp, pgEnum, pgTable, integer, numeric, index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const appointmentStatusEnum = pgEnum('appointment_status', [
   'pending',
@@ -24,7 +24,9 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'voided',
 ])
 
-export const appointments = pgTable('appointments', {
+export const appointments = pgTable(
+  'appointments',
+  {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull(),
   branchId: uuid('branch_id').notNull(),
@@ -44,7 +46,14 @@ export const appointments = pgTable('appointments', {
   idempotencyKey: text('idempotency_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+  },
+  (table) => [
+    uniqueIndex('appointments_tenant_idempotency_unique').on(table.tenantId, table.idempotencyKey),
+    index('appointments_tenant_staff_starts_idx').on(table.tenantId, table.staffId, table.startsAt),
+    index('appointments_tenant_branch_starts_idx').on(table.tenantId, table.branchId, table.startsAt),
+    index('appointments_customer_idx').on(table.customerId),
+  ]
+)
 
 export const appointmentPayments = pgTable('appointment_payments', {
   id: uuid('id').primaryKey().defaultRandom(),

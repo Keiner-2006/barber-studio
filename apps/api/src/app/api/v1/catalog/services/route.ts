@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
-import { catalogRepository } from '@/modules/catalog/infrastructure/repositories/catalog.repository'
+import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createServiceSchema } from '@/modules/catalog/presentation/schemas/catalog.schema'
 
 export async function GET(request: NextRequest) {
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     const result = await withTenantRequest(request.headers, async () => {
       const { searchParams } = new URL(request.url)
       const categoryId = searchParams.get('categoryId') || undefined
-      const services = await catalogRepository.listServices(categoryId)
-      return NextResponse.json({ data: services })
+      const services = await ServiceRegistry.catalog.listServices.execute({ categoryId })
+      return NextResponse.json({ data: services.map(s => s.toPlain()) })
     })
     if (!result) {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const category = await catalogRepository.findCategoryById(parsed.data.categoryId)
+      const category = await ServiceRegistry.catalogAdapter.findCategoryById(parsed.data.categoryId)
       if (!category) {
         return NextResponse.json(
           { error: { code: 'NOT_FOUND', message: 'Categoría no encontrada' }, requestId },
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const service = await catalogRepository.createService(parsed.data)
-      return NextResponse.json({ data: service }, { status: 201 })
+      const service = await ServiceRegistry.catalogAdapter.createService(parsed.data)
+      return NextResponse.json({ data: service.toPlain() }, { status: 201 })
     })
     if (!result) {
       return NextResponse.json(

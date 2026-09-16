@@ -1,4 +1,4 @@
-import { uuid, text, timestamp, pgTable, jsonb } from 'drizzle-orm/pg-core'
+import { uuid, text, timestamp, pgTable, jsonb, index } from 'drizzle-orm/pg-core'
 
 export const customers = pgTable('customers', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -18,4 +18,8 @@ export const customers = pgTable('customers', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-})
+}, (table) => [
+  index('customers_tenant_created_idx').on(table.tenantId, table.createdAt),
+  index('customers_tenant_phone_idx').on(table.tenantId, table.phone),
+  index('customers_tenant_email_idx').on(table.tenantId, table.email),
+])

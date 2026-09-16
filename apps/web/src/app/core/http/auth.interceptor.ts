@@ -1,19 +1,23 @@
 import { HttpInterceptorFn } from '@angular/common/http'
 import { inject } from '@angular/core'
 import { AuthService } from '../auth/auth.service'
+import { TenantService } from '../tenancy/tenant.service'
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService)
-  const token = authService.getToken()
+  const tenantService = inject(TenantService)
 
+  const token = authService.getToken()
+  const tenantId = tenantService.tenantId()
+
+  let headers = req.headers
   if (token) {
-    const cloned = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    return next(cloned)
+    headers = headers.set('Authorization', `Bearer ${token}`)
+  }
+  if (tenantId) {
+    headers = headers.set('x-tenant-id', tenantId)
   }
 
-  return next(req)
+  const cloned = req.clone({ headers })
+  return next(cloned)
 }

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
+import { BookingStore } from './booking.store'
 
 @Component({
   selector: 'app-booking',
@@ -35,4 +36,11 @@ import { CommonModule } from '@angular/common'
     .hint { font-size: 13px; color: #6b7280; margin-top: 8px; font-family: 'Inter', sans-serif; }
   `]
 })
-export class BookingComponent {}
+export class BookingComponent implements OnInit {
+  constructor(public store: BookingStore) {}
+
+  ngOnInit(): void {
+    this.store.loadCategories()
+    this.store.loadBranches()
+  }
+}

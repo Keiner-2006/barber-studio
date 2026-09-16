@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
-import { customerRepository } from '@/modules/customers/infrastructure/repositories/customer.repository'
+import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createCustomerSchema, searchCustomerSchema } from '@/modules/customers/presentation/schemas/customer.schema'
 import { parsePaginationParams, createPaginatedResponse } from '@/shared/pagination'
 
@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const customers = await customerRepository.search(
-        parsed.data.query,
-        parsed.data.cursor,
-        parsed.data.limit
-      )
+      const customers = await ServiceRegistry.customers.search.execute({
+        query: parsed.data.query,
+        cursor: parsed.data.cursor,
+        limit: parsed.data.limit,
+      })
 
-      return NextResponse.json(createPaginatedResponse(customers, customers.length === parsed.data.limit))
+      return NextResponse.json(createPaginatedResponse(customers.map(c => c.toPlain()), customers.length === parsed.data.limit))
     })
     if (!result) {
       return NextResponse.json(
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const customer = await customerRepository.create(parsed.data)
-      return NextResponse.json({ data: customer }, { status: 201 })
+      const customer = await ServiceRegistry.customerAdapter.create(parsed.data)
+      return NextResponse.json({ data: customer.toPlain() }, { status: 201 })
     })
     if (!result) {
       return NextResponse.json(

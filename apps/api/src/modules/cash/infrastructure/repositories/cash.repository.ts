@@ -5,9 +5,28 @@ import { eq, and, desc } from 'drizzle-orm'
 import type { CashTransactionInput } from '../../presentation/schemas/cash.schema'
 
 export const cashRepository = {
+  async listRegisters(branchId?: string) {
+    const conditions = [eq(cashRegisters.tenantId, getTenantId())]
+    if (branchId) conditions.push(eq(cashRegisters.branchId, branchId))
+    return db.query.cashRegisters.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: [cashRegisters.name],
+    })
+  },
+
   async findRegisterById(id: string) {
     return db.query.cashRegisters.findFirst({
       where: and(eq(cashRegisters.id, id), eq(cashRegisters.tenantId, getTenantId())),
+    })
+  },
+
+  async listSessions(registerId?: string, onlyOpen: boolean = false) {
+    const conditions = [eq(cashSessions.tenantId, getTenantId())]
+    if (registerId) conditions.push(eq(cashSessions.cashRegisterId, registerId))
+    if (onlyOpen) conditions.push(eq(cashSessions.isOpen, true))
+    return db.query.cashSessions.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: [desc(cashSessions.openedAt)],
     })
   },
 

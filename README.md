@@ -9,6 +9,7 @@ El proyecto está organizado como un monorepo con frontend Angular, backend Next
 - [Resumen](#resumen)
 - [Tecnologías](#tecnologías)
 - [Arquitectura](#arquitectura)
+- [Arquitectura del frontend](#arquitectura-del-frontend)
 - [Multitenancy](#multitenancy)
 - [Flujo de una petición](#flujo-de-una-petición)
 - [Usuarios, membresías y permisos](#usuarios-membresías-y-permisos)
@@ -18,7 +19,7 @@ El proyecto está organizado como un monorepo con frontend Angular, backend Next
 - [Instalación y ejecución](#instalación-y-ejecución)
 - [Migraciones y datos demo](#migraciones-y-datos-demo)
 - [Pruebas realizadas](#pruebas-realizadas)
-- [Estado actual y pendientes](#estado-actual-y-pendientes)
+- [Documentación adicional](#documentación-adicional)
 
 ## Resumen
 
@@ -110,6 +111,43 @@ Cada módulo puede organizarse en:
 - `presentation/`: schemas, mappers y validación HTTP.
 
 Las rutas no deberían contener SQL ni decidir reglas complejas. Su responsabilidad es traducir HTTP, validar entrada y llamar al caso de uso o repositorio correspondiente.
+
+## Arquitectura del frontend
+
+Angular Web consume la API Next.js mediante un cliente HTTP tipado. Cada feature modular sigue el patrón de capas **models → api → store → ui**:
+
+```text
+apps/web/src/app/
+├── core/                    # auth, http, rbac, tenant-context, request-context
+├── layout/                  # public shell, app shell, navigation, command menu
+├── shared/                  # componentes, pipes, utilidades reutilizables
+├── features/
+│   ├── booking/
+│   │   ├── booking.models.ts  # tipos, enums y constantes del dominio
+│   │   ├── booking.api.ts     # llamadas HTTP tipadas
+│   │   ├── booking.store.ts   # signals de estado y lógica reactiva
+│   │   └── booking.component.ts
+│   ├── dashboard/
+│   │   ├── dashboard.models.ts
+│   │   ├── dashboard.api.ts
+│   │   ├── dashboard.store.ts
+│   │   └── dashboard.component.ts
+│   ├── reports/
+│   │   ├── reports.models.ts
+│   │   ├── reports.api.ts
+│   │   ├── reports.store.ts
+│   │   └── reports.component.ts
+│   └── ...
+├── app.routes.ts            # rutas públicas y protegidas con AuthGuard
+└── app.config.ts            # providers, interceptors, guards
+```
+
+- **models.ts**: DTOs, enums y tipos compartidos del feature (importados desde `@navaja/shared` cuando aplican a múltiples features).
+- **api.ts**: wrapper de `HttpClient` con tipado estricto de request/response. Encapsula endpoints y maneja errores HTTP.
+- **store.ts**: signals de estado (`computed`, `effect`) para lógica reactiva y sincronización entre vistas.
+- **component.ts**: presentación. Standalone componentes, lazy loaded.
+
+Los componentes comparten utilidades desde `shared/` y los guards de autorización desde `core/rbac/`.
 
 ## Multitenancy
 
@@ -528,36 +566,6 @@ Se han validado:
 - Aislamiento de consultas por tenant.
 - Typecheck de API y frontend.
 - Build de producción del frontend.
-
-## Estado actual y pendientes
-
-### Implementado
-
-- Monorepo pnpm.
-- Frontend Angular.
-- API Next.js.
-- PostgreSQL con Drizzle.
-- `withTenantRequest`.
-- Membership por empresa.
-- Roles `admin` y `app`.
-- `tenant_id` en tablas operativas.
-- Repositorios con filtros tenant.
-- Migraciones aplicadas.
-- Seed realista de barbería.
-- Landing y login integrados.
-
-### Pendiente para producción
-
-1. Conectar completamente Better Auth con las cuentas `admin` y `app` reales.
-2. Desactivar `DEMO_AUTH` en producción.
-3. Aplicar `hasPermission` en todos los endpoints sensibles.
-4. Aplicar `branch scope` en cada consulta que use sucursales.
-5. Agregar índices compuestos por `tenant_id` y claves de búsqueda.
-6. Revisar unicidades globales como SKU, email y código de sucursal para que sean tenant-scoped.
-7. Agregar pruebas automatizadas de aislamiento entre dos tenants.
-8. Añadir rate limiting, CSRF y gestión de secretos.
-9. Configurar backups, restauración y observabilidad.
-10. Implementar idempotencia completa para reservas, caja e inventario.
 
 ## Documentación adicional
 

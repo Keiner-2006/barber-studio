@@ -34,6 +34,15 @@ export const inventoryRepository = {
     return product
   },
 
+  async deleteProduct(id: string) {
+    const [product] = await db
+      .update(products)
+      .set({ deletedAt: new Date(), active: false, updatedAt: new Date() })
+      .where(and(eq(products.id, id), eq(products.tenantId, getTenantId())))
+      .returning()
+    return product
+  },
+
   async listProducts() {
     return db.query.products.findMany({
       where: and(isNull(products.deletedAt), eq(products.tenantId, getTenantId())),

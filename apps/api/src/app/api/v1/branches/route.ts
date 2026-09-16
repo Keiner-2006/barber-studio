@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
-import { branchRepository } from '@/modules/branches/infrastructure/repositories/branch.repository'
+import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createBranchSchema } from '@/modules/branches/presentation/schemas/branch.schema'
-import { parsePaginationParams, createPaginatedResponse } from '@/shared/pagination'
 
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const result = await withTenantRequest(request.headers, async () => {
-      const branches = await branchRepository.list()
-      return NextResponse.json({ data: branches })
+      const branches = await ServiceRegistry.branches.list.execute({})
+      return NextResponse.json({ data: branches.map(b => b.toPlain()) })
     })
     if (!result) {
       return NextResponse.json(
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const existing = await branchRepository.findByCode(parsed.data.code)
+      const existing = await ServiceRegistry.branchAdapter.findByCode(parsed.data.code)
       if (existing) {
         return NextResponse.json(
           { error: { code: 'CONFLICT', message: 'Ya existe una sucursal con ese código' }, requestId },
@@ -47,8 +46,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const branch = await branchRepository.create(parsed.data)
-      return NextResponse.json({ data: branch }, { status: 201 })
+      const branch = await ServiceRegistry.branchAdapter.create(parsed.data)
+      return NextResponse.json({ data: branch.toPlain() }, { status: 201 })
     })
     if (!result) {
       return NextResponse.json(

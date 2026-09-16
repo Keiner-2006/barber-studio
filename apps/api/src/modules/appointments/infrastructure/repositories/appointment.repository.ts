@@ -1,7 +1,7 @@
 import { db } from '@/shared/db'
 import { getTenantId } from '@/shared/tenancy/request-context'
-import { appointments, appointmentPayments } from '@/shared/db/schema/appointments'
-import { eq, and, gte, lte, desc, isNull } from 'drizzle-orm'
+import { appointments, appointmentPayments, paymentMethodEnum } from '@/shared/db/schema/appointments'
+import { eq, and, gte, lte, desc, isNull, asc } from 'drizzle-orm'
 import type { CreateAppointmentInput } from '../../presentation/schemas/appointment.schema'
 
 export const appointmentRepository = {
@@ -111,5 +111,37 @@ export const appointmentRepository = {
       ),
       orderBy: [appointments.startsAt],
     })
+  },
+
+  async createPayment(data: {
+    appointmentId: string
+    amount: string
+    currency: string
+    method: (typeof paymentMethodEnum.enumValues)[number]
+    reference?: string
+    recordedBy?: string
+  }) {
+    const [payment] = await db
+      .insert(appointmentPayments)
+      .values({
+        ...data,
+        tenantId: getTenantId(),
+        status: 'recorded',
+      })
+      .returning()
+    return payment
+  },
+
+  async getPaymentsForAppointment(appointmentId: string) {
+    return db
+      .select()
+      .from(appointmentPayments)
+      .where(
+        and(
+          eq(appointmentPayments.appointmentId, appointmentId),
+          eq(appointmentPayments.tenantId, getTenantId())
+        )
+      )
+      .orderBy(asc(appointmentPayments.createdAt))
   },
 }
