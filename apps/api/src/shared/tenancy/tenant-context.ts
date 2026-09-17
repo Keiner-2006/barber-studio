@@ -219,6 +219,25 @@ export function invalidateIdentityCache(sessionToken?: string) {
   }
 }
 
+/**
+ * Pre-loads the identity cache so that subsequent API calls
+ * don't trigger a slow identity resolution on the first request.
+ * Call this after login and before the user navigates.
+ */
+export async function preloadIdentity(headers: Headers, tenantId: string): Promise<void> {
+  const session = await getSession(headers)
+  if (!session) return
+
+  const cacheKey = `${getSessionToken(session)}:${tenantId}`
+  const cached = getCachedIdentity(cacheKey)
+  if (cached) return
+
+  const identity = await resolveIdentity(headers, session, tenantId)
+  if (identity) {
+    setCachedIdentity(cacheKey, identity)
+  }
+}
+
 export async function getTenantSession(headers: Headers) {
   const request = await resolveTenantRequest(headers)
   if (!request) return null

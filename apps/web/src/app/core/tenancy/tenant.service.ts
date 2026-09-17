@@ -22,16 +22,16 @@ export class TenantService {
     return this.api
       .get<TenantMeResponse>('/tenants/me')
       .pipe(
-        tap((resp) => {
-          this.currentTenant.set(resp.tenant)
-          this.availableBranches.set(resp.branches)
+      tap((resp) => {
+          this.currentTenant.set(resp.data.tenant)
+          this.availableBranches.set(resp.data.branches)
           const savedBranchId =
-            typeof localStorage !== 'undefined'
-              ? localStorage.getItem('navaja_branch_id')
-              : null
-          const saved = resp.branches.find((b) => b.id === savedBranchId)
-          this.currentBranch.set(saved ?? resp.branches[0] ?? null)
-        }),
+              typeof localStorage !== 'undefined'
+                  ? localStorage.getItem('navaja_branch_id')
+                  : null
+          const saved = resp.data.branches.find((b) => b.id === savedBranchId)
+          this.currentBranch.set(saved ?? resp.data.branches[0] ?? null)
+      }),
         map(() => undefined as void)
       )
   }

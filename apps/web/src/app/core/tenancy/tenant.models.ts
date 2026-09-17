@@ -27,8 +27,10 @@ export interface TenantInfo {
 }
 
 export interface TenantMeResponse {
-  tenant: TenantInfo
-  branches: Branch[]
+    data: {
+        tenant: TenantInfo
+        branches: Branch[]
+    }
 }
 
 export interface BranchesResponse {

@@ -3,7 +3,7 @@ import { Product } from '../../domain/entities/Product'
 import { db } from '@/shared/db'
 import { getTenantId } from '@/shared/tenancy/request-context'
 import { products, branchInventory, inventoryMovements, inventoryMovementTypeEnum } from '@/shared/db/schema/inventory'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, ilike } from 'drizzle-orm'
 
 export class DrizzleInventoryAdapter implements IInventoryRepository {
   async findProductById(id: string): Promise<Product | null> {
@@ -71,9 +71,14 @@ export class DrizzleInventoryAdapter implements IInventoryRepository {
     return this.toDomain(row)
   }
 
-  async listProducts(): Promise<Product[]> {
+  async listProducts(search?: string): Promise<Product[]> {
+    const conditions = [isNull(products.deletedAt), eq(products.tenantId, getTenantId())]
+    if (search) {
+      conditions.push(ilike(products.name, `%${search}%`))
+    }
+
     const rows = await db.query.products.findMany({
-      where: and(isNull(products.deletedAt), eq(products.tenantId, getTenantId())),
+      where: and(...conditions),
       orderBy: [products.name],
     })
 

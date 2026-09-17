@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     const result = await withTenantRequest(request.headers, async () => {
       const { searchParams } = new URL(request.url)
       const categoryId = searchParams.get('categoryId') || undefined
-      const services = await ServiceRegistry.catalog.listServices.execute({ categoryId })
+      const search = searchParams.get('search') || undefined
+      const services = await ServiceRegistry.catalog.listServices.execute({ categoryId, search })
       return NextResponse.json({ data: services.map(s => s.toPlain()) })
     })
     if (!result) {

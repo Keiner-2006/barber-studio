@@ -33,27 +33,6 @@ export async function resolveUserRole(
   email: string,
   tenantId?: string
 ): Promise<{ role: string | null; category: RoleCategory | null; platformUserId?: string; localUserId?: string }> {
-  const platformDb = getPlatformDb()
-
-  const [platformUser] = await platformDb
-    .select({
-      userId: platformUsers.id,
-      membershipRole: platformMemberships.role,
-    })
-    .from(platformUsers)
-    .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
-    .where(eq(platformUsers.email, email))
-    .limit(1)
-
-  if (platformUser) {
-    const category = getRoleCategory(platformUser.membershipRole)
-    return {
-      role: platformUser.membershipRole,
-      category,
-      platformUserId: platformUser.userId,
-    }
-  }
-
   if (tenantId) {
     const tenantDb = getTenantDb()
     const [localUser] = await tenantDb
@@ -74,6 +53,26 @@ export async function resolveUserRole(
         category,
         localUserId: localUser.userId,
       }
+    }
+  }
+
+  const platformDb = getPlatformDb()
+  const [platformUser] = await platformDb
+    .select({
+      userId: platformUsers.id,
+      membershipRole: platformMemberships.role,
+    })
+    .from(platformUsers)
+    .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
+    .where(eq(platformUsers.email, email))
+    .limit(1)
+
+  if (platformUser) {
+    const category = getRoleCategory(platformUser.membershipRole)
+    return {
+      role: platformUser.membershipRole,
+      category,
+      platformUserId: platformUser.userId,
     }
   }
 

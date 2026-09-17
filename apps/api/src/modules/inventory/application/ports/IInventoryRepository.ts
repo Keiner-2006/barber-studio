@@ -38,7 +38,7 @@ export interface IInventoryRepository {
   createProduct(data: CreateProductData): Promise<Product>
   updateProduct(id: string, data: UpdateProductData): Promise<Product | null>
   deleteProduct(id: string): Promise<Product | null>
-  listProducts(): Promise<Product[]>
+  listProducts(search?: string): Promise<Product[]>
   getBranchInventory(branchId: string): Promise<any[]>
   getLowStockItems(branchId: string): Promise<any[]>
   createMovement(data: InventoryAdjustmentData): Promise<any>

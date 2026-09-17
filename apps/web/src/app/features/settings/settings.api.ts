@@ -26,4 +26,16 @@ export class SettingsApi {
   getStaff(): Observable<StaffMember[]> {
     return this.api.get<ApiResponse<StaffMember[]>>('/staff').pipe(map((r) => r.data))
   }
+
+  createStaff(data: { displayName: string; bio?: string; commissionRate?: string; email: string }): Observable<StaffMember> {
+    return this.api.post<ApiResponse<StaffMember>>('/staff', data).pipe(map((r) => r.data))
+  }
+
+  updateStaff(id: string, data: Partial<StaffMember>): Observable<StaffMember> {
+    return this.api.patch<ApiResponse<StaffMember>>(`/staff?id=${id}`, data).pipe(map((r) => r.data))
+  }
+
+  deleteStaff(id: string): Observable<void> {
+    return this.api.delete<ApiResponse<void>>(`/staff?id=${id}`).pipe(map((r) => void 0))
+  }
 }

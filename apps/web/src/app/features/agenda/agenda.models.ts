@@ -57,3 +57,14 @@ export interface AppointmentRow {
   status: string
   statusClass: string
 }
+
+export interface AgendaStats {
+  total: number
+  pending: number
+  confirmed: number
+  checkedIn: number
+  inService: number
+  completed: number
+  cancelled: number
+  noShow: number
+}

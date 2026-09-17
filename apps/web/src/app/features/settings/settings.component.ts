@@ -116,7 +116,8 @@ import {
         @if (tab() === 'staff') {
           <div class="card">
             <div class="card-header">
-              <h3>Personal</h3>
+              <h3>Barberos y Personal</h3>
+              <button class="primary-button" (click)="openStaffDialog()">+ Agregar barbero</button>
             </div>
             <div class="card-body">
               @if (store.loading()) {
@@ -135,6 +136,7 @@ import {
                       <th>Comisión</th>
                       <th>Reservable</th>
                       <th>Estatus</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -147,12 +149,43 @@ import {
                         <td>
                           <span class="badge" [class.active]="s.status === 'active'">{{ s.status }}</span>
                         </td>
+                        <td>
+                          <button class="secondary-button small" (click)="deleteStaff(s.id)">Eliminar</button>
+                        </td>
                       </tr>
                     }
                   </tbody>
                 </table>
               }
             </div>
+
+            @if (showStaffDialog()) {
+              <div class="dialog-backdrop" (click)="closeStaffDialog()">
+                <div class="dialog" (click)="$event.stopPropagation()">
+                  <h3>Agregar barbero</h3>
+                  <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input [(ngModel)]="newStaff().displayName" (ngModelChange)="updateStaffField('displayName', $event)" placeholder="Ej. Andrés Morales" />
+                  </div>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input [(ngModel)]="newStaff().email" (ngModelChange)="updateStaffField('email', $event)" placeholder="email@navaja.local" />
+                  </div>
+                  <div class="form-group">
+                    <label>Bio</label>
+                    <input [(ngModel)]="newStaff().bio" (ngModelChange)="updateStaffField('bio', $event)" placeholder="Especialidad del barbero" />
+                  </div>
+                  <div class="form-group">
+                    <label>Comisión (%)</label>
+                    <input type="number" [(ngModel)]="newStaff().commissionRate" (ngModelChange)="updateStaffField('commissionRate', $event)" placeholder="35" />
+                  </div>
+                  <div class="dialog-actions">
+                    <button class="secondary-button" (click)="closeStaffDialog()">Cancelar</button>
+                    <button class="primary-button" (click)="addStaff()" [disabled]="store.saving()">Guardar</button>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
@@ -223,6 +256,7 @@ import {
     .primary-button:hover { transform: translateY(-1px); }
     .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .secondary-button { padding: 12px 20px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .secondary-button.small { padding: 6px 12px; font-size: 12px; }
     .loading-rows { display: flex; flex-direction: column; gap: 12px; }
     .loading-row { height: 40px; background: #f3f4f6; border-radius: 4px; }
     .loading-rows .loading-row:last-child { margin-bottom: 0; }
@@ -240,9 +274,11 @@ import {
 export class SettingsComponent implements OnInit {
   tab = signal<'tenant' | 'branches' | 'staff'>('tenant')
   showBranchDialog = signal(false)
-  newBranch = signal<CreateBranch>({ code: '', name: '' })
+  showStaffDialog = signal(false)
+  newBranch = signal<CreateBranch>({ code: '', name: '', city: '', phone: '', address: '', country: '' })
+  newStaff = signal<{ displayName: string; email: string; bio: string; commissionRate: string }>({ displayName: '', email: '', bio: '', commissionRate: '' })
 
-  constructor(private store: SettingsStore) {}
+  constructor(readonly store: SettingsStore) {}
 
   ngOnInit(): void {
     this.store.load()
@@ -266,5 +302,31 @@ export class SettingsComponent implements OnInit {
     if (!branch.code || !branch.name) return
     this.store.createBranch(branch)
     this.closeBranchDialog()
+  }
+
+  openStaffDialog(): void {
+    this.newStaff.set({ displayName: '', email: '', bio: '', commissionRate: '' })
+    this.showStaffDialog.set(true)
+  }
+
+  closeStaffDialog(): void {
+    this.showStaffDialog.set(false)
+  }
+
+  updateStaffField(field: string, value: string): void {
+    this.newStaff.update((p) => ({ ...p, [field]: value }))
+  }
+
+  addStaff(): void {
+    const s = this.newStaff()
+    if (!s.displayName || !s.email) return
+    this.store.createStaff(s)
+    this.closeStaffDialog()
+  }
+
+  deleteStaff(id: string): void {
+    if (confirm('¿Eliminar este barbero?')) {
+      this.store.deleteStaff(id)
+    }
   }
 }

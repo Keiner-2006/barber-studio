@@ -4,7 +4,7 @@ import { Service } from '../../domain/entities/Service'
 import { db } from '@/shared/db'
 import { getTenantId } from '@/shared/tenancy/request-context'
 import { services, serviceCategories, branchServices } from '@/shared/db/schema/catalog'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, ilike } from 'drizzle-orm'
 
 export class DrizzleCatalogAdapter implements ICatalogRepository {
   async findCategoryById(id: string): Promise<ServiceCategory | null> {
@@ -126,10 +126,13 @@ export class DrizzleCatalogAdapter implements ICatalogRepository {
     return this.toServiceDomain(row)
   }
 
-  async listServices(categoryId?: string): Promise<Service[]> {
+  async listServices(categoryId?: string, search?: string): Promise<Service[]> {
     const conditions = [isNull(services.deletedAt), eq(services.active, true), eq(services.tenantId, getTenantId())]
     if (categoryId) {
       conditions.push(eq(services.categoryId, categoryId))
+    }
+    if (search) {
+      conditions.push(ilike(services.name, `%${search}%`))
     }
 
     const rows = await db.query.services.findMany({

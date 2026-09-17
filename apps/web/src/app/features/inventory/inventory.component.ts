@@ -19,6 +19,10 @@ import { CreateProduct } from './inventory.models'
         <button class="primary-button" (click)="openCreateDialog()">+ Registrar producto</button>
       </div>
 
+      <div class="search-bar">
+        <input type="text" placeholder="Buscar producto por nombre..." [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card">
           <p class="stat-label">Valor en inventario</p>
@@ -129,51 +133,76 @@ import { CreateProduct } from './inventory.models'
     </div>
   `,
   styles: [`
-    .page { padding: 32px; max-width: 1400px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-    .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
-    h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; }
-    .accent { color: #b87333; }
-    .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
-    .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
-    .stat-label { font-size: 13px; color: #6b7280; }
-    .stat-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: #2d2d2d; margin-top: 8px; }
-    .loading { padding: 48px; text-align: center; color: #6b7280; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; background: white; border: 2px dashed #e5e7eb; border-radius: 12px; }
-    .empty-state p { font-family: 'DM Serif Display', serif; font-size: 20px; color: #2d2d2d; }
-    .hint { font-size: 13px; color: #6b7280; margin-top: 8px; }
-    .inventory-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-    .inventory-table th { background: #f9fafb; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
-    .inventory-table td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; font-size: 13px; vertical-align: top; }
-    .inventory-table tbody tr:last-child td { border-bottom: none; }
-    .product-name { font-weight: 500; color: #2d2d2d; }
-    .product-desc { font-size: 12px; color: #6b7280; margin-top: 2px; }
-    .mono { font-family: monospace; font-size: 12px; color: #6b7280; }
-    .badge-active { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; background: #dcfce7; color: #166534; }
-    .badge-inactive { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; background: #fee2e2; color: #991b2b; }
-    .primary-button:hover { transform: translateY(-1px); }
-    .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .secondary-button { padding: 12px 20px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
-    .dialog { background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
-    .dialog h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: #2d2d2d; margin-top: 0; margin-bottom: 16px; }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; }
-    .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-    .form-group input:focus, .form-group textarea:focus { border-color: #b87333; outline: none; }
-    .dialog-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; }
-  `]
+    .search-bar {
+        margin-bottom: 20px;
+      }
+      .search-bar input {
+        width: 100%;
+        max-width: 480px;
+        padding: 10px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+      }
+      .search-bar input:focus {
+        border-color: #b87333;
+        outline: none;
+      }
+      .page { padding: 32px; max-width: 1400px; margin: 0 auto; }
+      .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+      .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+      h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; }
+      .accent { color: #b87333; }
+      .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
+      .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+      .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+      .stat-label { font-size: 13px; color: #6b7280; }
+      .stat-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: #2d2d2d; margin-top: 8px; }
+      .loading { padding: 48px; text-align: center; color: #6b7280; }
+      .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; background: white; border: 2px dashed #e5e7eb; border-radius: 12px; }
+      .empty-state p { font-family: 'DM Serif Display', serif; font-size: 20px; color: #2d2d2d; }
+      .hint { font-size: 13px; color: #6b7280; margin-top: 8px; }
+      .inventory-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+      .inventory-table th { background: #f9fafb; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
+      .inventory-table td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; font-size: 13px; vertical-align: top; }
+      .inventory-table tbody tr:last-child td { border-bottom: none; }
+      .product-name { font-weight: 500; color: #2d2d2d; }
+      .product-desc { font-size: 12px; color: #6b7280; margin-top: 2px; }
+      .mono { font-family: monospace; font-size: 12px; color: #6b7280; }
+      .badge-active { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; background: #dcfce7; color: #166534; }
+      .badge-inactive { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; background: #fee2e2; color: #991b2b; }
+      .primary-button:hover { transform: translateY(-1px); }
+      .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+      .secondary-button { padding: 12px 20px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
+      .dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+      .dialog { background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+      .dialog h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: #2d2d2d; margin-top: 0; margin-bottom: 16px; }
+      .form-group { margin-bottom: 12px; }
+      .form-group label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; }
+      .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+      .form-group input:focus, .form-group textarea:focus { border-color: #b87333; outline: none; }
+      .dialog-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; }
+    `]
 })
 export class InventoryComponent implements OnInit {
   showCreateDialog = signal(false)
   newProduct = signal<CreateProduct>({ name: '', sku: '', unitCost: '', minQuantity: 0 })
+  searchQuery = signal('')
+  searchDebounceTimer: any = null
 
   constructor(public store: InventoryStore) {}
 
   ngOnInit(): void {
     this.store.load()
+  }
+
+  onSearch(): void {
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
+    this.searchDebounceTimer = setTimeout(() => {
+      this.store.search(this.searchQuery())
+    }, 300)
   }
 
   openCreateDialog(): void {

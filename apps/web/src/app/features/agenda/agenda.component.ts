@@ -23,49 +23,64 @@ import { AgendaStore } from './agenda.store'
 
       @if (store.loading()) {
         <div class="loading">Cargando agenda...</div>
-      } @else if (store.appointmentRows().length === 0) {
-        <div class="empty-state">
-          <p>No hay reservas para este día</p>
-          <p class="hint">Presiona "Nueva reserva" para crear una.</p>
-        </div>
       } @else {
-        <div class="table-wrapper">
-          <table class="agenda-table">
-            <thead>
-              <tr>
-                <th>Hora</th>
-                <th>Cliente</th>
-                <th>Servicio</th>
-                <th>Barbero</th>
-                <th>Estado</th>
-                <th class="actions-header">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (appt of store.appointmentRows(); track appt.id) {
-                <tr>
-                  <td class="time-cell">{{ appt.time }}</td>
-                  <td>{{ appt.clientName }}</td>
-                  <td>{{ appt.service }}</td>
-                  <td>{{ appt.barber }}</td>
-                  <td>
-                    <span class="status-badge" [class]="appt.statusClass">{{ appt.status }}</span>
-                  </td>
-                  <td class="actions-cell">
-                    <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
-                      <option value="">Cambiar estado</option>
-                      <option value="confirmed">Confirmar</option>
-                      <option value="checked_in">En espera</option>
-                      <option value="in_service">En servicio</option>
-                      <option value="completed">Completar</option>
-                      <option value="cancelled">Cancelar</option>
-                    </select>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+        <div class="stats-bar">
+          <span class="stat-chip"><b>{{ store.stats().total }}</b> Total</span>
+          <span class="stat-chip confirmed"><b>{{ store.stats().confirmed }}</b> Confirmadas</span>
+          <span class="stat-chip pending"><b>{{ store.stats().pending }}</b> Pendientes</span>
+          <span class="stat-chip waiting"><b>{{ store.stats().checkedIn }}</b> En espera</span>
+          <span class="stat-chip active"><b>{{ store.stats().inService }}</b> En servicio</span>
+          <span class="stat-chip completed"><b>{{ store.stats().completed }}</b> Completadas</span>
+          <span class="stat-chip cancelled"><b>{{ store.stats().cancelled }}</b> Canceladas</span>
+          <span class="stat-chip cancelled"><b>{{ store.stats().noShow }}</b> No asistió</span>
         </div>
+
+        @if (store.appointmentRows().length === 0) {
+          <div class="empty-state">
+            <p>Sin turnos programados</p>
+            <p class="hint">Usa el calendario para ver otros días o crea una nueva reserva.</p>
+          </div>
+        }
+
+        @if (store.appointmentRows().length > 0) {
+          <div class="table-wrapper">
+            <table class="agenda-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Cliente</th>
+                  <th>Servicio</th>
+                  <th>Barbero</th>
+                  <th>Estado</th>
+                  <th class="actions-header">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (appt of store.appointmentRows(); track appt.id) {
+                  <tr>
+                    <td class="time-cell">{{ appt.time }}</td>
+                    <td>{{ appt.clientName }}</td>
+                    <td>{{ appt.service }}</td>
+                    <td>{{ appt.barber }}</td>
+                    <td>
+                      <span class="status-badge" [class]="appt.statusClass">{{ appt.status }}</span>
+                    </td>
+                    <td class="actions-cell">
+                      <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
+                        <option value="">Cambiar estado</option>
+                        <option value="confirmed">Confirmar</option>
+                        <option value="checked_in">En espera</option>
+                        <option value="in_service">En servicio</option>
+                        <option value="completed">Completar</option>
+                        <option value="cancelled">Cancelar</option>
+                      </select>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       }
     </div>
   `,
@@ -84,6 +99,9 @@ import { AgendaStore } from './agenda.store'
     .empty-state p { font-family: 'DM Serif Display', serif; font-size: 20px; color: #2d2d2d; }
     .hint { font-size: 13px; color: #6b7280; margin-top: 8px; }
     .table-wrapper { background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .stats-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; }
+    .stat-chip { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; background: white; border: 1px solid #e5e7eb; color: #374151; }
+    .stat-chip b { color: #111827; }
     .agenda-table { width: 100%; border-collapse: collapse; }
     .agenda-table th { background: #f9fafb; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
     .agenda-table td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }

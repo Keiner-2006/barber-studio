@@ -41,22 +41,26 @@ export class CatalogStore {
 
   constructor(private api: CatalogApi) {}
 
-  load(): void {
+  load(categoryId?: string, search?: string): void {
     this._loading.set(true)
     this.api.getCategories().subscribe({
       next: (cats) => {
         this._categories.set(cats ?? [])
-        this.loadServices()
+        this.loadServices(categoryId, search)
       },
       error: () => {
         this._categories.set([])
-        this.loadServices()
+        this.loadServices(categoryId, search)
       },
     })
   }
 
-  private loadServices(): void {
-    this.api.getServices().subscribe({
+  search(search: string): void {
+    this.load(undefined, search)
+  }
+
+  private loadServices(categoryId?: string, search?: string): void {
+    this.api.getServices(categoryId, search).subscribe({
       next: (services) => {
         this._services.set(services ?? [])
         this._loading.set(false)

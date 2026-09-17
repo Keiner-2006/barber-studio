@@ -1,7 +1,7 @@
 import { db } from '@/shared/db'
 import { getTenantId } from '@/shared/tenancy/request-context'
 import { services, serviceCategories, branchServices } from '@/shared/db/schema/catalog'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, ilike } from 'drizzle-orm'
 import type { CreateServiceInput, CreateServiceCategoryInput, UpdateServiceInput, UpdateServiceCategoryInput } from '../../presentation/schemas/catalog.schema'
 
 export const catalogRepository = {
@@ -77,10 +77,13 @@ export const catalogRepository = {
       .returning()
   },
 
-  async listServices(categoryId?: string) {
+  async listServices(categoryId?: string, search?: string) {
     const conditions = [isNull(services.deletedAt), eq(services.active, true)]
     if (categoryId) {
       conditions.push(eq(services.categoryId, categoryId))
+    }
+    if (search) {
+      conditions.push(ilike(services.name, `%${search}%`))
     }
 
     return db.query.services.findMany({

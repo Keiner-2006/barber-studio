@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
 import { AuthService } from '../../core/auth/auth.service'
 import { TenantService } from '../../core/tenancy/tenant.service'
+import { ROLES } from '@navaja/shared'
 
 @Component({
   selector: 'app-shell',
@@ -60,7 +61,7 @@ import { TenantService } from '../../core/tenancy/tenant.service'
 
         <nav class="sidebar-nav">
           <p class="nav-section">Workspace</p>
-          @for (item of navItems; track item.label) {
+          @for (item of navItemsList; track item.label) {
             <a
               class="nav-item"
               [routerLink]="item.route"
@@ -70,11 +71,13 @@ import { TenantService } from '../../core/tenancy/tenant.service'
             </a>
           }
 
+          @if (showSettings) {
           <p class="nav-section" style="margin-top: 24px;">Configuración</p>
           <a class="nav-item" routerLink="/settings" routerLinkActive="active">
             <span class="nav-icon">⚙️</span>
             <span class="nav-label">Ajustes</span>
           </a>
+        }
         </nav>
 
         <div class="sidebar-footer">
@@ -443,7 +446,7 @@ export class AppShellComponent {
   menuOpen = signal(false)
   branchOpen = signal(false)
 
-navItems = [
+  private navItems = [
     { label: 'Resumen', icon: '📊', route: '/dashboard' },
     { label: 'Agenda', icon: '📅', route: '/agenda' },
     { label: 'Cliente', icon: '👥', route: '/customers' },
@@ -453,6 +456,32 @@ navItems = [
     { label: 'Caja y pagos', icon: '💳', route: '/cash' },
     { label: 'Reportes', icon: '📈', route: '/reports' },
   ]
+
+  private settingsRoles = [ROLES.OWNER, ROLES.ADMIN]
+
+  get navItemsList() {
+    const role = this.authService.user()?.role
+    const allowed = this.getAllowedRoutes(role || '')
+    return this.navItems.filter(item => allowed.includes(item.route))
+  }
+
+  get showSettings() {
+    const role = this.authService.user()?.role
+    return role ? this.settingsRoles.includes(role as any) : false
+  }
+
+  private getAllowedRoutes(role: string): string[] {
+    const routes: Record<string, string[]> = {
+      [ROLES.OWNER]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.ADMIN]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.APP]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.RECEPTION]: ['/dashboard', '/agenda', '/customers', '/catalog', '/cash'],
+      [ROLES.BARBER]: ['/dashboard', '/agenda', '/customers', '/catalog'],
+      [ROLES.INVENTORY_MANAGER]: ['/dashboard', '/inventory', '/purchasing'],
+      [ROLES.ACCOUNTANT]: ['/dashboard', '/reports', '/cash'],
+    }
+    return routes[role] || []
+  }
 
   get userInitials(): string {
     const name = this.authService.user()?.name || 'U'

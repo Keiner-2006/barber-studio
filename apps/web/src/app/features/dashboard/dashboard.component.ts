@@ -14,7 +14,7 @@ import { DashboardStore } from './dashboard.store'
           <h1 class="greeting">Buenos días, {{ store.userName() }}<span class="accent">.</span></h1>
           <p class="subtitle">Esto es lo que está pasando en tu estudio hoy.</p>
         </div>
-        <button class="primary-button" (click)="store.createAppointment?.()" routerLink="/agenda">
+        <button class="primary-button" routerLink="/agenda">
           <span class="icon">+</span>
           Nueva reserva
         </button>

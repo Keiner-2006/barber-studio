@@ -53,6 +53,6 @@ export interface ICatalogRepository {
   createService(data: CreateServiceData): Promise<Service>
   updateService(id: string, data: UpdateServiceData): Promise<Service | null>
   deleteService(id: string): Promise<Service | null>
-  listServices(categoryId?: string): Promise<Service[]>
+  listServices(categoryId?: string, search?: string): Promise<Service[]>
   getBranchServices(branchId: string): Promise<any[]>
 }

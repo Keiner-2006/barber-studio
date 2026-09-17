@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core'
-import { Appointment, CustomerMap, StaffMap, AppointmentRow } from './agenda.models'
+import { Appointment, CustomerMap, StaffMap, AppointmentRow, AgendaStats } from './agenda.models'
 import { AgendaApi } from './agenda.api'
 import { StaffApi } from './staff.api'
 import { StaffMember } from './staff.models'
@@ -16,6 +16,21 @@ export class AgendaStore {
 
   readonly loading = this._loading.asReadonly()
   readonly selectedDate = this._selectedDate.asReadonly()
+
+  readonly stats = computed((): AgendaStats => {
+    const appts = this._appointments()
+    const count = (status: string) => appts.filter((a) => a.status === status).length
+    return {
+      total: appts.length,
+      pending: count('pending'),
+      confirmed: count('confirmed'),
+      checkedIn: count('checked_in'),
+      inService: count('in_service'),
+      completed: count('completed'),
+      cancelled: count('cancelled'),
+      noShow: count('no_show'),
+    }
+  })
 
   readonly dateLabel = computed(() => {
     return this._selectedDate().toLocaleDateString('es-MX', {

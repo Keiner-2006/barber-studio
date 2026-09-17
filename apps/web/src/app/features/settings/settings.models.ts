@@ -16,6 +16,7 @@ export interface StaffMember {
   id: string
   userId: string
   displayName: string
+  email?: string
   bio?: string
   avatarUrl?: string
   commissionRate: string

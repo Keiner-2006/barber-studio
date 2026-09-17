@@ -53,7 +53,7 @@ export class LoginComponent {
   password = ''
   loading = false
   error = ''
-  role: 'client' | 'staff' = 'client'
+  role: 'client' | 'staff' = 'staff'
   showPassword = false
   remember = true
 
@@ -63,10 +63,19 @@ export class LoginComponent {
     if (!this.email || !this.password) return
     this.loading = true
     this.error = ''
-    const expectedRole = this.role === 'client' ? 'customer' : 'company_member'
+    const expectedRole = this.role === 'client' ? 'customer' : 'admin'
     this.authService.login(this.email, this.password, expectedRole).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: (err) => { this.loading = false; this.error = err.error?.message || 'Credenciales incorrectas' },
+      next: (response: any) => {
+        const role = response?.user?.role
+        if (role === 'customer') {
+          this.router.navigate(['/booking'])
+        } else if (role === 'barber') {
+          this.router.navigate(['/agenda'])
+        } else {
+          this.router.navigate(['/dashboard'])
+        }
+      },
+      error: (err) => { this.loading = false; this.error = err.error?.error?.message || err.error?.message || 'Credenciales incorrectas' },
     })
   }
 }

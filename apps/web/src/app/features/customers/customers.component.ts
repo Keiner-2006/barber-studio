@@ -144,7 +144,7 @@ export class CustomersComponent implements OnInit {
   showCreateDialog = false
   newCustomer: CreateCustomerForm = { firstName: '', lastName: '', email: '', phone: '', document: '', notes: '' }
 
-  constructor(private store: CustomersStore) {}
+  constructor(readonly store: CustomersStore) {}
 
   ngOnInit(): void {
     this.store.search()

@@ -8,8 +8,9 @@ import { Product, CreateProduct, InventoryMovement, BranchStock } from './invent
 export class InventoryApi {
   constructor(private api: ApiClient) {}
 
-  getProducts(): Observable<Product[]> {
-    return this.api.get<ApiResponse<Product[]>>('/inventory/products').pipe(map((r) => r.data))
+  getProducts(search?: string): Observable<{ products: Product[]; totalValue: number }> {
+    const params = search ? { search } : undefined
+    return this.api.get<{ data: Product[]; totalValue: number }>('/inventory/products', params).pipe(map((r) => ({ products: r.data, totalValue: r.totalValue })))
   }
 
   getProduct(id: string): Observable<Product> {

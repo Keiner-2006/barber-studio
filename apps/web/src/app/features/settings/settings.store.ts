@@ -61,4 +61,37 @@ export class SettingsStore {
       error: () => this._saving.set(false),
     })
   }
+
+  createStaff(data: { displayName: string; bio?: string; commissionRate?: string; email: string }): void {
+    this._saving.set(true)
+    this.api.createStaff(data).subscribe({
+      next: (staff) => {
+        this.staffSignal.update((list) => [...list, staff])
+        this._saving.set(false)
+      },
+      error: () => this._saving.set(false),
+    })
+  }
+
+  updateStaff(id: string, data: Partial<StaffMember>): void {
+    this._saving.set(true)
+    this.api.updateStaff(id, data).subscribe({
+      next: (staff) => {
+        this.staffSignal.update((list) => list.map((s) => (s.id === id ? staff : s)))
+        this._saving.set(false)
+      },
+      error: () => this._saving.set(false),
+    })
+  }
+
+  deleteStaff(id: string): void {
+    this._saving.set(true)
+    this.api.deleteStaff(id).subscribe({
+      next: () => {
+        this.staffSignal.update((list) => list.filter((s) => s.id !== id))
+        this._saving.set(false)
+      },
+      error: () => this._saving.set(false),
+    })
+  }
 }

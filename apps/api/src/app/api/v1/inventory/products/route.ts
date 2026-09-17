@@ -8,8 +8,11 @@ export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const result = await withTenantRequest(request.headers, async () => {
-      const products = await ServiceRegistry.inventory.listProducts.execute({})
-      return NextResponse.json({ data: products.map(p => p.toPlain()) })
+      const { searchParams } = new URL(request.url)
+      const search = searchParams.get('search') || undefined
+      const products = await ServiceRegistry.inventory.listProducts.execute({ search })
+      const totalValue = products.reduce((sum, p) => sum + Number(p.unitCost || 0), 0)
+      return NextResponse.json({ data: products.map(p => p.toPlain()), totalValue })
     })
     if (!result) {
       return NextResponse.json(

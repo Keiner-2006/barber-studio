@@ -7,28 +7,31 @@ export class InventoryStore {
   private _products = signal<Product[]>([])
   private _loading = signal(true)
   private _saving = signal(false)
+  private _totalValue = signal(0)
 
   readonly loading = this._loading.asReadonly()
   readonly saving = this._saving.asReadonly()
   readonly products = this._products.asReadonly()
 
-  readonly totalStockValue = computed(() =>
-    this._products().reduce((sum, p) => sum + parseFloat(p.unitCost || '0'), 0)
-  )
-
+  readonly totalStockValue = computed(() => this._totalValue())
   readonly lowStockCount = computed(() => this._products().filter((p) => (p.minQuantity ?? 0) > 0).length)
 
   constructor(private api: InventoryApi) {}
 
-  load(): void {
+  load(search?: string): void {
     this._loading.set(true)
-    this.api.getProducts().subscribe({
-      next: (products) => {
-        this._products.set(products ?? [])
+    this.api.getProducts(search).subscribe({
+      next: (resp) => {
+        this._products.set(resp.products ?? [])
+        this._totalValue.set(resp.totalValue ?? 0)
         this._loading.set(false)
       },
       error: () => this._loading.set(false),
     })
+  }
+
+  search(search: string): void {
+    this.load(search)
   }
 
   create(data: CreateProduct): void {

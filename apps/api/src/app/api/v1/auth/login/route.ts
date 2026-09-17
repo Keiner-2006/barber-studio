@@ -40,22 +40,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (demoAuthEnabled()) {
-        const demoCategory = getRoleCategory(demoUser.role)
-        if (demoCategory !== expectedFlow) {
-          const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
-          return NextResponse.json(
-            {
-              error: {
-                code: 'ROLE_MISMATCH',
-                message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
-              },
-              requestId,
-            },
-            { status: 403 }
-          )
-        }
-      } else {
+      if (!demoAuthEnabled()) {
         const identity = await resolveUserRole(email, tenantId)
         if (!identity.role) {
           return NextResponse.json(
@@ -90,6 +75,13 @@ export async function POST(request: NextRequest) {
       { email, password },
       request.headers
     )
+
+    if (!demoAuthEnabled() && result.user) {
+      const identity = await resolveUserRole(email, tenantId)
+      if (identity.role) {
+        ;(result.user as any).role = identity.role
+      }
+    }
 
     return NextResponse.json({
       user: result.user,

@@ -5,6 +5,7 @@ import { getPlatformDb } from '@/shared/db'
 import { platformUsers, platformMemberships, platformTenants } from '@/shared/db/schema/platform-schema'
 import { branches } from '@/shared/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { preloadIdentity } from '@/shared/tenancy/tenant-context'
 
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
@@ -61,6 +62,10 @@ export async function GET(request: NextRequest) {
         eq(branches.status, 'active')
       ),
     })
+
+    // Pre-load identity cache so subsequent API calls are fast
+    const tenantId = tenant.id
+    await preloadIdentity(request.headers, tenantId).catch(() => {})
 
     return NextResponse.json({
       data: {

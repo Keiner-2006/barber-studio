@@ -12,9 +12,12 @@ export class CatalogApi {
     return this.api.get<ApiResponse<ServiceCategory[]>>('/catalog/categories').pipe(map((r) => r.data))
   }
 
-  getServices(categoryId?: string): Observable<Service[]> {
+  getServices(categoryId?: string, search?: string): Observable<Service[]> {
+    const params: Record<string, string | number | boolean | undefined> = {}
+    if (categoryId) params['categoryId'] = categoryId
+    if (search) params['search'] = search
     return this.api
-      .get<ApiResponse<Service[]>>('/catalog/services', categoryId ? { categoryId } : undefined)
+      .get<ApiResponse<Service[]>>('/catalog/services', params)
       .pipe(map((r) => r.data))
   }
 
