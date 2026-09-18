@@ -1,21 +1,38 @@
 import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins'
 import { Pool } from 'pg'
+import crypto from 'node:crypto'
+
+function logConnectionInfo(url: string, label: string) {
+  try {
+    const u = new URL(url)
+    const password = u.password || ''
+    const hasWeirdChars = /^[\s"'\\]|[\s"'\\]$/.test(password)
+    const sha = crypto.createHash('sha256').update(password).digest('hex').slice(0, 6)
+    console.log(`[DB] ${label} → host=${u.hostname} port=${u.port || 5432} db=${u.pathname.slice(1)} user=${u.username} pwd_len=${password.length} pwd_sha256=${sha}${hasWeirdChars ? ' ⚠️ TRIM_PASSWORD' : ''}`)
+  } catch {
+    console.log(`[DB] ${label} → invalid URL`)
+  }
+}
 
 const origin = (value?: string) =>
   value ? (value.startsWith('http') ? value : `https://${value}`) : undefined
 
 const trustedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:4200',
+  origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  origin(process.env.NEXT_PUBLIC_APP_URL),
+  origin(process.env.BETTER_AUTH_URL),
+  origin(process.env.VERCEL_URL),
   origin(process.env.V0_RUNTIME_URL),
   origin(process.env.V0_DEV_APP_URL),
-  origin(process.env.VERCEL_URL),
-  origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
 ].filter(Boolean) as string[]
 
-export const demoAuthEnabled = () =>
-  process.env.NODE_ENV !== 'production' && process.env.DEMO_AUTH === 'true'
+if (process.env.NODE_ENV !== 'production') {
+  trustedOrigins.unshift('http://localhost:3000')
+  trustedOrigins.unshift('http://localhost:4200')
+}
+
+export const demoAuthEnabled = () => process.env.DEMO_AUTH === 'true'
 
 export const demoToken = 'navaja-demo-session'
 export const demoUser = {
@@ -30,10 +47,18 @@ const createDemoSession = () => ({
   expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
 })
 
+const authRawUrl = process.env.DATABASE_URL || ''
+const authUrlWithSsl = authRawUrl.includes('sslmode=') ? authRawUrl : authRawUrl + '?sslmode=require'
+const authDbUrl = authUrlWithSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
+logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
+
 const auth = demoAuthEnabled()
   ? null
   : betterAuth({
-      database: new Pool({ connectionString: process.env.DATABASE_URL }),
+      database: new Pool({
+        connectionString: authDbUrl,
+        ssl: { rejectUnauthorized: true },
+      }),
       emailAndPassword: { enabled: true },
       baseURL:
         origin(process.env.BETTER_AUTH_URL) ||

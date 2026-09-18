@@ -50,11 +50,13 @@ function getSessionToken(session: NonNullable<Awaited<ReturnType<typeof getSessi
 }
 
 function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
-  if (
-    tenant.databaseSecretRef?.startsWith('postgres://') ||
-    tenant.databaseSecretRef?.startsWith('postgresql://')
-  ) {
-    return tenant.databaseSecretRef
+  const ref = tenant.databaseSecretRef
+  if (ref?.startsWith('postgres://') || ref?.startsWith('postgresql://')) {
+    const u = new URL(ref)
+    if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
+      return process.env.DATABASE_URL
+    }
+    return ref
   }
 
   const template = process.env.TENANT_DATABASE_URL_TEMPLATE
@@ -62,7 +64,7 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     return template.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
-  if (process.env.NODE_ENV !== 'production' && process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL
   }
 

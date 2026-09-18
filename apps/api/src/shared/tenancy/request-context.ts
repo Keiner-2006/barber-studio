@@ -61,14 +61,8 @@ export function hasPermission(permission: string, userRole: string): boolean {
       'cash:read',
       'reports:read',
     ],
-    reception: [
-      'customers:read', 'customers:write',
-      'appointments:read', 'appointments:write',
-      'catalog:read',
-      'cash:read', 'cash:write',
-    ],
     barber: [
-      'appointments:read',
+      'appointments:read', 'appointments:write',
       'customers:read',
       'catalog:read',
     ],
