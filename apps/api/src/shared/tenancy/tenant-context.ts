@@ -54,7 +54,22 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     tenant.databaseSecretRef?.startsWith('postgres://') ||
     tenant.databaseSecretRef?.startsWith('postgresql://')
   ) {
-    return tenant.databaseSecretRef
+    const ref = tenant.databaseSecretRef
+    const u = new URL(ref)
+    if (u.password && u.password.length < 8) {
+      const template = process.env.DATABASE_URL
+      if (template) {
+        const base = new URL(template)
+        u.hostname = base.hostname
+        u.port = base.port || '5432'
+        u.username = base.username
+        u.password = base.password
+        u.pathname = `/${tenant.databaseName || u.pathname.slice(1)}`
+        u.search = base.search
+        return u.toString()
+      }
+    }
+    return ref
   }
 
   const template = process.env.TENANT_DATABASE_URL_TEMPLATE
@@ -62,8 +77,10 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     return template.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL
+  if (process.env.DATABASE_URL && tenant.databaseName) {
+    const url = new URL(process.env.DATABASE_URL)
+    url.pathname = `/${tenant.databaseName}`
+    return url.toString()
   }
 
   throw new Error('TENANT_DATABASE_NOT_CONFIGURED')
