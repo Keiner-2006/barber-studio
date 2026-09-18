@@ -18,15 +18,15 @@ function logConnectionInfo(url: string, label: string) {
 
 let _logged = false
 function getConnectionString(): string {
-  const url = process.env.PLATFORM_DATABASE_URL || process.env.DATABASE_URL || ''
+  const url = process.env.DATABASE_URL || process.env.PLATFORM_DATABASE_URL || ''
   const withSsl = url.includes('sslmode=') ? url : url + '?sslmode=require'
   return withSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
 }
 
 function getPlatformPool(): Pool {
   if (!_logged) {
-    const url = process.env.PLATFORM_DATABASE_URL || process.env.DATABASE_URL || ''
-    const varName = process.env.PLATFORM_DATABASE_URL ? 'PLATFORM_DATABASE_URL' : 'DATABASE_URL'
+    const url = process.env.DATABASE_URL || process.env.PLATFORM_DATABASE_URL || ''
+    const varName = process.env.DATABASE_URL ? 'DATABASE_URL' : 'PLATFORM_DATABASE_URL'
     logConnectionInfo(url, varName)
     _logged = true
   }
