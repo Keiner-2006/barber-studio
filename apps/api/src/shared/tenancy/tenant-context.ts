@@ -68,14 +68,14 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     return ref
   }
 
-  if (process.env.TENANT_DATABASE_URL_TEMPLATE && tenant.databaseName) {
-    console.log('[TENANT RESOLVE] RETURNING TENANT_DATABASE_URL_TEMPLATE')
-    return process.env.TENANT_DATABASE_URL_TEMPLATE.replace('{database}', encodeURIComponent(tenant.databaseName))
+  if (process.env.DATABASE_URL) {
+    console.log('[TENANT RESOLVE] RETURNING DATABASE_URL (priority)')
+    return process.env.DATABASE_URL
   }
 
-  if (process.env.DATABASE_URL) {
-    console.log('[TENANT RESOLVE] RETURNING DATABASE_URL (fallback)')
-    return process.env.DATABASE_URL
+  if (process.env.TENANT_DATABASE_URL_TEMPLATE && tenant.databaseName) {
+    console.log('[TENANT RESOLVE] RETURNING TENANT_DATABASE_URL_TEMPLATE (fallback)')
+    return process.env.TENANT_DATABASE_URL_TEMPLATE.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
   throw new Error('TENANT_DATABASE_NOT_CONFIGURED')
