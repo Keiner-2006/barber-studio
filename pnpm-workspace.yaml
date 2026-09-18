@@ -4,6 +4,7 @@ packages:
 
 allowBuilds:
   '@parcel/watcher': true
+  bcrypt: set this to true or false
   esbuild: true
   lmdb: true
   msgpackr-extract: true
