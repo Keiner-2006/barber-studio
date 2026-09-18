@@ -11,6 +11,8 @@ services:
         value: production
       - key: DATABASE_URL
         sync: true
+      - key: PLATFORM_DATABASE_URL
+        value: ${DATABASE_URL}
       - key: BETTER_AUTH_URL
         value: https://barber-studio-1ook.onrender.com
       - key: BETTER_AUTH_SECRET
