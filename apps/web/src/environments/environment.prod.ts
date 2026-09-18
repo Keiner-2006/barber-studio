@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api/v1',
+  apiUrl: 'https://barber-studio-1ook.onrender.com/api/v1',
   demoAuth: false,
 }

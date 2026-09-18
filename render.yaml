@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: navaja-api
+    env: node
+    plan: starter
+    sourceDir: apps/api
+    buildCommand: pnpm install && pnpm --filter @navaja/api build
+    startCommand: pnpm --filter @navaja/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: true
+      - key: BETTER_AUTH_URL
+        value: https://barber-studio-1ook.onrender.com
+      - key: BETTER_AUTH_SECRET
+        value: navaja-studio-secret-key-change-in-production
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://barber-studio-1ook.onrender.com
+      - key: CORS_ORIGINS
+        value: https://barber-studio-1ook.onrender.com
+      - key: DEMO_AUTH
+        value: "true"
