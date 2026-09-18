@@ -449,6 +449,7 @@ export class AppShellComponent {
   private navItems = [
     { label: 'Resumen', icon: '📊', route: '/dashboard' },
     { label: 'Agenda', icon: '📅', route: '/agenda' },
+    { label: 'Personal', icon: '👤', route: '/staff' },
     { label: 'Cliente', icon: '👥', route: '/customers' },
     { label: 'Servicios', icon: '✂️', route: '/catalog' },
     { label: 'Inventario', icon: '📦', route: '/inventory' },
@@ -458,6 +459,8 @@ export class AppShellComponent {
   ]
 
   private settingsRoles = [ROLES.OWNER, ROLES.ADMIN]
+
+  private staffRoles = [ROLES.OWNER, ROLES.ADMIN, ROLES.APP]
 
   get navItemsList() {
     const role = this.authService.user()?.role
@@ -472,9 +475,9 @@ export class AppShellComponent {
 
   private getAllowedRoutes(role: string): string[] {
     const routes: Record<string, string[]> = {
-      [ROLES.OWNER]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
-      [ROLES.ADMIN]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
-      [ROLES.APP]: ['/dashboard', '/agenda', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.OWNER]: ['/dashboard', '/agenda', '/staff', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.ADMIN]: ['/dashboard', '/agenda', '/staff', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
+      [ROLES.APP]: ['/dashboard', '/agenda', '/staff', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
       [ROLES.RECEPTION]: ['/dashboard', '/agenda', '/customers', '/catalog', '/cash'],
       [ROLES.BARBER]: ['/dashboard', '/agenda', '/customers', '/catalog'],
       [ROLES.INVENTORY_MANAGER]: ['/dashboard', '/inventory', '/purchasing'],

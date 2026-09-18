@@ -59,22 +59,15 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     return ref
   }
 
-  // If no secret ref but DATABASE_URL points to a tenant DB, use it as fallback
-  if (!ref && tenant.databaseName && process.env.DATABASE_URL) {
-    const db = new URL(process.env.DATABASE_URL)
-    const dbName = tenant.databaseName
-    if (db.pathname === `/${dbName}` || process.env.DATABASE_URL.includes(dbName)) {
-      return process.env.DATABASE_URL
-    }
+  // PRIORIDAD 1: DATABASE_URL (como en commit 3c2324d)
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL
   }
 
+  // PRIORIDAD 2: TENANT_DATABASE_URL_TEMPLATE (fallback)
   const template = process.env.TENANT_DATABASE_URL_TEMPLATE
   if (template && tenant.databaseName) {
     return template.replace('{database}', encodeURIComponent(tenant.databaseName))
-  }
-
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL
   }
 
   throw new Error('TENANT_DATABASE_NOT_CONFIGURED')
