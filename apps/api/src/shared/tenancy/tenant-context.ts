@@ -60,9 +60,10 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
   }
 
   // If no secret ref but DATABASE_URL points to a tenant DB, use it as fallback
-  if (!ref && process.env.DATABASE_URL) {
+  if (!ref && tenant.databaseName && process.env.DATABASE_URL) {
     const db = new URL(process.env.DATABASE_URL)
-    if (db.pathname === `/${tenant.databaseName}` || process.env.DATABASE_URL.includes(tenant.databaseName)) {
+    const dbName = tenant.databaseName
+    if (db.pathname === `/${dbName}` || process.env.DATABASE_URL.includes(dbName)) {
       return process.env.DATABASE_URL
     }
   }
