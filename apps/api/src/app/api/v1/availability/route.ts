@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
       const fromDate = new Date(f)
       const toDate = new Date(t)
-
+      const dayOfWeek = fromDate.getDay()
       const tenantId = getTenantId()
 
       const schedules = await db
@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
         .where(
           and(
             eq(staffSchedules.staffId, sId),
+            eq(staffSchedules.dayOfWeek, dayOfWeek),
             gte(staffSchedules.validFrom, fromDate),
             lte(staffSchedules.validTo, toDate)
           )
@@ -81,14 +82,12 @@ export async function GET(request: NextRequest) {
         endsAt: t.endsAt,
       }))
 
-      const dayOfWeek = fromDate.getDay()
-      const daySchedule = schedules.find((s) => {
-        const scheduleDay = parseInt(s.startTime)
-        return true
-      })
+      if (schedules.length === 0) {
+        return NextResponse.json({ data: { slots: [], staffId: sId, from: fromDate.toISOString(), to: toDate.toISOString() } })
+      }
 
-      const openHour = 8
-      const closeHour = 18
+      const openHour = parseInt(schedules[0].startTime.split(':')[0])
+      const closeHour = parseInt(schedules[0].endTime.split(':')[0])
       const serviceDurationMinutes = 60
 
       const availableSlots: string[] = []
