@@ -4,11 +4,15 @@ import * as schema from './schema'
 import { getRequestContext } from '@/shared/tenancy/request-context'
 
 const platformPool = new Pool({
-  connectionString: process.env.PLATFORM_DATABASE_URL || process.env.DATABASE_URL,
+  connectionString: process.env.PLATFORM_DATABASE_URL || process.env.DATABASE_URL || '',
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 })
+
+if (!process.env.PLATFORM_DATABASE_URL && !process.env.DATABASE_URL) {
+  console.error('DATABASE_URL or PLATFORM_DATABASE_URL is not configured')
+}
 
 const platformDb = drizzle(platformPool, { schema })
 const tenantPools = new Map<string, Pool>()
