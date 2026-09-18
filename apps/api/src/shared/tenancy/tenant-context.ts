@@ -50,37 +50,21 @@ function getSessionToken(session: NonNullable<Awaited<ReturnType<typeof getSessi
 }
 
 function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
-  if (
-    tenant.databaseSecretRef?.startsWith('postgres://') ||
-    tenant.databaseSecretRef?.startsWith('postgresql://')
-  ) {
-    const ref = tenant.databaseSecretRef
+  const ref = tenant.databaseSecretRef
+  if (ref?.startsWith('postgres://') || ref?.startsWith('postgresql://')) {
     const u = new URL(ref)
-    if (u.password && u.password.length < 8) {
-      const template = process.env.DATABASE_URL
-      if (template) {
-        const base = new URL(template)
-        u.hostname = base.hostname
-        u.port = base.port || '5432'
-        u.username = base.username
-        u.password = base.password
-        u.pathname = `/${tenant.databaseName || u.pathname.slice(1)}`
-        u.search = base.search
-        return u.toString()
-      }
+    if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
+      return process.env.DATABASE_URL
     }
     return ref
   }
 
-  const template = process.env.TENANT_DATABASE_URL_TEMPLATE
-  if (template && tenant.databaseName) {
-    return template.replace('{database}', encodeURIComponent(tenant.databaseName))
+  if (process.env.TENANT_DATABASE_URL_TEMPLATE && tenant.databaseName) {
+    return process.env.TENANT_DATABASE_URL_TEMPLATE.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
-  if (process.env.DATABASE_URL && tenant.databaseName) {
-    const url = new URL(process.env.DATABASE_URL)
-    url.pathname = `/${tenant.databaseName}`
-    return url.toString()
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL
   }
 
   throw new Error('TENANT_DATABASE_NOT_CONFIGURED')
