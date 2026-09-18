@@ -5,7 +5,9 @@ export function middleware(request: Request) {
   if (request.method === 'OPTIONS') {
     return withCorsHeaders(handlePreflight())
   }
-  return NextResponse.next()
+  const response = NextResponse.next()
+  withCorsHeaders(response)
+  return response
 }
 
 export const config = {

@@ -6,16 +6,20 @@ const origin = (value?: string) =>
   value ? (value.startsWith('http') ? value : `https://${value}`) : undefined
 
 const trustedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:4200',
+  origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  origin(process.env.NEXT_PUBLIC_APP_URL),
+  origin(process.env.BETTER_AUTH_URL),
+  origin(process.env.VERCEL_URL),
   origin(process.env.V0_RUNTIME_URL),
   origin(process.env.V0_DEV_APP_URL),
-  origin(process.env.VERCEL_URL),
-  origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
 ].filter(Boolean) as string[]
 
-export const demoAuthEnabled = () =>
-  process.env.NODE_ENV !== 'production' && process.env.DEMO_AUTH === 'true'
+if (process.env.NODE_ENV !== 'production') {
+  trustedOrigins.unshift('http://localhost:3000')
+  trustedOrigins.unshift('http://localhost:4200')
+}
+
+export const demoAuthEnabled = () => process.env.DEMO_AUTH === 'true'
 
 export const demoToken = 'navaja-demo-session'
 export const demoUser = {

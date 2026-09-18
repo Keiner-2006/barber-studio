@@ -7,8 +7,6 @@ function origin(value?: string): string | undefined {
 
 export function getCorsOrigins(): string[] {
   const origins: string[] = [
-    'http://localhost:3000',
-    'http://localhost:4200',
     origin(process.env.NEXT_PUBLIC_APP_URL),
     origin(process.env.VERCEL_URL),
     origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
@@ -21,6 +19,11 @@ export function getCorsOrigins(): string[] {
       .map((o) => o.trim())
       .filter(Boolean)
     origins.push(...extra)
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    origins.unshift('http://localhost:3000')
+    origins.unshift('http://localhost:4200')
   }
 
   return origins
