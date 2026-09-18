@@ -17,5 +17,8 @@
     "db:generate": "pnpm --filter @navaja/api db:generate",
     "db:migrate": "pnpm --filter @navaja/api db:migrate",
     "db:seed": "pnpm --filter @navaja/api db:seed"
+  },
+  "devDependencies": {
+    "bcrypt": "^6.0.0"
   }
 }
