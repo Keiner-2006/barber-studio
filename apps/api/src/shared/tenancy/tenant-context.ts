@@ -62,7 +62,7 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     return template.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
-  if (process.env.NODE_ENV !== 'production' && process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL
   }
 
