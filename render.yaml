@@ -16,8 +16,8 @@ services:
       - key: BETTER_AUTH_SECRET
         value: navaja-studio-secret-key-change-in-production
       - key: NEXT_PUBLIC_APP_URL
-        value: https://barber-studio-1ook.onrender.com
+        value: https://barber-studio-web.vercel.app
       - key: CORS_ORIGINS
-        value: https://barber-studio-1ook.onrender.com
+        value: https://barber-studio-web.vercel.app
       - key: DEMO_AUTH
         value: "true"
