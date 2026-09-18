@@ -30,7 +30,7 @@ export function getCorsOrigins(): string[] {
 }
 
 const ALLOWED_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-const ALLOWED_HEADERS = 'Content-Type, Authorization, X-Tenant, X-Request-Id, X-Demo-Auth'
+const ALLOWED_HEADERS = 'Content-Type, Authorization, x-tenant-id, X-Tenant, X-Request-Id, X-Demo-Auth'
 const EXPOSED_HEADERS = 'X-Request-Id'
 
 export function withCorsHeaders(response: NextResponse): NextResponse {
