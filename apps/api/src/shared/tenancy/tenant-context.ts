@@ -53,17 +53,28 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
   const ref = tenant.databaseSecretRef
   if (ref?.startsWith('postgres://') || ref?.startsWith('postgresql://')) {
     const u = new URL(ref)
+    console.log('[TENANT RESOLVE]', JSON.stringify({
+      tenantId: tenant.id,
+      databaseName: tenant.databaseName,
+      secretDb: u.pathname,
+      secretPwdLen: u.password.length,
+      envDb: process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL).pathname : null,
+    }))
     if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
+      console.log('[TENANT RESOLVE] RETURNING DATABASE_URL (short pwd detected)')
       return process.env.DATABASE_URL
     }
+    console.log('[TENANT RESOLVE] RETURNING databaseSecretRef (pwd ok or no DATABASE_URL)')
     return ref
   }
 
   if (process.env.TENANT_DATABASE_URL_TEMPLATE && tenant.databaseName) {
+    console.log('[TENANT RESOLVE] RETURNING TENANT_DATABASE_URL_TEMPLATE')
     return process.env.TENANT_DATABASE_URL_TEMPLATE.replace('{database}', encodeURIComponent(tenant.databaseName))
   }
 
   if (process.env.DATABASE_URL) {
+    console.log('[TENANT RESOLVE] RETURNING DATABASE_URL (fallback)')
     return process.env.DATABASE_URL
   }
 
