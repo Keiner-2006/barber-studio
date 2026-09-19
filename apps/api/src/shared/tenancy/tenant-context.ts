@@ -56,6 +56,10 @@ function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
     if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
       return process.env.DATABASE_URL
     }
+    // Si DATABASE_URL existe, siempre usarlo (el ref puede apuntar a una DB que no existe)
+    if (process.env.DATABASE_URL) {
+      return process.env.DATABASE_URL
+    }
     return ref
   }
 
