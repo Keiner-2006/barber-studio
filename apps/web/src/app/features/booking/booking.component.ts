@@ -127,8 +127,8 @@ import { ROLE_LABELS } from '@navaja/shared'
                       <div class="staff-card" [class.selected]="store.selectedStaff()?.id === staff.id" (click)="store.selectStaff(staff)">
                         <div class="staff-avatar">{{ staff.name?.charAt(0) }}</div>
                         <p>{{ staff.name }}</p>
-                        @if (staff.role) <p class="specialty">{{ ROLE_LABELS[staff.role as keyof typeof ROLE_LABELS] || staff.role }}</p>
-                        @if (staff.specialty) <p class="specialty">{{ staff.specialty }}</p>
+                        @if (staff.role) { <p class="specialty">{{ ROLE_LABELS[staff.role as keyof typeof ROLE_LABELS] || staff.role }}</p> }
+                        @if (staff.specialty) { <p class="specialty">{{ staff.specialty }}</p> }
                       </div>
                     }
                   </div>
