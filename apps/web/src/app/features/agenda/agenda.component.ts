@@ -92,17 +92,17 @@ import { ROLE_LABELS } from '@navaja/shared'
 
             <div class="form-group">
               <label>Cliente</label>
-              <select (change)="store.setBookingField('customerId', $event.target.value)" [value]="store.bookingCustomerId()">
-                <option value="">Seleccionar cliente...</option>
-                @for (c of store.customerList(); track c.id) {
-                  <option [value]="c.id">{{ c.name }}</option>
-                }
-              </select>
+<select (change)="store.setBookingFieldFromEvent('customerId', $event)" [value]="store.bookingCustomerId()">
+              <option value="">Seleccionar cliente...</option>
+              @for (c of store.customerList(); track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
             </div>
 
             <div class="form-group">
               <label>Servicio</label>
-              <select (change)="store.setBookingField('serviceId', $event.target.value)" [value]="store.bookingServiceId()">
+              <select (change)="store.setBookingFieldFromEvent('serviceId', $event)" [value]="store.bookingServiceId()">
                 <option value="">Seleccionar servicio...</option>
                 @for (svc of store.services(); track svc.id) {
                   <option [value]="svc.id">{{ svc.name }} ({{ svc.durationMinutes }}min)</option>
@@ -112,10 +112,10 @@ import { ROLE_LABELS } from '@navaja/shared'
 
             <div class="form-group">
               <label>Barbero</label>
-              <select (change)="store.setBookingField('staffId', $event.target.value)" [value]="store.bookingStaffId()">
+<select (change)="store.setBookingFieldFromEvent('staffId', $event)" [value]="store.bookingStaffId()">
                 <option value="">Seleccionar barbero...</option>
                 @for (s of store.staffList(); track s.id) {
-                  <option [value]="s.id">{{ s.displayName }} ({{ ROLE_LABELS[s.role as keyof typeof ROLE_LABELS] || s.role }})</option>
+                  <option [value]="s.id">{{ s.displayName }} ({{ getRoleLabel(s.role || '') }})</option>
                 }
               </select>
             </div>
@@ -123,17 +123,17 @@ import { ROLE_LABELS } from '@navaja/shared'
             <div class="form-row">
               <div class="form-group">
                 <label>Fecha</label>
-                <input type="date" [value]="store.bookingDate()" (change)="store.setBookingField('date', $event.target.value)" />
+                <input type="date" [value]="store.bookingDate()" (change)="store.setBookingFieldFromEvent('date', $event)" />
               </div>
               <div class="form-group">
                 <label>Hora</label>
-                <input type="time" [value]="store.bookingTime()" (change)="store.setBookingField('time', $event.target.value)" />
+                <input type="time" [value]="store.bookingTime()" (change)="store.setBookingFieldFromEvent('time', $event)" />
               </div>
             </div>
 
             <div class="form-group">
               <label>Notas</label>
-              <textarea [(ngModel)]="store.bookingNotes()" (ngModelChange)="store.setBookingField('notes', $event)" placeholder="Notas opcionales..."></textarea>
+              <textarea [ngModel]="store.bookingNotes()" (ngModelChange)="store.setBookingField('notes', $event)" placeholder="Notas opcionales..."></textarea>
             </div>
 
             <div class="dialog-actions">
@@ -208,5 +208,9 @@ export class AgendaComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.load()
+  }
+
+  getRoleLabel(role: string): string {
+    return ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role
   }
 }

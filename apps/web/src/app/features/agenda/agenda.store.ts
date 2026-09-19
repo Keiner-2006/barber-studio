@@ -188,6 +188,11 @@ export class AgendaStore {
     }
   }
 
+  setBookingFieldFromEvent(field: string, event: Event): void {
+    const target = event.target as HTMLInputElement | HTMLSelectElement
+    this.setBookingField(field, target?.value ?? '')
+  }
+
   async createBooking(): Promise<void> {
     if (!this._bookingStaffId() || !this._bookingServiceId() || !this._bookingCustomerId() || !this._bookingDate() || !this._bookingTime()) {
       return

@@ -31,7 +31,7 @@ import { ROLE_LABELS } from '@navaja/shared'
         </div>
       } @else {
         <div class="booking-flow">
-          @if (isAuthenticated()) {
+          @if (isAuthenticated) {
             <div class="steps">
               @for (step of steps; track step) {
                 <div class="step" [class.active]="isStepActive(step)" [class.done]="isStepDone(step)">
@@ -42,7 +42,7 @@ import { ROLE_LABELS } from '@navaja/shared'
             </div>
           }
 
-          @if (!isAuthenticated() && showRegister) {
+          @if (!isAuthenticated && showRegister) {
             <div class="step-content">
               <h2>Crea tu cuenta</h2>
               <p class="subtitle">Regístrate para agendar tu cita</p>
@@ -127,7 +127,7 @@ import { ROLE_LABELS } from '@navaja/shared'
                       <div class="staff-card" [class.selected]="store.selectedStaff()?.id === staff.id" (click)="store.selectStaff(staff)">
                         <div class="staff-avatar">{{ staff.name?.charAt(0) }}</div>
                         <p>{{ staff.name }}</p>
-                        @if (staff.role) { <p class="specialty">{{ ROLE_LABELS[staff.role as keyof typeof ROLE_LABELS] || staff.role }}</p> }
+                        @if (staff.role) { <p class="specialty">{{ getRoleLabel(staff.role) }}</p> }
                         @if (staff.specialty) { <p class="specialty">{{ staff.specialty }}</p> }
                       </div>
                     }
@@ -361,5 +361,9 @@ export class BookingComponent implements OnInit {
 
   book(): void {
     this.store.book()
+  }
+
+  getRoleLabel(role: string): string {
+    return ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role
   }
 }

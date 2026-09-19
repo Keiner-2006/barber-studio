@@ -117,7 +117,7 @@ export class BookingStore {
     this._step.set('service')
   }
 
-  selectService(service: Service): void {
+  selectService(service: Service | null): void {
     this._selectedService.set(service)
     this._step.set('branch')
   }
