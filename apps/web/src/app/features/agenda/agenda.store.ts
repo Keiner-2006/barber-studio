@@ -1,9 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core'
-import { Appointment, CustomerMap, StaffMap, AppointmentRow, AgendaStats } from './agenda.models'
+import { Appointment, CustomerMap, StaffMap, AppointmentRow, AgendaStats, StaffOption, CustomerOption } from './agenda.models'
 import { AgendaApi } from './agenda.api'
 import { StaffApi } from './staff.api'
 import { StaffMember } from './staff.models'
 import { CustomersApi } from '../customers/customers.api'
+import { CatalogApi } from '../catalog/catalog.api'
+import { Service } from '../catalog/catalog.models'
 import { TenantService } from '../../core/tenancy/tenant.service'
 
 @Injectable({ providedIn: 'root' })
@@ -11,11 +13,33 @@ export class AgendaStore {
   private _appointments = signal<Appointment[]>([])
   private _customers = signal<CustomerMap>({})
   private _staff = signal<StaffMap>({})
+  private _services = signal<Service[]>([])
   private _loading = signal(true)
+  private _saving = signal(false)
   private _selectedDate = signal(new Date())
+  private _bookingOpen = signal(false)
+  private _bookingStaffId = signal<string>('')
+  private _bookingServiceId = signal<string>('')
+  private _bookingCustomerId = signal<string>('')
+  private _bookingNotes = signal<string>('')
+  private _bookingDate = signal<string>('')
+  private _bookingTime = signal<string>('')
+  private _staffList = signal<StaffOption[]>([])
+  private _customerList = signal<CustomerOption[]>([])
 
   readonly loading = this._loading.asReadonly()
+  readonly saving = this._saving.asReadonly()
   readonly selectedDate = this._selectedDate.asReadonly()
+  readonly services = this._services.asReadonly()
+  readonly bookingOpen = this._bookingOpen.asReadonly()
+  readonly bookingStaffId = this._bookingStaffId.asReadonly()
+  readonly bookingServiceId = this._bookingServiceId.asReadonly()
+  readonly bookingCustomerId = this._bookingCustomerId.asReadonly()
+  readonly bookingNotes = this._bookingNotes.asReadonly()
+  readonly bookingDate = this._bookingDate.asReadonly()
+  readonly bookingTime = this._bookingTime.asReadonly()
+  readonly staffList = this._staffList.asReadonly()
+  readonly customerList = this._customerList.asReadonly()
 
   readonly stats = computed((): AgendaStats => {
     const appts = this._appointments()
@@ -60,6 +84,7 @@ export class AgendaStore {
     private agendaApi: AgendaApi,
     private staffApi: StaffApi,
     private customersApi: CustomersApi,
+    private catalogApi: CatalogApi,
     private tenantService: TenantService
   ) {}
 
@@ -67,6 +92,46 @@ export class AgendaStore {
     this.loadStaff()
     this.loadCustomers()
     this.loadAppointments()
+  }
+
+  loadStaff(): void {
+    this.staffApi.getStaff().subscribe({
+      next: (list) => {
+        const map: StaffMap = {}
+        const opts: StaffOption[] = []
+        list.forEach((s) => {
+          map[s.id] = { displayName: s.displayName }
+          if (s.isBookable) {
+            opts.push({ id: s.id, displayName: s.displayName })
+          }
+        })
+        this._staff.set(map)
+        this._staffList.set(opts)
+      },
+      error: () => {
+        this._staff.set({})
+        this._staffList.set([])
+      },
+    })
+  }
+
+  loadCustomers(): void {
+    this.customersApi.search({ limit: 100 }).subscribe({
+      next: (resp) => {
+        const map: CustomerMap = {}
+        const opts: CustomerOption[] = []
+        ;(resp.data ?? []).forEach((c) => {
+          map[c.id] = { firstName: c.firstName, lastName: c.lastName }
+          opts.push({ id: c.id, name: `${c.firstName} ${c.lastName}` })
+        })
+        this._customers.set(map)
+        this._customerList.set(opts)
+      },
+      error: () => {
+        this._customers.set({})
+        this._customerList.set([])
+      },
+    })
   }
 
   prevDay(): void {
@@ -96,10 +161,66 @@ export class AgendaStore {
   }
 
   openNewBooking(): void {
-    window.location.href = '/agenda'
+    this.loadStaff()
+    this.loadCustomers()
+    this.loadServices()
+    this._bookingOpen.set(true)
+    this._bookingStaffId.set('')
+    this._bookingServiceId.set('')
+    this._bookingCustomerId.set('')
+    this._bookingNotes.set('')
+    this._bookingDate.set('')
+    this._bookingTime.set('')
   }
 
-  private loadAppointments(): void {
+  closeBookingModal(): void {
+    this._bookingOpen.set(false)
+  }
+
+  setBookingField(field: string, value: string): void {
+    switch (field) {
+      case 'staffId': this._bookingStaffId.set(value); break
+      case 'serviceId': this._bookingServiceId.set(value); break
+      case 'customerId': this._bookingCustomerId.set(value); break
+      case 'notes': this._bookingNotes.set(value); break
+      case 'date': this._bookingDate.set(value); break
+      case 'time': this._bookingTime.set(value); break
+    }
+  }
+
+  async createBooking(): Promise<void> {
+    if (!this._bookingStaffId() || !this._bookingServiceId() || !this._bookingCustomerId() || !this._bookingDate() || !this._bookingTime()) {
+      return
+    }
+    this._saving.set(true)
+    const branchId = this.tenantService.getBranchId()
+    const startsAt = new Date(`${this._bookingDate()}T${this._bookingTime()}`)
+    this.agendaApi.createAppointment({
+      branchId: branchId || '',
+      customerId: this._bookingCustomerId(),
+      staffId: this._bookingStaffId(),
+      serviceId: this._bookingServiceId(),
+      startsAt: startsAt.toISOString(),
+      notes: this._bookingNotes(),
+      idempotencyKey: crypto.randomUUID(),
+    }).subscribe({
+      next: () => {
+        this._bookingOpen.set(false)
+        this._saving.set(false)
+        this.loadAppointments()
+      },
+      error: () => this._saving.set(false),
+    })
+  }
+
+  loadServices(): void {
+    this.catalogApi.getServices().subscribe({
+      next: (services) => this._services.set(services ?? []),
+      error: () => this._services.set([]),
+    })
+  }
+
+  loadAppointments(): void {
     this._loading.set(true)
     const branchId = this.tenantService.getBranchId()
     this.agendaApi.getDailyAppointments(branchId, new Date(this._selectedDate())).subscribe({
@@ -108,36 +229,6 @@ export class AgendaStore {
         this._loading.set(false)
       },
       error: () => this._loading.set(false),
-    })
-  }
-
-  private loadCustomers(): void {
-    this.customersApi.search({ limit: 100 }).subscribe({
-      next: (resp) => {
-        const map: CustomerMap = {}
-        ;(resp.data ?? []).forEach((c) => {
-          map[c.id] = { firstName: c.firstName, lastName: c.lastName }
-        })
-        this._customers.set(map)
-      },
-      error: () => {
-        this._customers.set({})
-      },
-    })
-  }
-
-  private loadStaff(): void {
-    this.staffApi.getStaff().subscribe({
-      next: (list) => {
-        const map: StaffMap = {}
-        list.forEach((s) => {
-          map[s.id] = { displayName: s.displayName }
-        })
-        this._staff.set(map)
-      },
-      error: () => {
-        this._staff.set({})
-      },
     })
   }
 

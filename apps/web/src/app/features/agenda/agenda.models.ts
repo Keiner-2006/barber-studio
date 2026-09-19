@@ -68,3 +68,13 @@ export interface AgendaStats {
   cancelled: number
   noShow: number
 }
+
+export interface StaffOption {
+  id: string
+  displayName: string
+}
+
+export interface CustomerOption {
+  id: string
+  name: string
+}

@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core'
 import { BookingApi } from './booking.api'
-import { StaffMember, AvailableSlot, BookingStep } from './booking.models'
+import { StaffMember, AvailableSlot, BookingStep, CreateAppointment } from './booking.models'
 import { Service, ServiceCategory } from '../catalog/catalog.models'
 import { Branch } from '../../core/tenancy/tenant.models'
 
@@ -20,6 +20,10 @@ export class BookingStore {
   private _selectedStaff = signal<StaffMember | null>(null)
   private _selectedSlot = signal<AvailableSlot | null>(null)
   private _step = signal<BookingStep>('service')
+  private _customerId = signal<string>('')
+  private _notes = signal<string>('')
+  private _saving = signal(false)
+  private _booked = signal(false)
 
   readonly categories = this._categories.asReadonly()
   readonly services = this._services.asReadonly()
@@ -28,12 +32,17 @@ export class BookingStore {
   readonly slots = this._slots.asReadonly()
   readonly loading = this._loading.asReadonly()
   readonly error = this._error.asReadonly()
+  readonly saving = this._saving.asReadonly()
+  readonly booked = this._booked.asReadonly()
 
   readonly currentStep = this._step.asReadonly()
   readonly selectedService = this._selectedService.asReadonly()
   readonly selectedBranch = this._selectedBranch.asReadonly()
   readonly selectedStaff = this._selectedStaff.asReadonly()
   readonly selectedSlot = this._selectedSlot.asReadonly()
+
+  readonly customerId = this._customerId.asReadonly()
+  readonly notes = this._notes.asReadonly()
 
   readonly isComplete = computed(() => {
     return !!(
@@ -135,5 +144,41 @@ export class BookingStore {
     this._selectedStaff.set(null)
     this._selectedSlot.set(null)
     this._step.set('service')
+    this._customerId.set('')
+    this._notes.set('')
+    this._saving.set(false)
+    this._booked.set(false)
+  }
+
+  setCustomerId(id: string): void {
+    this._customerId.set(id)
+  }
+
+  setNotes(notes: string): void {
+    this._notes.set(notes)
+  }
+
+  async book(): Promise<void> {
+    if (!this._selectedService() || !this._selectedBranch() || !this._selectedStaff() || !this._selectedSlot() || !this._customerId()) {
+      return
+    }
+    this._saving.set(true)
+    try {
+      const slot = this._selectedSlot()!
+      await this.bookingApi.createAppointment({
+        branchId: this._selectedBranch()!.id,
+        customerId: this._customerId(),
+        staffId: this._selectedStaff()!.id,
+        serviceId: this._selectedService()!.id,
+        startsAt: slot.startsAt,
+        notes: this._notes(),
+        idempotencyKey: crypto.randomUUID(),
+      }).toPromise()
+      this._booked.set(true)
+    } catch (e) {
+      // error handled by component
+    } finally {
+      this._saving.set(false)
+    }
   }
 }

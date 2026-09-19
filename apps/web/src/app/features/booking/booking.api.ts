@@ -4,7 +4,7 @@ import { ApiClient } from '../../core/http/api-client'
 import { ApiResponse } from '@navaja/shared'
 import { Service, ServiceCategory } from '../catalog/catalog.models'
 import { Branch } from '../../core/tenancy/tenant.models'
-import { StaffMember, AvailableSlot, AvailabilityQuery } from './booking.models'
+import { StaffMember, AvailableSlot, AvailabilityQuery, CreateAppointment } from './booking.models'
 
 @Injectable({ providedIn: 'root' })
 export class BookingApi {
@@ -24,7 +24,19 @@ export class BookingApi {
   }
 
   getStaff(branchId: string): Observable<StaffMember[]> {
-    return this.api.get<ApiResponse<StaffMember[]>>('/staff', { branchId }).pipe(map((r) => r.data))
+    return this.api
+      .get<ApiResponse<any[]>>('/staff', { branchId })
+      .pipe(
+        map((resp) =>
+          (resp.data ?? []).map((s: any) => ({
+            id: s.id,
+            name: s.displayName || '',
+            email: s.userEmail || '',
+            specialty: s.bio || '',
+            avatarUrl: s.avatarUrl || '',
+          }))
+        )
+      )
   }
 
   getAvailability(query: AvailabilityQuery): Observable<AvailableSlot[]> {
@@ -37,5 +49,9 @@ export class BookingApi {
         to: query.to,
       })
       .pipe(map((r) => r.data))
+  }
+
+  createAppointment(data: CreateAppointment): Observable<any> {
+    return this.api.post<ApiResponse<any>>('/appointments', data).pipe(map((r) => r.data))
   }
 }

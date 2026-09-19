@@ -24,6 +24,16 @@ export interface AvailabilityQuery {
   to: string
 }
 
+export interface CreateAppointment {
+  branchId: string
+  customerId: string
+  staffId: string
+  serviceId: string
+  startsAt: string
+  notes?: string
+  idempotencyKey: string
+}
+
 export type BookingStep = 'service' | 'branch' | 'staff' | 'time' | 'confirm'
 
 export interface BookingState {
