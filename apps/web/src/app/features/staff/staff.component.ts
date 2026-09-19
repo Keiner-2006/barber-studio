@@ -24,6 +24,7 @@ import { StaffMember, CreateStaffInput, UpdateStaffInput } from './staff.models'
               <tr>
                 <th>Nombre</th>
                 <th>Email</th>
+                <th>Rol</th>
                 <th>Comisión</th>
                 <th>Reservable</th>
                 <th>Estado</th>
@@ -35,6 +36,13 @@ import { StaffMember, CreateStaffInput, UpdateStaffInput } from './staff.models'
                 <tr>
                   <td>{{ member.displayName }}</td>
                   <td>{{ member.userEmail }}</td>
+                  <td>
+                    @if (member.role) {
+                      <span class="badge" [class.active]="true">{{ member.role }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
                   <td>{{ member.commissionRate }}%</td>
                   <td>
                     <span class="badge" [class.active]="member.isBookable">

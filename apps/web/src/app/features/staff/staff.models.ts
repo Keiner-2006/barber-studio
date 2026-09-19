@@ -10,6 +10,7 @@ export interface StaffMember {
   isBookable: boolean
   status: 'active' | 'inactive'
   userEmail: string
+  role: Role | null
 }
 
 export interface CreateStaffInput {

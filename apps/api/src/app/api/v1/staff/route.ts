@@ -12,27 +12,39 @@ export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const result = await withTenantRequest(request.headers, async () => {
-const staff = await db
-      .select({
-        id: staffProfiles.id,
-        userId: staffProfiles.userId,
-        displayName: staffProfiles.displayName,
-        bio: staffProfiles.bio,
-        avatarUrl: staffProfiles.avatarUrl,
-        commissionRate: staffProfiles.commissionRate,
-        isBookable: staffProfiles.isBookable,
-        status: staffProfiles.status,
-        userEmail: users.email,
-        role: roles.name,
-      })
-      .from(staffProfiles)
-      .leftJoin(users, eq(staffProfiles.userId, users.id))
-      .leftJoin(userRoles, eq(userRoles.userId, users.id))
-      .leftJoin(roles, eq(roles.id, userRoles.roleId))
-      .where(and(eq(staffProfiles.tenantId, getTenantId())))
-      .orderBy(desc(staffProfiles.displayName))
+      // Get staff profiles with their primary role (avoiding duplicates from multiple user_roles entries)
+      const staffWithRoles = await db
+        .select({
+          id: staffProfiles.id,
+          userId: staffProfiles.userId,
+          displayName: staffProfiles.displayName,
+          bio: staffProfiles.bio,
+          avatarUrl: staffProfiles.avatarUrl,
+          commissionRate: staffProfiles.commissionRate,
+          isBookable: staffProfiles.isBookable,
+          status: staffProfiles.status,
+          userEmail: users.email,
+          role: roles.name,
+        })
+        .from(staffProfiles)
+        .leftJoin(users, eq(staffProfiles.userId, users.id))
+        .leftJoin(
+          userRoles,
+          and(eq(userRoles.userId, users.id), eq(userRoles.tenantId, getTenantId()))
+        )
+        .leftJoin(roles, eq(roles.id, userRoles.roleId))
+        .where(and(eq(staffProfiles.tenantId, getTenantId())))
+        .orderBy(desc(staffProfiles.displayName))
 
-      return NextResponse.json({ data: staff })
+      // Deduplicate by staff profile ID (keep first role if multiple)
+      const uniqueStaff = new Map()
+      for (const s of staffWithRoles) {
+        if (!uniqueStaff.has(s.id)) {
+          uniqueStaff.set(s.id, s)
+        }
+      }
+
+      return NextResponse.json({ data: Array.from(uniqueStaff.values()) })
     })
     if (!result) {
       return NextResponse.json(
