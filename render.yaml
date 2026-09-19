@@ -20,4 +20,4 @@ services:
       - key: CORS_ORIGINS
         value: https://barber-studio-web.vercel.app
       - key: DEMO_AUTH
-        value: "true"
+        value: "false"
