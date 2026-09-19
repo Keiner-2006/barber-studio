@@ -45,7 +45,7 @@ export interface CustomerMap {
 }
 
 export interface StaffMap {
-  [id: string]: { displayName: string }
+  [id: string]: { displayName: string; role?: string }
 }
 
 export interface AppointmentRow {
@@ -72,6 +72,7 @@ export interface AgendaStats {
 export interface StaffOption {
   id: string
   displayName: string
+  role?: string
 }
 
 export interface CustomerOption {

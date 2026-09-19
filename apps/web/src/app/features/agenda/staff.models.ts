@@ -8,4 +8,5 @@ export interface StaffMember {
   isBookable: boolean
   status: string
   userEmail?: string
+  role?: string
 }

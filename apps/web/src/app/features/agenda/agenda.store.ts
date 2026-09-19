@@ -100,9 +100,9 @@ export class AgendaStore {
         const map: StaffMap = {}
         const opts: StaffOption[] = []
         list.forEach((s) => {
-          map[s.id] = { displayName: s.displayName }
+          map[s.id] = { displayName: s.displayName, role: s.role }
           if (s.isBookable) {
-            opts.push({ id: s.id, displayName: s.displayName })
+            opts.push({ id: s.id, displayName: s.displayName, role: s.role })
           }
         })
         this._staff.set(map)

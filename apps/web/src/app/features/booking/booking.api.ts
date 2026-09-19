@@ -34,6 +34,7 @@ export class BookingApi {
             email: s.userEmail || '',
             specialty: s.bio || '',
             avatarUrl: s.avatarUrl || '',
+            role: s.role || undefined,
           }))
         )
       )

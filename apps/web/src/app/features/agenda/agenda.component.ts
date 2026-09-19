@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { AgendaStore } from './agenda.store'
+import { ROLE_LABELS } from '@navaja/shared'
 
 @Component({
   selector: 'app-agenda',
@@ -114,7 +115,7 @@ import { AgendaStore } from './agenda.store'
               <select (change)="store.setBookingField('staffId', $event.target.value)" [value]="store.bookingStaffId()">
                 <option value="">Seleccionar barbero...</option>
                 @for (s of store.staffList(); track s.id) {
-                  <option [value]="s.id">{{ s.displayName }}</option>
+                  <option [value]="s.id">{{ s.displayName }} ({{ ROLE_LABELS[s.role as keyof typeof ROLE_LABELS] || s.role }})</option>
                 }
               </select>
             </div>

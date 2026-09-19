@@ -7,6 +7,7 @@ export interface StaffMember {
   email?: string
   specialty?: string
   avatarUrl?: string
+  role?: string
 }
 
 export interface AvailableSlot {

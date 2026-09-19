@@ -4,7 +4,7 @@ import { getTenantId } from '@/shared/tenancy/request-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
 import { db } from '@/shared/db'
 import { staffProfiles } from '@/shared/db/schema/branches'
-import { users } from '@/shared/db/schema/identity'
+import { users, userRoles, roles } from '@/shared/db/schema/identity'
 import { eq, and, desc } from 'drizzle-orm'
 import { createStaffSchema, updateStaffSchema, type CreateStaffInput, type UpdateStaffInput } from '@/modules/branches/presentation/schemas/staff.schema'
 
@@ -12,22 +12,25 @@ export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const result = await withTenantRequest(request.headers, async () => {
-      const staff = await db
-        .select({
-          id: staffProfiles.id,
-          userId: staffProfiles.userId,
-          displayName: staffProfiles.displayName,
-          bio: staffProfiles.bio,
-          avatarUrl: staffProfiles.avatarUrl,
-          commissionRate: staffProfiles.commissionRate,
-          isBookable: staffProfiles.isBookable,
-          status: staffProfiles.status,
-          userEmail: users.email,
-        })
-        .from(staffProfiles)
-        .leftJoin(users, eq(staffProfiles.userId, users.id))
-        .where(and(eq(staffProfiles.tenantId, getTenantId())))
-        .orderBy(desc(staffProfiles.displayName))
+const staff = await db
+      .select({
+        id: staffProfiles.id,
+        userId: staffProfiles.userId,
+        displayName: staffProfiles.displayName,
+        bio: staffProfiles.bio,
+        avatarUrl: staffProfiles.avatarUrl,
+        commissionRate: staffProfiles.commissionRate,
+        isBookable: staffProfiles.isBookable,
+        status: staffProfiles.status,
+        userEmail: users.email,
+        role: roles.name,
+      })
+      .from(staffProfiles)
+      .leftJoin(users, eq(staffProfiles.userId, users.id))
+      .leftJoin(userRoles, eq(userRoles.userId, users.id))
+      .leftJoin(roles, eq(roles.id, userRoles.roleId))
+      .where(and(eq(staffProfiles.tenantId, getTenantId())))
+      .orderBy(desc(staffProfiles.displayName))
 
       return NextResponse.json({ data: staff })
     })
