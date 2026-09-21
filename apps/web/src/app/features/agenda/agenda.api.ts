@@ -37,13 +37,14 @@ export class AgendaApi {
       .pipe(map((r) => r.data))
   }
 
-  getDailyAppointments(branchId: string | null, date: Date): Observable<Appointment[]> {
+  getDailyAppointments(branchId: string | null, date: Date, staffId?: string): Observable<Appointment[]> {
     const start = new Date(date)
     start.setHours(0, 0, 0, 0)
     const end = new Date(date)
     end.setHours(23, 59, 59, 999)
     return this.getAppointments({
       branchId: branchId ?? undefined,
+      staffId: staffId,
       from: start.toISOString(),
       to: end.toISOString(),
     })

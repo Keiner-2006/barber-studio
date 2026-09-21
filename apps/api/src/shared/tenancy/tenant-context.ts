@@ -6,6 +6,7 @@ import {
   platformUsers,
 } from '@/shared/db/schema/platform-schema'
 import { roles, userRoles, users } from '@/shared/db/schema/identity'
+import { staffProfiles } from '@/shared/db/schema/branches'
 import { and, eq } from 'drizzle-orm'
 import { runWithRequestContext, setRequestContext, type RequestContext } from './request-context'
 import {
@@ -182,15 +183,33 @@ async function resolveIdentity(
   return identity
 }
 
-function buildContext(
+async function buildContext(
   headers: Headers,
   identity: ResolvedIdentity,
   sessionUserId: string
-): RequestContext {
+): Promise<RequestContext> {
+  const localUserId = identity.localUserId || sessionUserId
+  let staffId: string | undefined
+
+  // Query staff profile if we have a local user ID
+  if (localUserId) {
+    try {
+      const [staff] = await getTenantDb()
+        .select({ id: staffProfiles.id })
+        .from(staffProfiles)
+        .where(and(eq(staffProfiles.userId, localUserId), eq(staffProfiles.tenantId, identity.tenantId)))
+        .limit(1)
+      staffId = staff?.id
+    } catch {
+      // Staff profile may not exist for this user
+    }
+  }
+
   return {
     tenantId: identity.tenantId,
-    userId: identity.localUserId || sessionUserId,
+    userId: localUserId,
     userRole: identity.userRole,
+    staffId,
     databaseUrl: identity.databaseUrl,
     requestId: headers.get('x-request-id') || crypto.randomUUID(),
     ipAddress: headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
@@ -213,7 +232,7 @@ export async function resolveTenantRequest(
 
   return {
     session,
-    context: buildContext(headers, identity, session.user.id),
+    context: await buildContext(headers, identity, session.user.id),
   }
 }
 

@@ -4,6 +4,7 @@ export type RequestContext = {
   tenantId: string
   userId: string
   userRole: string
+  staffId?: string
   databaseUrl: string
   branchId?: string
   requestId: string
@@ -61,6 +62,12 @@ export function hasPermission(permission: string, userRole: string): boolean {
       'cash:read',
       'reports:read',
     ],
+    reception: [
+      'customers:read', 'customers:write',
+      'appointments:read', 'appointments:write',
+      'catalog:read',
+      'cash:read', 'cash:write',
+    ],
     barber: [
       'appointments:read', 'appointments:write',
       'customers:read',
@@ -86,4 +93,9 @@ export function hasPermission(permission: string, userRole: string): boolean {
   if (!permissions) return false
   if (permissions.includes('*')) return true
   return permissions.includes(permission)
+}
+
+export function getCurrentStaffId(): string | undefined {
+  const context = requestContext.getStore()
+  return context?.staffId
 }
