@@ -5,6 +5,11 @@ import { ServiceRegistry } from '@/shared/container/ServiceRegistry'
 import { createCustomerSchema, searchCustomerSchema } from '@/modules/customers/presentation/schemas/customer.schema'
 import { parsePaginationParams, createPaginatedResponse } from '@/shared/pagination'
 
+function parseDate(value: string | undefined): Date | undefined {
+  if (!value) return undefined
+  return new Date(value)
+}
+
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
@@ -54,7 +59,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const customer = await ServiceRegistry.customerAdapter.create(parsed.data)
+      const data = { ...parsed.data, birthDate: parseDate(parsed.data.birthDate) }
+      const customer = await ServiceRegistry.customerAdapter.create(data as any)
       return NextResponse.json({ data: customer.toPlain() }, { status: 201 })
     })
     if (!result) {

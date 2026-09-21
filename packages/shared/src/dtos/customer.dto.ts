@@ -1,6 +1,7 @@
 export type CreateCustomerDTO = {
   firstName: string
   lastName: string
+  fullName: string
   email?: string
   phone?: string
   document?: string
@@ -10,6 +11,7 @@ export type CreateCustomerDTO = {
 export type UpdateCustomerDTO = {
   firstName?: string
   lastName?: string
+  fullName?: string
   email?: string
   phone?: string
   document?: string
