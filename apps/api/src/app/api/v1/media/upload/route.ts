@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}))
-    const { folder = 'navaja-studio' } = body || {}
+    const { folder = process.env.CLOUDINARY_UPLOAD_FOLDER || 'barbershop_staging' } = body || {}
 
     return NextResponse.json({
       data: {

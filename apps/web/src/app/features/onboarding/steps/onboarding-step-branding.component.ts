@@ -168,12 +168,13 @@ export class OnboardingStepBrandingComponent {
         throw new Error('Solo se permiten archivos PNG, SVG o JPG')
       }
 
-      const params = await this.api.getUploadParams('navaja-studio').toPromise()
+      const params = await this.api.getUploadParams('barbershop_staging').toPromise()
       if (!params) throw new Error('No se pudieron obtener los parámetros de subida')
 
       const formData = new FormData()
       formData.append('file', file)
       formData.append('upload_preset', params.uploadPreset)
+      formData.append('folder', params.folder)
 
       const response = await fetch(params.uploadUrl, {
         method: 'POST',

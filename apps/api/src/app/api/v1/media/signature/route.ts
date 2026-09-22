@@ -13,7 +13,7 @@ function getCloudinaryParams(): Record<string, string> {
   const params: Record<string, string> = {
     api_key: CLOUDINARY_API_KEY,
     timestamp: String(timestamp),
-    folder: 'Barber_Studio',
+    folder: process.env.CLOUDINARY_UPLOAD_FOLDER || 'barbershop_staging',
     use_filename: 'true',
     unique_filename: 'true',
     upload_preset: uploadPreset,
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const params = getCloudinaryParams()
 
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 
     return NextResponse.json({
       data: {

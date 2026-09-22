@@ -8,9 +8,9 @@ import { RouterLink } from '@angular/router'
   template: `
     <div class="landing-page">
       <header class="site-header">
-        <a class="brand" routerLink="/" aria-label="Navaja Studio OS inicio">
+        <a class="brand" routerLink="/" aria-label="BarberShop Management System inicio">
           <span class="brand-mark">✂</span>
-          <span>Navaja Studio <small>OS</small></span>
+          <span>BarberShop Management System</span>
         </a>
         <nav class="desktop-nav" aria-label="Navegación principal">
           <a href="#caracteristicas">Características</a>
@@ -30,7 +30,7 @@ import { RouterLink } from '@angular/router'
               <span class="badge">★ Plataforma Todo-en-Uno</span>
               <span class="badge badge-muted">📍 Colombia · Latam</span>
             </div>
-            <p class="eyebrow">NAJA STUDIO OS</p>
+            <p class="eyebrow">BARBERSHOP MANAGEMENT SYSTEM</p>
             <h1>Gestiona tu barbería con<br>precisión y estilo.</h1>
             <p class="lead">Agenda citas, administra tu inventario, procesa pagos y atrae clientes — desde un solo panel diseñado para barbershops.</p>
             <div class="hero-actions">
@@ -44,7 +44,7 @@ import { RouterLink } from '@angular/router'
             </div>
           </div>
           <div class="hero-visual">
-            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAubVCNIVudhrapcMd17-AbO1IUdwFIWeBWEzh3I_8_pRMDorr2jXU2UgD3xqewfZOewrdQxiRu2iYgATwwB9jbihdgSMjI9Z5T742xXgA0DpeSMK2pL7K5PQjrNhCQCEfajL73_snLDht2P8KT4LvNblVo22TbfFOG7qdGeN-ornMKMMblKB4AELpvfe76wD0I96LNTN3ZHs52wvInJFgCmUNTIc7q2W40MHfFWjOP4MB3W35Hw9Zsxw" alt="Navaja Studio OS — plataforma de gestión para barberías" />
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAubVCNIVudhrapcMd17-AbO1IUdwFIWeBWEzh3I_8_pRMDorr2jXU2UgD3xqewfZOewrdQxiRu2iYgATwwB9jbihdgSMjI9Z5T742xXgA0DpeSMK2pL7K5PQjrNhCQCEfajL73_snLDht2P8KT4LvNblVo22TbfFOG7qdGeN-ornMKMMblKB4AELpvfe76wD0I96LNTN3ZHs52wvInJFgCmUNTIc7q2W40MHfFWjOP4MB3W35Hw9Zsxw" alt="BarberShop Management System — plataforma de gestión para barberías" />
             <div class="visual-caption"><small>PLATAFORMA TODO-EN-UNO</small><strong>Control total desde un solo lugar.</strong><span>Diseñado para barbershops en Latam</span></div>
           </div>
         </section>
@@ -106,7 +106,7 @@ import { RouterLink } from '@angular/router'
         <section class="testimonials section-shell" id="testimonios">
           <div class="section-heading"><div><p class="eyebrow">TESTIMONIOS</p><h2>Barbershops que ya confían en nosotros.</h2></div></div>
           <div class="testimonial-grid">
-            <article><p>"Navaja Studio nos cambió la vida. Antes teníamos agendas en papel y ahora todo es digital, rápido y confiable."</p><strong>Andrés Morales</strong><small>Barbería El Aristocracia</small></article>
+            <article><p>"BarberShop Management System nos cambió la vida. Antes teníamos agendas en papel y ahora todo es digital, rápido y confiable."</p><strong>Andrés Morales</strong><small>Barbería El Aristocracia</small></article>
             <article><p>"La página pública nos trajo clientes nuevos todos los meses. El booking online aumentó nuestras reservas un 40%."</p><strong>Santiago Vega</strong><small>Grooming Studio Bogotá</small></article>
             <article><p>"Finalmente una plataforma que entiende las necesidades de los barbershops colombianos. Precios en COP, soporte local."</p><strong>Mariana Reyes</strong><small>Salón Roma Norte</small></article>
           </div>
@@ -119,7 +119,7 @@ import { RouterLink } from '@angular/router'
       </main>
 
       <footer class="site-footer">
-        <div><span class="footer-brand">Navaja Studio OS</span><p>La plataforma definitiva para barbershops en Latam. Hecho con ❤️ en Colombia.</p></div>
+        <div><span class="footer-brand">BarberShop Management System</span><p>La plataforma definitiva para barbershops en Latam. Hecho con ❤️ en Colombia.</p></div>
         <div><p class="footer-label">ENLACES</p><a routerLink="/booking">Reservar</a><a href="#caracteristicas">Características</a><a href="#planes">Planes</a></div>
         <div><p class="footer-label">LEGAL</p><a href="#">Privacidad</a><a href="#">Términos</a></div>
       </footer>
