@@ -132,6 +132,8 @@ export class OnboardingStepLocationComponent {
 
   constructor(public store: OnboardingStore) {}
 
+  location() { return this.store.location() }
+
   onContinue(): void {
     if (!this.store.location().city || !this.store.location().address) return
     this.store.nextStep()
