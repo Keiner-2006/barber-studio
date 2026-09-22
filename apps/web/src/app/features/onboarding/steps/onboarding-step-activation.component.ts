@@ -1,10 +1,12 @@
 import { Component } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
-import { RouterLink } from '@angular/router'
+import { RouterLink, Router } from '@angular/router'
 import { OnboardingStore } from '../onboarding.store'
 import { OnboardingApi } from '../onboarding.api'
 import { OnboardingSubmitData } from '../onboarding.models'
+import { AuthService } from '../../../core/auth/auth.service'
+import { TenantService } from '../../../core/tenancy/tenant.service'
 
 @Component({
   selector: 'app-onboarding-step-activation',
@@ -161,6 +163,9 @@ export class OnboardingStepActivationComponent {
   constructor(
     public store: OnboardingStore,
     private api: OnboardingApi,
+    private router: Router,
+    private authService: AuthService,
+    private tenantService: TenantService,
   ) {}
 
   get brandInitials(): string {
@@ -214,7 +219,14 @@ export class OnboardingStepActivationComponent {
 
     this.api.submitAll(data).subscribe({
       next: (response: any) => {
-        this.runProvisioning()
+        const jobId = response.data?.jobId
+        if (jobId) {
+          this.store.setJobId(jobId)
+          this.pollJob(jobId)
+        } else {
+          this.isSubmitting = false
+          this.submitting = false
+        }
       },
       error: () => {
         this.submitting = false
@@ -222,30 +234,84 @@ export class OnboardingStepActivationComponent {
     })
   }
 
-  private runProvisioning(): void {
+  private async pollJob(jobId: string): Promise<void> {
     const steps = [
       { percent: 25, message: 'Configurando tu barbería...', log: 'Creando tu cuenta...' },
-      { percent: 45, message: 'Configurando servicios y horarios...', log: 'Agregando servicios...' },
-      { percent: 65, message: 'Subiendo identidad visual...', log: 'Configurando marca...' },
-      { percent: 80, message: 'Finalizando configuración...', log: 'Listo...' },
+      { percent: 50, message: 'Creando sucursal y roles...', log: 'Agregando servicios...' },
+      { percent: 75, message: 'Finalizando configuración...', log: 'Configurando marca...' },
       { percent: 100, message: '¡Tu barbería está activa!', log: 'Todo completado.' },
     ]
 
     let i = 0
-    const interval = setInterval(() => {
+    const poll = async () => {
       if (i >= steps.length) {
-        clearInterval(interval)
-        setTimeout(() => {
-          this.isSubmitting = false
-          this.isComplete = true
-        }, 500)
+        this.api.getJobStatus(jobId).subscribe({
+          next: (resp: any) => {
+            if (resp.data?.status === 'succeeded') {
+              const tenantId = resp.data?.tenantId
+              if (tenantId) {
+                this.store.setTenantId(tenantId)
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.setItem('navaja_tenant_id', tenantId)
+                }
+              }
+              this.loginAfterOnboarding()
+            } else {
+              i++
+              if (i < steps.length) {
+                this.submittingPercent = steps[i].percent
+                this.submittingMessage = steps[i].message
+                this.terminalLogs = [...this.terminalLogs, steps[i].log]
+                setTimeout(poll, 1000)
+              }
+            }
+          },
+          error: () => {
+            i++
+            if (i < steps.length) {
+              this.submittingPercent = steps[i].percent
+              this.submittingMessage = steps[i].message
+              this.terminalLogs = [...this.terminalLogs, steps[i].log]
+              setTimeout(poll, 1000)
+            }
+          },
+        })
         return
       }
-      const step = steps[i]
-      this.submittingPercent = step.percent
-      this.submittingMessage = step.message
-      this.terminalLogs = [...this.terminalLogs, step.log]
+      this.submittingPercent = steps[i].percent
+      this.submittingMessage = steps[i].message
+      this.terminalLogs = [...this.terminalLogs, steps[i].log]
       i++
-    }, 1200)
+      this.api.completeJob(jobId, 'succeeded').subscribe({
+        next: () => {
+          setTimeout(poll, 500)
+        },
+        error: () => {
+          setTimeout(poll, 1000)
+        },
+      })
+    }
+    setTimeout(poll, 1500)
+  }
+
+  private loginAfterOnboarding(): void {
+    const email = this.store.account().email
+    const password = this.store.account().password
+    const name = this.store.account().name
+    const tenantId = this.store.tenantId()
+    this.authService.register(email, password, name, tenantId).subscribe({
+      next: () => {
+        this.isSubmitting = false
+        this.isComplete = true
+        this.store.setCompleted()
+        this.router.navigate(['/dashboard'])
+      },
+      error: () => {
+        this.isSubmitting = false
+        this.isComplete = true
+        this.store.setCompleted()
+        this.router.navigate(['/login'])
+      },
+    })
   }
 }

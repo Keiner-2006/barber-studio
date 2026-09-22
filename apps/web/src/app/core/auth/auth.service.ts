@@ -70,13 +70,16 @@ export class AuthService {
     window.location.href = `${environment.betterAuthUrl}/api/auth/signin/google`
   }
 
-  register(email: string, password: string, name: string): Observable<LoginResponse> {
+  register(email: string, password: string, name: string, tenantId?: string): Observable<LoginResponse> {
     const body: RegisterRequest = { email, password, name }
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, body).pipe(
       tap((response) => {
         this.currentUser.set(response.user)
         this.currentSession.set(response.session)
         this.saveToStorage(response)
+        if (tenantId && typeof localStorage !== 'undefined') {
+          localStorage.setItem('navaja_tenant_id', tenantId)
+        }
       })
     )
   }

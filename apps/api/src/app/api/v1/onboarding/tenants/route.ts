@@ -13,7 +13,18 @@ export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { legalName, tradeName, slug, businessType, email, password, ownerName, phone } = body
+    const { account, business, branding } = body
+
+    const { legalName, tradeName, slug, businessType, email, password, ownerName, phone } = {
+      legalName: business?.legalName ?? body.legalName,
+      tradeName: business?.tradeName ?? body.tradeName,
+      slug: business?.slug ?? body.slug,
+      businessType: business?.businessType ?? body.businessType,
+      email: account?.email ?? body.email,
+      password: account?.password ?? body.password,
+      ownerName: account?.name ?? body.ownerName,
+      phone: body.phone,
+    }
 
     if (!legalName || !tradeName || !slug || !email || !password || !ownerName) {
       throw new AppError('VALIDATION_ERROR', 'Faltan campos requeridos: legalName, tradeName, slug, email, password, ownerName')
@@ -28,6 +39,8 @@ export async function POST(request: NextRequest) {
       password,
       ownerName,
       phone,
+      logoUrl: branding?.logoUrl,
+      primaryColor: branding?.primaryColor,
     })
 
     return NextResponse.json({ data: result, requestId }, { status: 201 })

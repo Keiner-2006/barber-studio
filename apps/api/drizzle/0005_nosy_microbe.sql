@@ -79,7 +79,8 @@ ALTER TABLE "customers" ADD COLUMN "marketing_consent" boolean DEFAULT false NOT
 ALTER TABLE "customers" ADD COLUMN "archived_at" timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "platform_tenants" ADD COLUMN "business_type" "business_type" NOT NULL;--> statement-breakpoint
 ALTER TABLE "platform_tenants" ADD COLUMN "phone" text;--> statement-breakpoint
-ALTER TABLE "platform_users" ADD COLUMN "name" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "platform_users" ADD COLUMN "name" text DEFAULT '' NOT NULL;
+ALTER TABLE "platform_users" ALTER COLUMN "name" DROP DEFAULT;--> statement-breakpoint
 ALTER TABLE "customer_consents" ADD CONSTRAINT "customer_consents_customer_id_customers_id_fk" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tenant_branding" ADD CONSTRAINT "tenant_branding_tenant_id_platform_tenants_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "public"."platform_tenants"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tenant_media_assets" ADD CONSTRAINT "tenant_media_assets_tenant_id_platform_tenants_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "public"."platform_tenants"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

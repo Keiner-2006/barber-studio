@@ -16,7 +16,12 @@ export class TenantService {
   readonly branches = this.availableBranches.asReadonly()
   readonly tenantId = computed(() => this.currentTenant()?.id ?? null)
 
-  constructor(private api: ApiClient) {}
+  constructor(private api: ApiClient) {
+    const savedTenantId = typeof localStorage !== 'undefined' ? localStorage.getItem('navaja_tenant_id') : null
+    if (savedTenantId) {
+      this.currentTenant.set({ id: savedTenantId } as TenantInfo)
+    }
+  }
 
   load(): Observable<void> {
     return this.api

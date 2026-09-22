@@ -20,6 +20,7 @@ export class OnboardingStore {
   private _submitting = signal(false)
   private _completed = signal(false)
   private _jobId = signal('')
+  private _tenantId = signal('')
 
   private _account = signal<OwnerAccount>({
     name: '',
@@ -92,6 +93,7 @@ export class OnboardingStore {
   readonly submitting = this._submitting.asReadonly()
   readonly completed = this._completed.asReadonly()
   readonly jobId = this._jobId.asReadonly()
+  readonly tenantId = this._tenantId.asReadonly()
   readonly account = this._account.asReadonly()
   readonly business = this._business.asReadonly()
   readonly location = this._location.asReadonly()
@@ -155,6 +157,10 @@ export class OnboardingStore {
 
   setJobId(id: string): void {
     this._jobId.set(id)
+  }
+
+  setTenantId(id: string): void {
+    this._tenantId.set(id)
   }
 
   setSummary(data: OnboardingSummary): void {

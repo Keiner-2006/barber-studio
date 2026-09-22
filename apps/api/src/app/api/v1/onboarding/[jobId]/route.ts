@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ jo
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { step, status } = body
+    const { status } = body
     if (!status) {
       throw new AppError('VALIDATION_ERROR', 'status es requerido')
     }
@@ -32,8 +32,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ jo
     if (!job) {
       throw new AppError('NOT_FOUND', 'Job de provisioning no encontrado')
     }
-    await service.advanceJob(params.jobId, step || 'completed', status, body.error)
-    await service.activateTenant(job.tenantId)
+    await service.advanceJob(params.jobId, 'completed', status, body.error)
+    if (status === 'succeeded') {
+      await service.activateTenant(job.tenantId)
+    }
     const updatedJob = await service.getJob(params.jobId)
     return NextResponse.json({ data: updatedJob, requestId })
   } catch (error) {

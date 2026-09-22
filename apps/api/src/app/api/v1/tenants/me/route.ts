@@ -7,6 +7,13 @@ import { branches } from '@/shared/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { preloadIdentity } from '@/shared/tenancy/tenant-context'
 
+function getRequestedTenantId(headers: Headers, sessionUser: unknown): string | undefined {
+  return headers.get('x-tenant-id') ||
+    (typeof sessionUser === 'object' && sessionUser !== null && 'tenantId' in sessionUser
+      ? (sessionUser as { tenantId?: string }).tenantId
+      : undefined)
+}
+
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId()
   try {
@@ -30,10 +37,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const requestedTenantId = getRequestedTenantId(request.headers, session.user)
+
     const membership = await db.query.platformMemberships.findFirst({
       where: and(
         eq(platformMemberships.userId, platformUser.id),
-        eq(platformMemberships.status, 'active')
+        eq(platformMemberships.status, 'active'),
+        requestedTenantId ? eq(platformMemberships.tenantId, requestedTenantId) : undefined
       ),
     })
     if (!membership) {

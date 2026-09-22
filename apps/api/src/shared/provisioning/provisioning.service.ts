@@ -1,8 +1,13 @@
-import { getPlatformDb } from '@/shared/db'
-import { platformTenants, platformUsers, platformMemberships, tenantProvisioningJobs } from '@/shared/db/schema/platform-schema'
+import { getPlatformDb, getTenantDb } from '@/shared/db'
+import { platformTenants, platformUsers, platformMemberships, tenantProvisioningJobs, tenantBranding } from '@/shared/db/schema/platform-schema'
+import { users, roles, userRoles, branches } from '@/shared/db/schema'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { AppError } from '@/shared/errors/app-error'
+import { runWithRequestContext, type RequestContext } from '@/shared/tenancy/request-context'
+import { resolveDatabaseUrl } from '@/shared/tenancy/tenant-context'
+
+const DEFAULT_BRANCH_NAME = 'Sucursal Principal'
 
 export interface CreateTenantInput {
   legalName: string
@@ -13,6 +18,8 @@ export interface CreateTenantInput {
   password: string
   phone?: string
   ownerName: string
+  logoUrl?: string
+  primaryColor?: string
 }
 
 export interface ProvisioningResult {
@@ -57,6 +64,14 @@ export class ProvisioningService {
       status: 'active',
     })
 
+    await platformDb.insert(tenantBranding).values({
+      tenantId,
+      logoUrl: input.logoUrl || null,
+      primaryColor: input.primaryColor || null,
+      socialLinks: {},
+      publicBookingEnabled: true,
+    })
+
     await platformDb.insert(tenantProvisioningJobs).values({
       id: jobId,
       tenantId,
@@ -66,6 +81,93 @@ export class ProvisioningService {
     })
 
     return { jobId, tenantId, status: 'queued' }
+  }
+
+  async createTenantData(tenantId: string, tenant: typeof platformTenants.$inferSelect, platformUserId: string): Promise<void> {
+    const platformDb = getPlatformDb()
+    const databaseUrl = resolveDatabaseUrl(tenant as any)
+
+    const [platformUser] = await platformDb
+      .select({ email: platformUsers.email, name: platformUsers.name })
+      .from(platformUsers)
+      .where(eq(platformUsers.id, platformUserId))
+      .limit(1)
+
+    const ctx: RequestContext = {
+      tenantId,
+      userId: platformUserId,
+      userRole: 'owner',
+      databaseUrl,
+      requestId: randomUUID(),
+    }
+
+    await runWithRequestContext(ctx, async () => {
+      const tenantDb = getTenantDb()
+
+      const [existingBranch] = await tenantDb.select().from(branches).where(eq(branches.tenantId, tenantId)).limit(1)
+      if (!existingBranch) {
+        await tenantDb.insert(branches).values({
+          id: randomUUID(),
+          tenantId,
+          code: 'MAIN',
+          name: DEFAULT_BRANCH_NAME,
+          address: null,
+          city: null,
+          state: null,
+          country: 'CO',
+          postalCode: null,
+          phone: tenant.phone || null,
+          timezone: 'America/Bogota',
+          status: 'active',
+        })
+      }
+
+      const existingRoles = await tenantDb.select().from(roles).where(eq(roles.tenantId, tenantId))
+      if (existingRoles.length === 0) {
+        const roleData = [
+          { name: 'admin', description: 'Administrador del negocio', isSystem: true },
+          { name: 'app', description: 'Aplicación de gestión', isSystem: true },
+          { name: 'barber', description: 'Barbero', isSystem: true },
+          { name: 'reception', description: 'Recepcionista', isSystem: true },
+          { name: 'inventory_manager', description: 'Gestor de inventario', isSystem: true },
+          { name: 'accountant', description: 'Contador', isSystem: true },
+          { name: 'customer', description: 'Cliente', isSystem: true },
+        ]
+        for (const role of roleData) {
+          await tenantDb.insert(roles).values({
+            id: randomUUID(),
+            tenantId,
+            name: role.name,
+            description: role.description,
+            isSystem: role.isSystem,
+          })
+        }
+      }
+
+      const [existingUser] = await tenantDb.select().from(users).where(eq(users.platformUserId, platformUserId)).limit(1)
+      if (!existingUser) {
+        const [adminRole] = await tenantDb.select().from(roles).where(eq(roles.name, 'admin')).limit(1)
+        const newUserId = randomUUID()
+        await tenantDb.insert(users).values({
+          id: newUserId,
+          tenantId,
+          platformUserId,
+          email: platformUser?.email || '',
+          name: platformUser?.name || '',
+          passwordHash: '',
+          status: 'active',
+        })
+
+        if (adminRole) {
+          await tenantDb.insert(userRoles).values({
+            id: randomUUID(),
+            tenantId,
+            userId: newUserId,
+            roleId: adminRole.id,
+          })
+        }
+      }
+    })
   }
 
   async advanceJob(jobId: string, step: string, status: string, error?: string): Promise<void> {
@@ -84,10 +186,21 @@ export class ProvisioningService {
 
   async activateTenant(tenantId: string): Promise<void> {
     const platformDb = getPlatformDb()
+    const [tenant] = await platformDb.select().from(platformTenants).where(eq(platformTenants.id, tenantId)).limit(1)
     await platformDb
       .update(platformTenants)
       .set({ status: 'active', updatedAt: new Date() })
       .where(eq(platformTenants.id, tenantId))
+    if (tenant) {
+      const [ownerMembership] = await platformDb
+        .select({ userId: platformMemberships.userId, membershipId: platformMemberships.id })
+        .from(platformMemberships)
+        .where(eq(platformMemberships.tenantId, tenantId))
+        .limit(1)
+      if (ownerMembership) {
+        await this.createTenantData(tenantId, tenant, ownerMembership.userId)
+      }
+    }
   }
 
   async getJob(jobId: string) {

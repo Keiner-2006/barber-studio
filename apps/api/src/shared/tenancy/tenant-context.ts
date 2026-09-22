@@ -50,7 +50,7 @@ function getSessionToken(session: NonNullable<Awaited<ReturnType<typeof getSessi
   return token || session.user.email
 }
 
-function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
+export function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
   const ref = tenant.databaseSecretRef
   if (ref?.startsWith('postgres://') || ref?.startsWith('postgresql://')) {
     const u = new URL(ref)
