@@ -5,15 +5,17 @@ import { getPlatformDb } from '@/shared/db'
 import { platformTenants, tenantBranding } from '@/shared/db/schema/platform-schema'
 import { eq } from 'drizzle-orm'
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  const { params } = context
   const requestId = generateRequestId()
   try {
     const platformDb = getPlatformDb()
+    const resolvedParams = await params
 
     const [tenant] = await platformDb
       .select()
       .from(platformTenants)
-      .where(eq(platformTenants.slug, params.slug))
+      .where(eq(platformTenants.slug, resolvedParams.slug))
       .limit(1)
 
     if (!tenant) {
