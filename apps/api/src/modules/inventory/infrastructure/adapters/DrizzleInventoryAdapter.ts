@@ -162,6 +162,8 @@ export class DrizzleInventoryAdapter implements IInventoryRepository {
   }
 
   private toDomain(row: any): Product {
+    const unitCost = typeof row.unitCost === 'object' ? row.unitCost.toString() : String(row.unitCost || '0')
+    const suggestedPrice = row.suggestedPrice != null ? (typeof row.suggestedPrice === 'object' ? row.suggestedPrice.toString() : String(row.suggestedPrice)) : null
     return Product.fromPlain({
       id: row.id,
       tenantId: row.tenantId,
@@ -170,8 +172,8 @@ export class DrizzleInventoryAdapter implements IInventoryRepository {
       description: row.description ?? null,
       category: row.category ?? null,
       unit: row.unit,
-      unitCost: row.unitCost,
-      suggestedPrice: row.suggestedPrice ?? null,
+      unitCost,
+      suggestedPrice,
       minQuantity: row.minQuantity,
       active: row.active,
       createdAt: row.createdAt,

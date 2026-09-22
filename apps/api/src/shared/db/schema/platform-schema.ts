@@ -121,7 +121,7 @@ export const platformAuditEvents = pgTable('platform_audit_events', {
 })
 
 export const tenantBranding = pgTable('tenant_branding', {
-  tenantId: uuid('tenant_id').notNull().references(() => platformTenants.id),
+  tenantId: uuid('tenant_id').notNull().references(() => platformTenants.id).primaryKey(),
   logoUrl: text('logo_url'),
   coverImageUrl: text('cover_image_url'),
   galleryUrls: jsonb('gallery_urls').$type<string[]>(),
@@ -147,4 +147,6 @@ export const tenantMediaAssets = pgTable('tenant_media_assets', {
   altText: text('alt_text'),
   purpose: text('purpose').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [
+  uniqueIndex('tenant_media_assets_tenant_purpose_unique').on(table.tenantId, table.purpose),
+])

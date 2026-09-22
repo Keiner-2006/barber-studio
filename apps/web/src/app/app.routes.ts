@@ -18,8 +18,8 @@ export const routes: Routes = [
   },
   {
     path: 'onboarding',
-    loadComponent: () =>
-      import('./features/auth/onboarding.component').then((m) => m.OnboardingComponent),
+    loadChildren: () =>
+      import('./features/onboarding/onboarding.routes').then((m) => m.routes),
   },
   {
     path: 'booking',

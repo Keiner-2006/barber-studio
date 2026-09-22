@@ -483,12 +483,12 @@ import { RouterLink } from '@angular/router'
 <footer class="w-full bg-surface-container-low">
   <div class="w-full px-6 py-6">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 mb-6">
-      <div class="lg:col-span-4 flex flex-col gap-4">
-        <div class="flex items-center gap-2"><span class="font-headline-lg text-headline-lg text-primary">Navaja Studio</span></div>
+      <div class="lg:col-span-3 flex flex-col gap-4">
+        <div class="flex items-center gap-2"><span class="font-headline-lg text-headline-lg text-primary">BarberShop</span></div>
         <p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Atelier de cuidado masculino, tradición artesanal y barbería de precisión en el corazón de la Ciudad de México.</p>
         <div class="flex items-center gap-2 pt-2"><span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estudio Abierto • Roma Norte</span></div>
       </div>
-      <div class="lg:col-span-3 flex flex-col gap-2">
+      <div class="lg:col-span-2 flex flex-col gap-2">
         <span class="font-label-md text-label-md uppercase tracking-wider text-secondary mb-4">Ubicación &amp; Horarios</span>
         <p class="font-body-md text-body-md text-on-surface font-label-lg">Colima 184, Roma Norte</p>
         <p class="font-body-sm text-body-sm text-on-surface-variant">Cuauhtémoc, 06700 CDMX</p>
@@ -504,6 +504,11 @@ import { RouterLink } from '@angular/router'
         <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#barberos">El Equipo</a>
         <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#rituales">Rituales</a>
       </div>
+      <div class="lg:col-span-2 flex flex-col gap-3">
+        <span class="font-label-md text-label-md uppercase tracking-wider text-secondary mb-4">¿Quieres tu propio atelier?</span>
+        <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" routerLink="/onboarding">Crear Mi Negocio</a>
+        <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" routerLink="/login">Acceso Studio OS</a>
+      </div>
       <div class="lg:col-span-3 flex flex-col gap-3">
         <span class="font-label-md text-label-md uppercase tracking-wider text-secondary mb-4">Legal</span>
         <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidad</a>
@@ -511,7 +516,7 @@ import { RouterLink } from '@angular/router'
       </div>
     </div>
     <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-6 border-t border-surface-variant">
-      <span class="font-label-sm text-label-sm text-on-surface-variant">© 2026 Navaja Studio OS. Todos los derechos reservados.</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">© 2026 BarberShop Management System. Todos los derechos reservados.</span>
       <span class="font-label-sm text-label-sm text-on-surface-variant">Hecho con ❤️ en Colombia</span>
     </div>
   </div>

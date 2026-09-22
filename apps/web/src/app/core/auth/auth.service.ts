@@ -66,6 +66,10 @@ export class AuthService {
     )
   }
 
+  signInWithGoogle(): void {
+    window.location.href = `${environment.betterAuthUrl}/api/auth/signin/google`
+  }
+
   register(email: string, password: string, name: string): Observable<LoginResponse> {
     const body: RegisterRequest = { email, password, name }
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, body).pipe(
@@ -78,7 +82,7 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/logout`, {}).pipe(
+    return this.http.post<void>(`${this.apiUrl}/session`, {}).pipe(
       tap(() => {
         this.clearSession()
         this.tenantService.clear()

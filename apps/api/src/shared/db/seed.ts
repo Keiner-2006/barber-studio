@@ -122,7 +122,7 @@ async function seed() {
     const [platformBarber] = await db.insert(platformUsers).values({ email: barber.email, name: barber.name, passwordHash: 'seed-managed-by-auth', status: 'active' }).onConflictDoNothing({ target: platformUsers.email }).returning()
     const storedPlatformBarber = platformBarber || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, barber.email) })
     if (!storedPlatformBarber) throw new Error(`Could not create ${barber.email}`)
-    await db.insert(platformMemberships).values({ tenantId: tenant.id, userId: storedPlatformBarber.id, role: 'owner', status: 'active' }).onConflictDoNothing()
+     await db.insert(platformMemberships).values({ tenantId: tenant.id, userId: storedPlatformBarber.id, role: 'barber', status: 'active' }).onConflictDoNothing()
     const [localBarber] = await db.insert(users).values({ tenantId: tenant.id, platformUserId: storedPlatformBarber.id, email: barber.email, name: barber.name, status: 'active' }).onConflictDoUpdate({ target: users.email, set: { tenantId: tenant.id, platformUserId: storedPlatformBarber.id, name: barber.name, updatedAt: new Date() } }).returning()
     const localUser = localBarber || await db.query.users.findFirst({ where: eq(users.email, barber.email) })
     if (!localUser) throw new Error(`Could not create local user ${barber.email}`)
