@@ -41,10 +41,11 @@ async function seed() {
       legalName: 'Navaja Studio Demo S.A. de C.V.',
       tradeName: 'Navaja Studio Demo',
       slug: DEMO_TENANT_SLUG,
+      businessType: 'barberia',
       status: 'active',
-      countryCode: 'MX',
-      timezone: 'America/Mexico_City',
-      currencyCode: 'MXN',
+      countryCode: 'CO',
+      timezone: 'America/Bogota',
+      currencyCode: 'COP',
       locale: 'es',
       databaseName: process.env.TENANT_DATABASE_NAME || 'navaja_db',
       schemaVersion: '0000',
@@ -57,12 +58,12 @@ async function seed() {
 
   const [platformAdmin] = await db
     .insert(platformUsers)
-    .values({ email: ADMIN_EMAIL, passwordHash: 'seed-managed-by-auth', status: 'active' })
+    .values({ email: ADMIN_EMAIL, name: 'Administrador Navaja', passwordHash: 'seed-managed-by-auth', status: 'active' })
     .onConflictDoNothing({ target: platformUsers.email })
     .returning()
   const [platformApp] = await db
     .insert(platformUsers)
-    .values({ email: APP_EMAIL, passwordHash: 'seed-managed-by-auth', status: 'active' })
+    .values({ email: APP_EMAIL, name: 'Usuario App', passwordHash: 'seed-managed-by-auth', status: 'active' })
     .onConflictDoNothing({ target: platformUsers.email })
     .returning()
 
@@ -77,7 +78,7 @@ async function seed() {
 
   const [branch] = await db
     .insert(branches)
-    .values({ tenantId: tenant.id, code: 'ROMA-NORTE', name: 'Roma Norte', city: 'Ciudad de México', country: 'México', timezone: 'America/Mexico_City' })
+    .values({ tenantId: tenant.id, code: 'ROMA-NORTE', name: 'Roma Norte', city: 'Ciudad de México', country: 'México', timezone: 'America/Bogota' })
     .onConflictDoUpdate({ target: branches.code, set: { name: 'Roma Norte', updatedAt: new Date() } })
     .returning()
 
@@ -118,10 +119,10 @@ async function seed() {
 
   const barberUsers = []
   for (const barber of barberData) {
-    const [platformBarber] = await db.insert(platformUsers).values({ email: barber.email, passwordHash: 'seed-managed-by-auth', status: 'active' }).onConflictDoNothing({ target: platformUsers.email }).returning()
+    const [platformBarber] = await db.insert(platformUsers).values({ email: barber.email, name: barber.name, passwordHash: 'seed-managed-by-auth', status: 'active' }).onConflictDoNothing({ target: platformUsers.email }).returning()
     const storedPlatformBarber = platformBarber || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, barber.email) })
     if (!storedPlatformBarber) throw new Error(`Could not create ${barber.email}`)
-    await db.insert(platformMemberships).values({ tenantId: tenant.id, userId: storedPlatformBarber.id, role: 'owner', status: 'active' }).onConflictDoNothing()
+     await db.insert(platformMemberships).values({ tenantId: tenant.id, userId: storedPlatformBarber.id, role: 'barber', status: 'active' }).onConflictDoNothing()
     const [localBarber] = await db.insert(users).values({ tenantId: tenant.id, platformUserId: storedPlatformBarber.id, email: barber.email, name: barber.name, status: 'active' }).onConflictDoUpdate({ target: users.email, set: { tenantId: tenant.id, platformUserId: storedPlatformBarber.id, name: barber.name, updatedAt: new Date() } }).returning()
     const localUser = localBarber || await db.query.users.findFirst({ where: eq(users.email, barber.email) })
     if (!localUser) throw new Error(`Could not create local user ${barber.email}`)
@@ -144,7 +145,7 @@ async function seed() {
   const seededServices = []
   for (const serviceDataItem of serviceData) {
     const existing = await db.query.services.findFirst({ where: and(eq(services.tenantId, tenant.id), eq(services.name, serviceDataItem.name)) })
-    const service = existing || (await db.insert(services).values({ tenantId: tenant.id, categoryId: storedCategory.id, ...serviceDataItem, currency: 'MXN', paymentPolicy: 'none', active: true }).returning())[0]
+    const service = existing || (await db.insert(services).values({ tenantId: tenant.id, categoryId: storedCategory.id, ...serviceDataItem, currency: 'COP', paymentPolicy: 'none', active: true }).returning())[0]
     if (service) {
       seededServices.push(service)
       await db.insert(branchServices).values({ tenantId: tenant.id, branchId: branch.id, serviceId: service.id, active: true }).onConflictDoNothing()
@@ -159,9 +160,9 @@ async function seed() {
   }
 
   const customerData = [
-    { firstName: 'Jorge', lastName: 'Ramírez', email: 'jorge.ramirez@example.com', phone: '+52 55 1234 5678' },
-    { firstName: 'Luis', lastName: 'Navarro', email: 'luis.navarro@example.com', phone: '+52 55 2345 6789' },
-    { firstName: 'Mateo', lastName: 'Serrano', email: 'mateo.serrano@example.com', phone: '+52 55 3456 7890' },
+    { firstName: 'Jorge', lastName: 'Ramírez', fullName: 'Jorge Ramírez', email: 'jorge.ramirez@example.com', phone: '+52 55 1234 5678' },
+    { firstName: 'Luis', lastName: 'Navarro', fullName: 'Luis Navarro', email: 'luis.navarro@example.com', phone: '+52 55 2345 6789' },
+    { firstName: 'Mateo', lastName: 'Serrano', fullName: 'Mateo Serrano', email: 'mateo.serrano@example.com', phone: '+52 55 3456 7890' },
   ]
   const seededCustomers = []
   for (const customerDataItem of customerData) {
@@ -179,7 +180,7 @@ async function seed() {
     for (const appointmentDataItem of appointmentData) {
       const customer = seededCustomers.find(item => item.email === appointmentDataItem.email)
       const existing = customer ? await db.query.appointments.findFirst({ where: and(eq(appointments.tenantId, tenant.id), eq(appointments.customerId, customer.id), eq(appointments.staffId, appointmentDataItem.staffId), eq(appointments.status, appointmentDataItem.status)) }) : undefined
-      if (!existing && customer) await db.insert(appointments).values({ tenantId: tenant.id, branchId: branch.id, customerId: customer.id, staffId: appointmentDataItem.staffId, serviceId: appointmentDataItem.service.id, startsAt: appointmentDataItem.startsAt, endsAt: new Date(appointmentDataItem.startsAt.getTime() + appointmentDataItem.service.durationMinutes * 60000), serviceNameSnapshot: appointmentDataItem.service.name, serviceDurationSnapshot: appointmentDataItem.service.durationMinutes, priceSnapshot: appointmentDataItem.service.priceBase, currencySnapshot: 'MXN', status: appointmentDataItem.status, source: 'seed_demo' })
+      if (!existing && customer) await db.insert(appointments).values({ tenantId: tenant.id, branchId: branch.id, customerId: customer.id, staffId: appointmentDataItem.staffId, serviceId: appointmentDataItem.service.id, startsAt: appointmentDataItem.startsAt, endsAt: new Date(appointmentDataItem.startsAt.getTime() + appointmentDataItem.service.durationMinutes * 60000), serviceNameSnapshot: appointmentDataItem.service.name, serviceDurationSnapshot: appointmentDataItem.service.durationMinutes, priceSnapshot: appointmentDataItem.service.priceBase, currencySnapshot: 'COP', status: appointmentDataItem.status, source: 'seed_demo' })
     }
   }
 
@@ -204,10 +205,10 @@ async function seed() {
   const register = existingRegister || (await db.insert(cashRegisters).values({ tenantId: tenant.id, branchId: branch.id, name: 'Caja principal', status: 'active', initialBalance: '2500' }).returning())[0]
   if (register && adminUser) {
     const existingCash = await db.query.cashSessions.findFirst({ where: and(eq(cashSessions.tenantId, tenant.id), eq(cashSessions.cashRegisterId, register.id), eq(cashSessions.isOpen, true)) })
-    const cashSession = existingCash || (await db.insert(cashSessions).values({ tenantId: tenant.id, cashRegisterId: register.id, userId: adminUser.id, initialBalance: '2500', currency: 'MXN', isOpen: true }).returning())[0]
+    const cashSession = existingCash || (await db.insert(cashSessions).values({ tenantId: tenant.id, cashRegisterId: register.id, userId: adminUser.id, initialBalance: '2500', currency: 'COP', isOpen: true }).returning())[0]
     if (cashSession) {
       const existingTransaction = await db.query.cashTransactions.findFirst({ where: and(eq(cashTransactions.tenantId, tenant.id), eq(cashTransactions.sessionId, cashSession.id), eq(cashTransactions.reference, 'SEED-DEMO-SALE')) })
-      if (!existingTransaction) await db.insert(cashTransactions).values({ tenantId: tenant.id, sessionId: cashSession.id, type: 'sale', method: 'cash', amount: '450', currency: 'MXN', reference: 'SEED-DEMO-SALE', notes: 'Corte clásico de demostración', actorId: adminUser.id })
+      if (!existingTransaction) await db.insert(cashTransactions).values({ tenantId: tenant.id, sessionId: cashSession.id, type: 'sale', method: 'cash', amount: '450', currency: 'COP', reference: 'SEED-DEMO-SALE', notes: 'Corte clásico de demostración', actorId: adminUser.id })
     }
   }
 

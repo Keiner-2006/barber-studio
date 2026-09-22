@@ -13,34 +13,58 @@ import { ROLE_LABELS } from '@navaja/shared'
       <div class="page-header">
         <div>
           <p class="label">{{ store.dateLabel() }}</p>
-          <h1>Agenda <span class="accent">del día.</span></h1>
-          <p class="subtitle">Gestionas turnos, disponibilidad y atención en tiempo real.</p>
+          <h1>
+            @if (store.isBarber()) {
+              Mi día <span class="accent">.</span>
+            } @else {
+              Agenda <span class="accent">del día.</span>
+            }
+          </h1>
+          <p class="subtitle">
+            @if (store.isBarber()) {
+              Tus citas programadas para hoy.
+            } @else {
+              Gestionas turnos, disponibilidad y atención en tiempo real.
+            }
+          </p>
         </div>
         <div class="header-actions">
           <button class="secondary-button" (click)="store.prevDay()">←</button>
           <button class="secondary-button" (click)="store.nextDay()">→</button>
-          <button class="primary-button" (click)="store.openNewBooking()">+ Nueva reserva</button>
+          @if (store.canCreateBookings()) {
+            <button class="primary-button" (click)="store.openNewBooking()">+ Nueva reserva</button>
+          }
         </div>
       </div>
 
       @if (store.loading()) {
         <div class="loading">Cargando agenda...</div>
       } @else {
-        <div class="stats-bar">
-          <span class="stat-chip"><b>{{ store.stats().total }}</b> Total</span>
-          <span class="stat-chip confirmed"><b>{{ store.stats().confirmed }}</b> Confirmadas</span>
-          <span class="stat-chip pending"><b>{{ store.stats().pending }}</b> Pendientes</span>
-          <span class="stat-chip waiting"><b>{{ store.stats().checkedIn }}</b> En espera</span>
-          <span class="stat-chip active"><b>{{ store.stats().inService }}</b> En servicio</span>
-          <span class="stat-chip completed"><b>{{ store.stats().completed }}</b> Completadas</span>
-          <span class="stat-chip cancelled"><b>{{ store.stats().cancelled }}</b> Canceladas</span>
-          <span class="stat-chip cancelled"><b>{{ store.stats().noShow }}</b> No asistió</span>
-        </div>
+        @if (!store.isBarber()) {
+          <div class="stats-bar">
+            <span class="stat-chip"><b>{{ store.stats().total }}</b> Total</span>
+            <span class="stat-chip confirmed"><b>{{ store.stats().confirmed }}</b> Confirmadas</span>
+            <span class="stat-chip pending"><b>{{ store.stats().pending }}</b> Pendientes</span>
+            <span class="stat-chip waiting"><b>{{ store.stats().checkedIn }}</b> En espera</span>
+            <span class="stat-chip active"><b>{{ store.stats().inService }}</b> En servicio</span>
+            <span class="stat-chip completed"><b>{{ store.stats().completed }}</b> Completadas</span>
+            <span class="stat-chip cancelled"><b>{{ store.stats().cancelled }}</b> Canceladas</span>
+            <span class="stat-chip cancelled"><b>{{ store.stats().noShow }}</b> No asistió</span>
+          </div>
+        }
 
         @if (store.appointmentRows().length === 0) {
           <div class="empty-state">
-            <p>Sin turnos programados</p>
-            <p class="hint">Usa el calendario para ver otros días o crea una nueva reserva.</p>
+            <p>
+              @if (store.isBarber()) {
+                No tienes citas programadas
+              } @else {
+                Sin turnos programados
+              }
+            </p>
+            @if (!store.isBarber()) {
+              <p class="hint">Usa el calendario para ver otros días o crea una nueva reserva.</p>
+            }
           </div>
         }
 
@@ -52,7 +76,9 @@ import { ROLE_LABELS } from '@navaja/shared'
                   <th>Hora</th>
                   <th>Cliente</th>
                   <th>Servicio</th>
-                  <th>Barbero</th>
+                  @if (!store.isBarber()) {
+                    <th>Barbero</th>
+                  }
                   <th>Estado</th>
                   <th class="actions-header">Acciones</th>
                 </tr>
@@ -63,19 +89,30 @@ import { ROLE_LABELS } from '@navaja/shared'
                     <td class="time-cell">{{ appt.time }}</td>
                     <td>{{ appt.clientName }}</td>
                     <td>{{ appt.service }}</td>
-                    <td>{{ appt.barber }}</td>
+                    @if (!store.isBarber()) {
+                      <td>{{ appt.barber }}</td>
+                    }
                     <td>
                       <span class="status-badge" [class]="appt.statusClass">{{ appt.status }}</span>
                     </td>
                     <td class="actions-cell">
-                      <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
-                        <option value="">Cambiar estado</option>
-                        <option value="confirmed">Confirmar</option>
-                        <option value="checked_in">En espera</option>
-                        <option value="in_service">En servicio</option>
-                        <option value="completed">Completar</option>
-                        <option value="cancelled">Cancelar</option>
-                      </select>
+                      @if (store.isBarber()) {
+                        <button
+                          class="action-button"
+                          (click)="store.completeAppointment(appt.id)"
+                          [disabled]="appt.status === 'completed' || appt.status === 'cancelled'">
+                          {{ appt.status === 'completed' ? 'Completada' : 'Completar' }}
+                        </button>
+                      } @else {
+                        <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
+                          <option value="">Cambiar estado</option>
+                          <option value="confirmed">Confirmar</option>
+                          <option value="checked_in">En espera</option>
+                          <option value="in_service">En servicio</option>
+                          <option value="completed">Completar</option>
+                          <option value="cancelled">Cancelar</option>
+                        </select>
+                      }
                     </td>
                   </tr>
                 }
@@ -180,6 +217,9 @@ import { ROLE_LABELS } from '@navaja/shared'
       .actions-cell { width: 120px; }
       .action-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; background: white; cursor: pointer; }
       .action-select:focus { outline: 2px solid #b87333; outline-offset: 1px; }
+      .action-button { padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; background: white; color: #374151; cursor: pointer; white-space: nowrap; }
+      .action-button:hover:not(:disabled) { background: #f3f4f6; }
+      .action-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
       .modal-backdrop {
         position: fixed; inset: 0; background: rgba(0,0,0,0.5);

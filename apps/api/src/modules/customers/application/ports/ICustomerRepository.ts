@@ -3,19 +3,25 @@ import { Customer } from '../../domain/entities/Customer'
 export interface CreateCustomerData {
   firstName: string
   lastName: string
+  fullName: string
   email?: string | null
   phone?: string | null
   document?: string | null
   notes?: string | null
+  birthDate?: Date | null
+  marketingConsent?: boolean
 }
 
 export interface UpdateCustomerData {
   firstName?: string
   lastName?: string
+  fullName?: string
   email?: string | null
   phone?: string | null
   document?: string | null
   notes?: string | null
+  birthDate?: Date | null
+  marketingConsent?: boolean
 }
 
 export interface SearchCustomerFilters {

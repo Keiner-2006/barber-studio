@@ -3,6 +3,7 @@ export interface CustomerProps {
   tenantId: string
   firstName: string
   lastName: string
+  fullName: string
   email: string | null
   phone: string | null
   document: string | null
@@ -16,6 +17,8 @@ export interface CustomerProps {
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
+  marketingConsent?: boolean
+  birthDate?: Date | null
 }
 
 export class Customer {
@@ -40,7 +43,7 @@ export class Customer {
   get deletedAt() { return this.props.deletedAt }
 
   get fullName(): string {
-    return `${this.props.firstName} ${this.props.lastName}`.trim()
+    return this.props.fullName
   }
 
   get totalVisitsNumber(): number {

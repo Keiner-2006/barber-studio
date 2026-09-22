@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'onboarding',
+    loadChildren: () =>
+      import('./features/onboarding/onboarding.routes').then((m) => m.routes),
+  },
+  {
     path: 'booking',
     loadComponent: () =>
       import('./features/booking/booking.component').then(

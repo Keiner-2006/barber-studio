@@ -20,6 +20,7 @@ export class DrizzleCustomerAdapter implements ICustomerRepository {
       .values({
         ...data,
         tenantId: getTenantId(),
+        fullName: data.fullName ?? `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim(),
         email: data.email ?? null,
         phone: data.phone ?? null,
         document: data.document ?? null,
@@ -34,10 +35,13 @@ export class DrizzleCustomerAdapter implements ICustomerRepository {
     const updateData: any = { updatedAt: new Date() }
     if (data.firstName !== undefined) updateData.firstName = data.firstName
     if (data.lastName !== undefined) updateData.lastName = data.lastName
+    if (data.fullName !== undefined) updateData.fullName = data.fullName
     if (data.email !== undefined) updateData.email = data.email
     if (data.phone !== undefined) updateData.phone = data.phone
     if (data.document !== undefined) updateData.document = data.document
     if (data.notes !== undefined) updateData.notes = data.notes
+    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate
+    if (data.marketingConsent !== undefined) updateData.marketingConsent = data.marketingConsent
 
     const [row] = await db
       .update(customers)
@@ -67,6 +71,7 @@ export class DrizzleCustomerAdapter implements ICustomerRepository {
         or(
           like(customers.firstName, `%${filters.query}%`),
           like(customers.lastName, `%${filters.query}%`),
+          like(customers.fullName, `%${filters.query}%`),
           like(customers.email, `%${filters.query}%`),
           like(customers.phone, `%${filters.query}%`)
         )!
@@ -91,12 +96,15 @@ export class DrizzleCustomerAdapter implements ICustomerRepository {
       tenantId: row.tenantId,
       firstName: row.firstName,
       lastName: row.lastName,
+      fullName: row.fullName,
       email: row.email ?? null,
       phone: row.phone ?? null,
       document: row.document ?? null,
+      birthDate: row.birthDate ?? null,
       notes: row.notes ?? null,
       preferences: row.preferences ?? null,
       consents: row.consents ?? null,
+      marketingConsent: row.marketingConsent ?? false,
       totalVisits: row.totalVisits,
       totalSpent: row.totalSpent,
       currency: row.currency,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withTenantRequest } from '@/shared/tenancy/tenant-context'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
 import { appointmentRepository } from '@/modules/appointments/infrastructure/repositories/appointment.repository'
+import { getRequestContext } from '@/shared/tenancy/request-context'
 
 const ACTION_MAP: Record<string, string> = {
   confirm: 'confirmed',
@@ -23,6 +24,22 @@ async function handleAction(request: NextRequest, { params }: { params: Promise<
           { error: { code: 'NOT_FOUND', message: 'Reserva no encontrada' }, requestId },
           { status: 404 }
         )
+      }
+
+      const context = getRequestContext()
+      if (context.userRole === 'barber') {
+        if (appointment.staffId !== context.staffId) {
+          return NextResponse.json(
+            { error: { code: 'FORBIDDEN', message: 'No tienes permiso para modificar esta cita' }, requestId },
+            { status: 403 }
+          )
+        }
+        if (action !== 'complete') {
+          return NextResponse.json(
+            { error: { code: 'FORBIDDEN', message: 'Los barberos solo pueden marcar citas como completadas' }, requestId },
+            { status: 403 }
+          )
+        }
       }
 
       const status = ACTION_MAP[action]

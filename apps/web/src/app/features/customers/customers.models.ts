@@ -3,10 +3,13 @@ export interface Customer {
   tenantId: string
   firstName: string
   lastName: string
+  fullName: string
   email?: string
   phone?: string
   document?: string
   notes?: string
+  birthDate?: string
+  marketingConsent: boolean
   totalVisits: number
   totalSpent: string
   currency: string
@@ -25,8 +28,11 @@ export interface CustomerSearch {
 export interface CreateCustomer {
   firstName: string
   lastName: string
+  fullName: string
   email?: string
   phone?: string
   document?: string
   notes?: string
+  birthDate?: string
+  marketingConsent?: boolean
 }

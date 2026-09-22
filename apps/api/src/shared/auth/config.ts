@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { bearer } from 'better-auth/plugins'
+import { google } from 'better-auth/social-providers'
 import { Pool } from 'pg'
 import crypto from 'node:crypto'
 
@@ -52,7 +53,7 @@ const authUrlWithSsl = authRawUrl.includes('sslmode=') ? authRawUrl : authRawUrl
 const authDbUrl = authUrlWithSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
 logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
 
-const auth = demoAuthEnabled()
+export const auth = demoAuthEnabled()
   ? null
   : betterAuth({
       database: new Pool({
@@ -66,7 +67,13 @@ const auth = demoAuthEnabled()
         origin(process.env.VERCEL_URL) ||
         origin(process.env.V0_RUNTIME_URL),
       trustedOrigins,
-      plugins: [bearer()],
+      plugins: [
+        bearer(),
+        google({
+          clientId: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
+      ],
       ...(process.env.NODE_ENV === 'development'
         ? {
             advanced: {

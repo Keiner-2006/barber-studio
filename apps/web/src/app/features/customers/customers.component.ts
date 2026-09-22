@@ -7,6 +7,7 @@ import { CreateCustomer } from './customers.models'
 export interface CreateCustomerForm {
   firstName: string
   lastName: string
+  fullName: string
   email: string
   phone: string
   document: string
@@ -80,6 +81,10 @@ export interface CreateCustomerForm {
               <input [(ngModel)]="newCustomer.lastName" placeholder="Apellido" />
             </div>
             <div class="form-group">
+              <label>Nombre completo</label>
+              <input [(ngModel)]="newCustomer.fullName" placeholder="Nombre completo" />
+            </div>
+            <div class="form-group">
               <label>Correo</label>
               <input [(ngModel)]="newCustomer.email" type="email" placeholder="correo@ejemplo.com" />
             </div>
@@ -142,7 +147,7 @@ export interface CreateCustomerForm {
 export class CustomersComponent implements OnInit {
   searchTerm = ''
   showCreateDialog = false
-  newCustomer: CreateCustomerForm = { firstName: '', lastName: '', email: '', phone: '', document: '', notes: '' }
+  newCustomer: CreateCustomerForm = { firstName: '', lastName: '', fullName: '', email: '', phone: '', document: '', notes: '' }
 
   constructor(readonly store: CustomersStore) {}
 
@@ -155,7 +160,7 @@ export class CustomersComponent implements OnInit {
   }
 
   openCreateDialog(): void {
-    this.newCustomer = { firstName: '', lastName: '', email: '', phone: '', document: '', notes: '' }
+    this.newCustomer = { firstName: '', lastName: '', fullName: '', email: '', phone: '', document: '', notes: '' }
     this.showCreateDialog = true
   }
 
@@ -165,7 +170,7 @@ export class CustomersComponent implements OnInit {
 
   createCustomer(): void {
     if (!this.newCustomer.firstName || !this.newCustomer.lastName) return
-    this.store.create({ ...this.newCustomer })
+    this.store.create({ ...this.newCustomer, fullName: this.newCustomer.fullName || `${this.newCustomer.firstName} ${this.newCustomer.lastName}`.trim() })
     this.closeCreateDialog()
   }
 }

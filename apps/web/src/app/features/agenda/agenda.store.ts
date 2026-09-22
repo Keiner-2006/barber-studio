@@ -7,6 +7,7 @@ import { CustomersApi } from '../customers/customers.api'
 import { CatalogApi } from '../catalog/catalog.api'
 import { Service } from '../catalog/catalog.models'
 import { TenantService } from '../../core/tenancy/tenant.service'
+import { AuthService } from '../../core/auth/auth.service'
 
 @Injectable({ providedIn: 'root' })
 export class AgendaStore {
@@ -26,6 +27,7 @@ export class AgendaStore {
   private _bookingTime = signal<string>('')
   private _staffList = signal<StaffOption[]>([])
   private _customerList = signal<CustomerOption[]>([])
+  private _myStaffId = signal<string | null>(null)
 
   readonly loading = this._loading.asReadonly()
   readonly saving = this._saving.asReadonly()
@@ -40,6 +42,18 @@ export class AgendaStore {
   readonly bookingTime = this._bookingTime.asReadonly()
   readonly staffList = this._staffList.asReadonly()
   readonly customerList = this._customerList.asReadonly()
+  readonly myStaffId = this._myStaffId.asReadonly()
+
+  readonly isBarber = computed(() => this.authService.user()?.role === 'barber')
+  readonly isReception = computed(() => this.authService.user()?.role === 'reception')
+  readonly canManageAppointments = computed(() => {
+    const role = this.authService.user()?.role
+    return role === 'owner' || role === 'admin' || role === 'app' || role === 'reception'
+  })
+  readonly canCreateBookings = computed(() => {
+    const role = this.authService.user()?.role
+    return role === 'owner' || role === 'admin' || role === 'app' || role === 'reception'
+  })
 
   readonly stats = computed((): AgendaStats => {
     const appts = this._appointments()
@@ -85,16 +99,16 @@ export class AgendaStore {
     private staffApi: StaffApi,
     private customersApi: CustomersApi,
     private catalogApi: CatalogApi,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private authService: AuthService
   ) {}
 
   load(): void {
-    this.loadStaff()
     this.loadCustomers()
-    this.loadAppointments()
+    this.loadStaff(() => this.loadAppointments())
   }
 
-  loadStaff(): void {
+  loadStaff(onComplete?: () => void): void {
     this.staffApi.getStaff().subscribe({
       next: (list) => {
         const map: StaffMap = {}
@@ -104,13 +118,19 @@ export class AgendaStore {
           if (s.isBookable) {
             opts.push({ id: s.id, displayName: s.displayName, role: s.role })
           }
+          // Find my staff profile if I'm a barber
+          if (this.authService.user()?.id === s.userId) {
+            this._myStaffId.set(s.id)
+          }
         })
         this._staff.set(map)
         this._staffList.set(opts)
+        onComplete?.()
       },
       error: () => {
         this._staff.set({})
         this._staffList.set([])
+        onComplete?.()
       },
     })
   }
@@ -152,6 +172,16 @@ export class AgendaStore {
     const action = (event.target as HTMLSelectElement).value
     if (!action) return
     this.agendaApi.updateStatus(id, action).subscribe({
+      next: (updated) => {
+        this._appointments.update((appts) =>
+          appts.map((a) => (a.id === updated.id ? updated : a))
+        )
+      },
+    })
+  }
+
+  completeAppointment(id: string): void {
+    this.agendaApi.updateStatus(id, 'complete').subscribe({
       next: (updated) => {
         this._appointments.update((appts) =>
           appts.map((a) => (a.id === updated.id ? updated : a))
@@ -228,7 +258,10 @@ export class AgendaStore {
   loadAppointments(): void {
     this._loading.set(true)
     const branchId = this.tenantService.getBranchId()
-    this.agendaApi.getDailyAppointments(branchId, new Date(this._selectedDate())).subscribe({
+    // If barber, only fetch their own appointments
+    // Reception and Admin see all (no staffId filter)
+    const staffId = this.isBarber() ? this._myStaffId() : undefined
+    this.agendaApi.getDailyAppointments(branchId, new Date(this._selectedDate()), staffId ?? undefined).subscribe({
       next: (appts) => {
         this._appointments.set(appts ?? [])
         this._loading.set(false)

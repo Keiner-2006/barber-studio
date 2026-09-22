@@ -38,7 +38,8 @@ export function withCorsHeaders(response: NextResponse): NextResponse {
   const isDev = process.env.NODE_ENV !== 'production'
 
   if (isDev && origins.length === 0) {
-    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.set('Vary', 'Origin')
   } else {
     response.headers.set('Access-Control-Allow-Origin', origins[0] ?? '')
     response.headers.set('Vary', 'Origin')
@@ -59,7 +60,8 @@ export function handlePreflight(): NextResponse {
   const isDev = process.env.NODE_ENV !== 'production'
 
   if (isDev && origins.length === 0) {
-    res.headers.set('Access-Control-Allow-Origin', '*')
+    res.headers.set('Access-Control-Allow-Origin', 'http://localhost:3000')
+    res.headers.set('Vary', 'Origin')
   } else {
     res.headers.set('Access-Control-Allow-Origin', origins[0] ?? '')
     res.headers.set('Vary', 'Origin')
