@@ -50,6 +50,13 @@
       "when": 1790100000000,
       "tag": "0006_add_platform_users_name",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790100000000,
+      "tag": "0007_add_customers_fields",
+      "breakpoints": true
     }
   ]
 }
