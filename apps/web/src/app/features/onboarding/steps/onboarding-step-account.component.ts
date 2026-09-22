@@ -95,6 +95,8 @@ export class OnboardingStepAccountComponent {
 
   constructor(public store: OnboardingStore) {}
 
+  account() { return this.store.account() }
+
   onContinue(): void {
     if (!this.store.account().name || !this.store.account().email || !this.store.account().password) return
     if (this.store.account().password.length < 8) return

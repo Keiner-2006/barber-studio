@@ -31,7 +31,7 @@ const COLOR_PRESETS = [
             Isotipo / Emblema de la Barbería
             <span class="optional">PNG o SVG transparente máx 5MB</span>
           </label>
-          <div class="upload-zone" (click)="fileInput.click()" (dragover)="dragOver=true" (dragleave)="dragOver=false" [class.drag-active]="dragOver">
+          <div class="upload-zone" (click)="fileInput.click()" (dragover)="dragging=true" (dragleave)="dragging=false" [class.drag-active]="dragging">
             <input type="file" #fileInput accept="image/png,image/svg+xml,image/jpeg" (change)="onFileSelected($event)" hidden />
             @if (logoUrl) {
               <img [src]="logoUrl" class="logo-preview" />
@@ -133,7 +133,7 @@ const COLOR_PRESETS = [
 })
 export class OnboardingStepBrandingComponent {
   colorPresets = COLOR_PRESETS
-  dragOver = false
+  dragging = false
   uploadError = ''
   logoUrl = ''
   uploading = false

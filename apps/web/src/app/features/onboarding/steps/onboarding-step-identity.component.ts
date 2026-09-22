@@ -197,6 +197,9 @@ export class OnboardingStepIdentityComponent {
     private api: OnboardingApi,
   ) {}
 
+  business() { return this.store.business() }
+  location() { return this.store.location() }
+
   selectBusinessType(type: BusinessType): void {
     this.store.updateBusiness({ businessType: type })
   }
