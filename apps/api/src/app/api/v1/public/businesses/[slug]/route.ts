@@ -6,16 +6,15 @@ import { platformTenants, tenantBranding } from '@/shared/db/schema/platform-sch
 import { eq } from 'drizzle-orm'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
-  const { params } = context
+  const params = await context.params
   const requestId = generateRequestId()
   try {
     const platformDb = getPlatformDb()
-    const resolvedParams = await params
 
     const [tenant] = await platformDb
       .select()
       .from(platformTenants)
-      .where(eq(platformTenants.slug, resolvedParams.slug))
+      .where(eq(platformTenants.slug, params.slug))
       .limit(1)
 
     if (!tenant) {
