@@ -40,34 +40,32 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!demoAuthEnabled()) {
-        const identity = await resolveUserRole(email, tenantId)
-        if (!identity.role) {
-          return NextResponse.json(
-            {
-              error: {
-                code: 'USER_NOT_FOUND',
-                message: 'Usuario no encontrado',
-              },
-              requestId,
+      const identity = await resolveUserRole(email, tenantId)
+      if (!identity.role) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'USER_NOT_FOUND',
+              message: 'Usuario no encontrado',
             },
-            { status: 404 }
-          )
-        }
+            requestId,
+          },
+          { status: 404 }
+        )
+      }
 
-        if (!validateRoleForFlow(identity.role, expectedFlow)) {
-          const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
-          return NextResponse.json(
-            {
-              error: {
-                code: 'ROLE_MISMATCH',
-                message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
-              },
-              requestId,
+      if (!validateRoleForFlow(identity.role, expectedFlow)) {
+        const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
+        return NextResponse.json(
+          {
+            error: {
+              code: 'ROLE_MISMATCH',
+              message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
             },
-            { status: 403 }
-          )
-        }
+            requestId,
+          },
+          { status: 403 }
+        )
       }
     }
 
@@ -76,7 +74,7 @@ export async function POST(request: NextRequest) {
       request.headers
     )
 
-    if (!demoAuthEnabled() && result.user) {
+    if (result.user) {
       const identity = await resolveUserRole(email, tenantId)
       if (identity.role) {
         ;(result.user as any).role = identity.role
