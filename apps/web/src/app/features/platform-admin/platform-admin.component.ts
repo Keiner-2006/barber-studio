@@ -1,12 +1,11 @@
 import { Component } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { RouterLink } from '@angular/router'
-import { AuthGuard } from '../../core/auth/auth.guard'
 
 @Component({
   selector: 'app-platform-admin',
   standalone: true,
-  imports: [CommonModule, RouterLink, AuthGuard],
+  imports: [CommonModule, RouterLink],
   template: `
     <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_4px_20px_-2px_rgba(10,7,5,0.65)]">
       <div class="flex flex-col">
