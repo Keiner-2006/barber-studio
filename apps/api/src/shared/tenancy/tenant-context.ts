@@ -136,7 +136,33 @@ async function resolveIdentity(
     platformUserId: string
   } | null = null
 
-  if (platformUserId) {
+if (platformUserId) {
+    const platformAdmin = await platformDb
+      .select({
+        membershipRole: platformMemberships.role,
+        platformUserId: platformUsers.id,
+      })
+      .from(platformMemberships)
+      .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+      .where(
+        and(eq(platformMemberships.userId, platformUserId), eq(platformMemberships.role, 'platform_admin'))
+      )
+      .limit(1) as any
+
+    if (platformAdmin) {
+      const identity: ResolvedIdentity = {
+        tenantId: '',
+        tenantStatus: 'active',
+        databaseUrl: '',
+        platformUserId: platformAdmin.platformUserId,
+        localUserId: null,
+        userRole: 'platform_admin',
+        isPlatformAdmin: true,
+      }
+      setCachedIdentity(cacheKey, identity)
+      return identity
+    }
+
     if (!requestedTenantId) {
       row = await platformDb
         .select({
@@ -194,7 +220,7 @@ async function resolveIdentity(
     }
   }
 
-const identity: ResolvedIdentity = {
+  const identity: ResolvedIdentity = {
     tenantId: row.tenantId || '',
     tenantStatus: row.tenantStatus,
     databaseUrl: resolveDatabaseUrl({

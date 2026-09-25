@@ -1,7 +1,7 @@
 import { getPlatformDb, getTenantDb } from '@/shared/db'
 import { platformUsers, platformMemberships } from '@/shared/db/schema/platform-schema'
 import { users, userRoles, roles } from '@/shared/db/schema/identity'
-import { eq, or, and, ne } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 export type UserRole =
   | 'owner'
@@ -59,41 +59,33 @@ export async function resolveUserRole(
 
   const platformDb = getPlatformDb()
 
-  const [platformUser] = await platformDb
+  const platformUser = await platformDb
     .select({
       userId: platformUsers.id,
       membershipRole: platformMemberships.role,
     })
     .from(platformUsers)
     .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
-    .where(and(eq(platformUsers.email, email), or(eq(platformMemberships.role, 'platform_admin'), eq(platformMemberships.role, 'platform_support'))))
-    .limit(1)
+    .where(eq(platformUsers.email, email))
+    .limit(5)
 
-  if (platformUser) {
-    const category = getRoleCategory(platformUser.membershipRole)
+  const platformMember = platformUser.find((u) => u.membershipRole === 'platform_admin' || u.membershipRole === 'platform_support')
+  if (platformMember) {
+    const category = getRoleCategory(platformMember.membershipRole)
     return {
-      role: platformUser.membershipRole,
+      role: platformMember.membershipRole,
       category,
-      platformUserId: platformUser.userId,
+      platformUserId: platformMember.userId,
     }
   }
 
-  const [fallbackMembership] = await platformDb
-    .select({
-      userId: platformUsers.id,
-      membershipRole: platformMemberships.role,
-    })
-    .from(platformUsers)
-    .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
-    .where(and(eq(platformUsers.email, email), ne(platformMemberships.role, 'platform_admin'), ne(platformMemberships.role, 'platform_support')))
-    .limit(1)
-
-  if (fallbackMembership) {
-    const category = getRoleCategory(fallbackMembership.membershipRole)
+  const otherMember = platformUser.find((u) => u.membershipRole !== 'platform_admin' && u.membershipRole !== 'platform_support')
+  if (otherMember) {
+    const category = getRoleCategory(otherMember.membershipRole)
     return {
-      role: fallbackMembership.membershipRole,
+      role: otherMember.membershipRole,
       category,
-      platformUserId: fallbackMembership.userId,
+      platformUserId: otherMember.userId,
     }
   }
 

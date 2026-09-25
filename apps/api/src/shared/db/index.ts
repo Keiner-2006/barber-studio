@@ -55,6 +55,9 @@ export function getPlatformDb() {
 
 export function getTenantDb() {
   const { tenantId, databaseUrl } = getRequestContext()
+  if (!tenantId) {
+    return getPlatformDb()
+  }
   const existing = tenantDbs.get(tenantId)
   if (existing) return existing
 
