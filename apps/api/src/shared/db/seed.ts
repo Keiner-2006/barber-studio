@@ -6,6 +6,7 @@ import {
   platformUsers,
   platformMemberships,
 } from './schema/platform-schema'
+import { signUp } from '@/shared/auth/config'
 import {
   branches,
   users,
@@ -77,6 +78,25 @@ async function seed() {
   const appPlatformUser = platformApp || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, APP_EMAIL) })
   const superAdminPlatformUser = platformSuperAdmin || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, PLATFORM_ADMIN_EMAIL) })
   if (!adminPlatformUser || !appPlatformUser || !superAdminPlatformUser) throw new Error('Could not create platform users')
+
+  const mockHeaders = new Headers({ 'x-forwarded-proto': 'https', 'origin': process.env.BETTER_AUTH_URL || 'http://localhost:3000' })
+
+  const createBetterAuthUser = async (email: string, name: string, password: string) => {
+    try {
+      await signUp({ email, password, name }, mockHeaders)
+      console.log(`[Better Auth] Created user: ${email}`)
+    } catch (e: any) {
+      if (e.message?.includes('already')) {
+        console.log(`[Better Auth] User already exists: ${email}`)
+      } else {
+        console.error(`[Better Auth] Failed to create ${email}:`, e.message)
+      }
+    }
+  }
+
+  await createBetterAuthUser(ADMIN_EMAIL, 'Administrador Navaja', 'admin123')
+  await createBetterAuthUser(APP_EMAIL, 'Usuario App', 'app123')
+  await createBetterAuthUser(PLATFORM_ADMIN_EMAIL, 'Super Administrador Plataforma', 'admin123')
 
   await db.insert(platformMemberships).values([
     { tenantId: tenant.id, userId: adminPlatformUser.id, role: 'owner', status: 'active' },
