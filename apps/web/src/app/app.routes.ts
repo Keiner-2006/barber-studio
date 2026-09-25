@@ -88,17 +88,13 @@ export const routes: Routes = [
     ],
   },
   {
+    // The platform console ships its own full-bleed shell, so it is not
+    // nested inside the tenant-facing AppShellComponent.
     path: 'platform-admin',
-    component: AppShellComponent,
     canActivate: [AuthGuard],
     data: { roles: ['platform_admin'] },
-    children: [
-      {
-        path: '',
-        loadChildren: () =>
-          import('./features/platform-admin/platform-admin.routes').then((m) => m.routes),
-      },
-    ],
+    loadChildren: () =>
+      import('./features/platform-admin/platform-admin.routes').then((m) => m.routes),
   },
   { path: '**', redirectTo: 'dashboard' },
 ]

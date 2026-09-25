@@ -4,6 +4,7 @@ export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6
 
 export interface OwnerAccount {
   name: string
+  lastName: string
   email: string
   password: string
 }
@@ -54,7 +55,7 @@ export interface BrandingInfo {
 }
 
 export interface OnboardingSubmitData {
-  account: { name: string; email: string; userId: string }
+  account: { name: string; lastName: string; email: string; userId: string }
   business: { tradeName: string; legalName: string; slug: string; businessType: string; description: string }
   location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }
   schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }

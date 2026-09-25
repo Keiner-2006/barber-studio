@@ -12,7 +12,7 @@ import { OnboardingStore } from '../onboarding.store'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">person</span>
+          <span class="material-symbols-outlined text-sm">person</span>
           Paso 1 de {{ store.totalSteps }} · Cuenta del Propietario
         </span>
         <h2>Crea tu cuenta de administrador</h2>
@@ -20,18 +20,26 @@ import { OnboardingStore } from '../onboarding.store'
       </div>
 
       <form (ngSubmit)="onContinue()" class="step-form">
-        <div class="form-group">
-          <label for="name">Nombre completo *</label>
-          <div class="input-wrap">
-            <span class="material-icons">person</span>
-            <input id="name" [(ngModel)]="account().name" name="name" placeholder="Tu nombre completo" required />
-          </div>
-        </div>
+         <div class="form-group">
+           <label for="name">Nombre *</label>
+           <div class="input-wrap">
+             <span class="material-symbols-outlined">person</span>
+             <input id="name" [(ngModel)]="account().name" name="name" placeholder="Tu nombre completo" required />
+           </div>
+         </div>
+
+         <div class="form-group">
+           <label for="lastName">Apellido *</label>
+           <div class="input-wrap">
+             <span class="material-symbols-outlined">person</span>
+             <input id="lastName" [(ngModel)]="account().lastName" name="lastName" placeholder="Tu apellido" required />
+           </div>
+         </div>
 
         <div class="form-group">
           <label for="email">Correo electrónico *</label>
           <div class="input-wrap">
-            <span class="material-icons">mail</span>
+            <span class="material-symbols-outlined">mail</span>
             <input id="email" type="email" [(ngModel)]="account().email" name="email" placeholder="tu@mail.com" required />
           </div>
         </div>
@@ -39,7 +47,7 @@ import { OnboardingStore } from '../onboarding.store'
         <div class="form-group">
           <label for="password">Contraseña *</label>
           <div class="input-wrap">
-            <span class="material-icons">lock</span>
+            <span class="material-symbols-outlined">lock</span>
             <input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="account().password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" />
             <button type="button" class="toggle-pwd" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
               {{ showPassword ? '◉' : '◌' }}
@@ -77,8 +85,8 @@ import { OnboardingStore } from '../onboarding.store'
     .remember input { margin-top: 2px; accent-color: #944928; }
     .remember a { color: #944928; }
     .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-icons { position: absolute; left: 12px; color: #50443e; font-size: 18px; }
-    .input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
+    .input-wrap input { width: 100%; padding: 12px 38px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
     .input-wrap input:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
     .toggle-pwd { position: absolute; right: 12px; background: none; border: none; color: #50443e; cursor: pointer; font-size: 16px; }
     .btn { padding: 14px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 0; cursor: pointer; transition: .2s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
@@ -97,11 +105,11 @@ export class OnboardingStepAccountComponent {
 
   account() { return this.store.account() }
 
-  onContinue(): void {
-    if (!this.store.account().name || !this.store.account().email || !this.store.account().password) return
-    if (this.store.account().password.length < 8) return
-    if (!this.acceptTerms) return
-    this.store.setSubmitting(true)
-    this.store.registerAndLogin()
-  }
+   onContinue(): void {
+     if (!this.store.account().name || !this.store.account().lastName || !this.store.account().email || !this.store.account().password) return
+     if (this.store.account().password.length < 8) return
+     if (!this.acceptTerms) return
+     this.store.setSubmitting(true)
+     this.store.registerAndLogin()
+   }
 }

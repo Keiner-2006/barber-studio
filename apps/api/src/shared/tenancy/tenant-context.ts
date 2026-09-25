@@ -1,5 +1,6 @@
 import { getSession } from '@/shared/auth/config'
 import { getPlatformDb, getTenantDb } from '@/shared/db'
+import { ForbiddenError } from '@/shared/errors/app-error'
 import {
   platformMemberships,
   platformTenants,
@@ -37,6 +38,15 @@ type ResolvedIdentity = {
 
 const IDENTITY_CACHE_TTL_MS = 30_000
 const identityCache = new Map<string, { identity: ResolvedIdentity; expiresAt: number }>()
+
+type MembershipRow = {
+  membershipRole: string
+  tenantId: string | null
+  tenantStatus: string
+  databaseName: string | null
+  databaseSecretRef: string | null
+  platformUserId: string
+}
 
 function getRequestedTenantId(headers: Headers, sessionUser: unknown) {
   const tenantId =
@@ -107,14 +117,7 @@ async function resolveIdentity(
     .limit(1)
 
   const platformUserId = platformUserResult[0]?.id
-  let row: {
-    membershipRole: string
-    tenantId: string | null
-    tenantStatus: string
-    databaseName: string | null
-    databaseSecretRef: string | null
-    platformUserId: string
-  } | null = null
+  let row: MembershipRow | null = null
 
 if (platformUserId) {
     const platformAdmin = await platformDb
@@ -129,12 +132,16 @@ if (platformUserId) {
       )
       .limit(1) as any
 
-    if (platformAdmin) {
+    // Drizzle select builders resolve to an ARRAY, and an empty array is truthy
+    // in JS. Both facts matter here: without the length check every user with a
+    // platform_users row took the platform-admin branch, and without indexing the
+    // row every field read (row.tenantId, ...) was undefined.
+    if (platformAdmin.length > 0) {
       const identity: ResolvedIdentity = {
         tenantId: '',
         tenantStatus: 'active',
         databaseUrl: '',
-        platformUserId: platformAdmin.platformUserId,
+        platformUserId: platformAdmin[0].platformUserId,
         localUserId: null,
         userRole: 'platform_admin',
         isPlatformAdmin: true,
@@ -143,53 +150,55 @@ if (platformUserId) {
       return identity
     }
 
-    if (!requestedTenantId) {
-      row = await platformDb
-        .select({
-          membershipRole: platformMemberships.role,
-          tenantId: platformTenants.id,
-          tenantStatus: platformTenants.status,
-          databaseName: platformTenants.databaseName,
-          databaseSecretRef: platformTenants.databaseSecretRef,
-          platformUserId: platformUsers.id,
-        })
-        .from(platformMemberships)
-        .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
-        .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
-        .where(
-          and(
-            eq(platformMemberships.userId, platformUserId),
-            eq(platformMemberships.status, 'active'),
-            eq(platformTenants.status, 'active')
+    const membershipRows = requestedTenantId
+      ? await platformDb
+          .select({
+            membershipRole: platformMemberships.role,
+            tenantId: platformTenants.id,
+            tenantStatus: platformTenants.status,
+            databaseName: platformTenants.databaseName,
+            databaseSecretRef: platformTenants.databaseSecretRef,
+            platformUserId: platformUsers.id,
+          })
+          .from(platformMemberships)
+          .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+          .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
+          .where(
+            and(
+              eq(platformMemberships.userId, platformUserId),
+              eq(platformMemberships.tenantId, requestedTenantId),
+              eq(platformMemberships.status, 'active'),
+              eq(platformTenants.status, 'active')
+            )
           )
-        )
-        .limit(1) as any
-    } else {
-      row = await platformDb
-        .select({
-          membershipRole: platformMemberships.role,
-          tenantId: platformTenants.id,
-          tenantStatus: platformTenants.status,
-          databaseName: platformTenants.databaseName,
-          databaseSecretRef: platformTenants.databaseSecretRef,
-          platformUserId: platformUsers.id,
-        })
-        .from(platformMemberships)
-        .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
-        .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
-        .where(
-          and(
-            eq(platformMemberships.userId, platformUserId),
-            eq(platformMemberships.tenantId, requestedTenantId),
-            eq(platformMemberships.status, 'active'),
-            eq(platformTenants.status, 'active')
+          .limit(1) as unknown as MembershipRow[]
+      : await platformDb
+          .select({
+            membershipRole: platformMemberships.role,
+            tenantId: platformTenants.id,
+            tenantStatus: platformTenants.status,
+            databaseName: platformTenants.databaseName,
+            databaseSecretRef: platformTenants.databaseSecretRef,
+            platformUserId: platformUsers.id,
+          })
+          .from(platformMemberships)
+          .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+          .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
+          .where(
+            and(
+              eq(platformMemberships.userId, platformUserId),
+              eq(platformMemberships.status, 'active'),
+              eq(platformTenants.status, 'active')
+            )
           )
-        )
-        .limit(1) as any
-    }
+          .limit(1) as unknown as MembershipRow[]
+
+    row = membershipRows[0] ?? null
   }
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
 
   const isPlatformAdmin = row.membershipRole === 'platform_admin'
 
@@ -351,5 +360,14 @@ export async function withTenantRequest<T>(
 ) {
   const request = await resolveTenantRequest(headers)
   if (!request) return null
+  // A platform admin without a requested tenant resolves to an empty tenantId.
+  // Tenant-scoped handlers must never run in that context: getTenantDb() would
+  // fall back to the platform DB and every tenant_id = '' comparison would raise
+  // Postgres 22P02 (invalid input syntax for type uuid), surfacing as a 500.
+  if (!request.context.tenantId) {
+    throw new ForbiddenError(
+      'Este recurso requiere un contexto de tenant. Selecciona un tenant o usa un usuario con membresía de tenant.'
+    )
+  }
   return runWithRequestContext(request.context, () => callback(request))
 }

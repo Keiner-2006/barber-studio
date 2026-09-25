@@ -11,7 +11,7 @@ import { OnboardingStore } from '../onboarding.store'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">schedule</span>
+          <span class="material-symbols-outlined text-sm">schedule</span>
           Paso 4 de {{ store.totalSteps }} · Catálogo & Disponibilidad
         </span>
         <h2>Horarios Semanales y Catálogo Inicial</h2>
@@ -48,7 +48,7 @@ import { OnboardingStore } from '../onboarding.store'
           <div class="services-header">
             <span class="title">Servicios Preconfigurados (COP $)</span>
             <button class="add-btn" type="button">
-              <span class="material-icons text-sm">add_circle</span>
+              <span class="material-symbols-outlined text-sm">add_circle</span>
               Añadir Otro Servicio
             </button>
           </div>
@@ -57,7 +57,7 @@ import { OnboardingStore } from '../onboarding.store'
               <div class="service-row">
                 <div class="service-info">
                   <div class="service-icon">
-                    <span class="material-icons">{{ getServiceIcon(service.name) }}</span>
+                    <span class="material-symbols-outlined">{{ getServiceIcon(service.name) }}</span>
                   </div>
                   <div class="service-details">
                     <span class="service-name">{{ service.name }}</span>
@@ -125,6 +125,6 @@ export class OnboardingStepServicesComponent {
     if (name.includes('Corte') || name.includes('Fade')) return 'content_cut'
     if (name.includes('Barba')) return 'face'
     if (name.includes('Combo')) return 'workspace_premium'
-    return 'beauty_rest'
+    return 'self_improvement'
   }
 }

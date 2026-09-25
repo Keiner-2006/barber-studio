@@ -16,7 +16,10 @@ export interface CreateTenantInput {
   businessType: 'barberia' | 'peluqueria' | 'grooming' | 'otro'
   email: string
   ownerName: string
+  ownerLastName?: string
   phone?: string
+  documentType?: string
+  documentNumber?: string
   logoUrl?: string
   primaryColor?: string
 }
@@ -43,10 +46,14 @@ export class ProvisioningService {
     const userId = existingUser?.id || randomUUID()
 
     if (!existingUser) {
-      await platformDb.insert(platformUsers).values({
+       await platformDb.insert(platformUsers).values({
         id: userId,
         email: input.email,
         name: input.ownerName,
+        lastName: input.ownerLastName || null,
+        phone: input.phone || null,
+        documentType: input.documentType || null,
+        documentNumber: input.documentNumber || null,
         passwordHash: 'oauth:better-auth',
         status: 'active',
       })

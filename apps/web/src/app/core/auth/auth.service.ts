@@ -49,13 +49,16 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, expectedRole?: string): Observable<LoginResponse> {
+  login(email: string, password: string, expectedRole?: string, tenantId?: string): Observable<LoginResponse> {
     const body: LoginRequest = { email, password, ...(expectedRole ? { expectedRole: expectedRole as any } : {}) }
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, body).pipe(
       tap((response) => {
         this.currentUser.set(response.user)
         this.currentSession.set(response.session)
         this.saveToStorage(response)
+        if (tenantId && typeof localStorage !== 'undefined') {
+          localStorage.setItem('navaja_tenant_id', tenantId)
+        }
       }),
       switchMap((response) =>
         this.tenantService.load().pipe(

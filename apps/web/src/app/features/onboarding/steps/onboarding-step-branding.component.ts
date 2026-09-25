@@ -18,7 +18,7 @@ const COLOR_PRESETS = [
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">palette</span>
+          <span class="material-symbols-outlined text-sm">palette</span>
           Paso 5 de {{ store.totalSteps }} · Estética y Medios Digitales
         </span>
         <h2>Identidad Visual y Presencia Online</h2>
@@ -37,7 +37,7 @@ const COLOR_PRESETS = [
               <img [src]="logoUrl" class="logo-preview" />
             } @else {
               <div class="upload-icon">
-                <span class="material-icons text-2xl">cloud_upload</span>
+                <span class="material-symbols-outlined text-2xl">cloud_upload</span>
               </div>
               <span class="upload-title">{{ dragging ? 'Suelta el archivo aquí' : 'Arrastra tu archivo de logo aquí o haz clic para explorar' }}</span>
               <span class="upload-hint">Subida directa a Cloudinary — optimización automática</span>
@@ -67,7 +67,7 @@ const COLOR_PRESETS = [
                   <span class="preset-sublabel">{{ preset.sublabel }}</span>
                 </div>
                 @if (store.branding().colorPreset === preset.name) {
-                  <span class="check"><span class="material-icons text-sm">check</span></span>
+                  <span class="check"><span class="material-symbols-outlined text-sm">check</span></span>
                 }
               </div>
             }
@@ -78,7 +78,7 @@ const COLOR_PRESETS = [
           <div class="form-group">
             <label for="instagram">Instagram Oficial</label>
             <div class="input-wrap">
-              <span class="material-icons">photo_camera</span>
+              <span class="material-symbols-outlined">photo_camera</span>
               <input id="instagram" [(ngModel)]="store.branding().instagram" name="instagram" placeholder="@tu_negocio" />
             </div>
           </div>
@@ -86,7 +86,7 @@ const COLOR_PRESETS = [
           <div class="form-group">
             <label for="tiktok">TikTok Barber Showcase</label>
             <div class="input-wrap">
-              <span class="material-icons">videocam</span>
+              <span class="material-symbols-outlined">videocam</span>
               <input id="tiktok" [(ngModel)]="store.branding().tiktok" name="tiktok" placeholder="@tu_negocio" />
             </div>
           </div>
@@ -125,7 +125,7 @@ const COLOR_PRESETS = [
     .preset-sublabel { font-size: 11px; color: #50443e; }
     .check { color: #944928; }
     .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-icons { position: absolute; left: 12px; color: #50443e; font-size: 18px; }
+    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
     .input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
     .input-wrap input:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
     @media (max-width: 768px) { .color-presets { grid-template-columns: 1fr; } }

@@ -13,7 +13,7 @@ import { BusinessType } from '../onboarding.models'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">badge</span>
+          <span class="material-symbols-outlined text-sm">badge</span>
           Paso 2 de {{ store.totalSteps }} · Datos Fundamentales
         </span>
         <h2>Configura la identidad de tu barbería o estudio</h2>
@@ -28,7 +28,7 @@ import { BusinessType } from '../onboarding.models'
               <span class="required">Requerido</span>
             </label>
             <div class="input-wrap">
-              <span class="material-icons">storefront</span>
+              <span class="material-symbols-outlined">storefront</span>
               <input
                 id="tradeName"
                 [(ngModel)]="business().tradeName"
@@ -43,15 +43,16 @@ import { BusinessType } from '../onboarding.models'
           <div class="form-group">
             <label for="legalName">
               Razón Social / Registro DIAN
-              <span class="optional">Facturación</span>
+              <span class="required">Requerido</span>
             </label>
             <div class="input-wrap">
-              <span class="material-icons">receipt_long</span>
+              <span class="material-symbols-outlined">receipt_long</span>
               <input
                 id="legalName"
                 [(ngModel)]="business().legalName"
                 name="legalName"
                 placeholder="Ej. Inversiones Valhalla S.A.S."
+                required
               />
             </div>
             <span class="hint">Para emisión de comprobantes fiscales y configuración de facturas.</span>
@@ -60,12 +61,12 @@ import { BusinessType } from '../onboarding.models'
 
         <div class="form-group slug-group">
           <label for="slug">
-            <span class="material-icons text-sm">link</span>
+            <span class="material-symbols-outlined text-sm">link</span>
             Slug de Subdominio Exclusivo
           </label>
           <div class="input-wrap slug-input">
             <div class="slug-prefix">
-              <span class="material-icons text-sm">dns</span>
+              <span class="material-symbols-outlined text-sm">dns</span>
               https://navajastudio.com/
             </div>
             <input
@@ -76,7 +77,7 @@ import { BusinessType } from '../onboarding.models'
               required
             />
             <span class="slug-status" *ngIf="business().slug">
-              <span class="material-icons text-xs">check_circle</span>
+              <span class="material-symbols-outlined text-xs">check_circle</span>
               Disponible
             </span>
           </div>
@@ -95,7 +96,7 @@ import { BusinessType } from '../onboarding.models'
                 [class.selected]="business().businessType === type.value"
                 (click)="selectBusinessType(type.value)"
               >
-                <span class="material-icons">{{ type.icon }}</span>
+                <span class="material-symbols-outlined">{{ type.icon }}</span>
                 <span class="type-title">{{ type.label }}</span>
                 <span class="type-desc">{{ type.description }}</span>
               </div>
@@ -150,13 +151,13 @@ import { BusinessType } from '../onboarding.models'
     .required { color: #944928; font-size: 10px; font-weight: 600; }
     .optional { color: #50443e; font-size: 10px; font-weight: 400; }
     .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-icons { position: absolute; left: 12px; color: #50443e; font-size: 18px; }
+    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
     .input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
     .input-wrap input:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
     .hint { font-size: 11px; color: #50443e; }
     .slug-group { background: #f5f0e8; border-radius: 8px; padding: 16px; }
     .slug-input { background: white; border: 1px solid #e6e2d9; border-radius: 8px; overflow: hidden; }
-    .slug-input .material-icons { position: static; margin: 0; }
+    .slug-input .material-symbols-outlined { position: static; margin: 0; }
     .slug-prefix { display: flex; align-items: center; gap: 6px; background: #f5f0e8; padding: 12px; font-size: 13px; color: #50443e; white-space: nowrap; border-right: 1px solid #e6e2d9; }
     .slug-input input { flex: 1; padding: 12px; border: none; font-size: 14px; font-weight: 700; color: #944928; }
     .slug-input input:focus { outline: none; box-shadow: none; }
@@ -167,7 +168,7 @@ import { BusinessType } from '../onboarding.models'
     .type-card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
     .type-card:hover { background: #e6e2d9; }
     .type-card.selected { border-color: #944928; background: #fdf9f0; }
-    .type-card .material-icons { color: #944928; font-size: 24px; }
+    .type-card .material-symbols-outlined { color: #944928; font-size: 24px; }
     .type-title { font-weight: 700; color: #412311; font-size: 14px; }
     .type-desc { font-size: 11px; color: #50443e; }
     .role-pills { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -204,8 +205,8 @@ export class OnboardingStepIdentityComponent {
     this.store.updateBusiness({ businessType: type })
   }
 
-  onContinue(): void {
-    if (!this.store.business().tradeName || !this.store.business().slug) return
-    this.store.nextStep()
-  }
+   onContinue(): void {
+     if (!this.store.business().tradeName || !this.store.business().legalName || !this.store.business().slug) return
+     this.store.nextStep()
+   }
 }

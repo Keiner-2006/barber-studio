@@ -13,16 +13,17 @@ export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { account, business, branding } = body
+    const { account, business, location, branding } = body
 
-    const { legalName, tradeName, slug, businessType, email, ownerName, phone } = {
+    const { legalName, tradeName, slug, businessType, email, ownerName, ownerLastName, phone } = {
       legalName: business?.legalName ?? body.legalName,
       tradeName: business?.tradeName ?? body.tradeName,
       slug: business?.slug ?? body.slug,
       businessType: business?.businessType ?? body.businessType,
       email: account?.email ?? body.email,
       ownerName: account?.name ?? body.ownerName,
-      phone: body.phone,
+      ownerLastName: account?.lastName ?? body.ownerLastName,
+      phone: location?.whatsapp ?? body.phone,
     }
 
     if (!legalName || !tradeName || !slug || !email || !ownerName) {
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       businessType,
       email,
       ownerName,
+      ownerLastName,
       phone,
       logoUrl: branding?.logoUrl,
       primaryColor: branding?.primaryColor,

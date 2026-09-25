@@ -14,13 +14,13 @@ import { AuthService } from '../../core/auth/auth.service'
         <section class="editorial-panel">
           <div class="panel-photo"></div>
           <div class="panel-content">
-            <div class="studio-location"><i></i> SEDE ROMA NORTE · CDMX</div>
-            <div class="panel-message"><span class="pill">✂ Artisan Grooming & Atelier</span><h1>La artesanía del detalle en cada corte.</h1><p>Plataforma centralizada para reservas exclusivas, gestión de agenda artesanal y membresías de cuidado personal.</p></div>
-            <div class="panel-status"><span><b>✓</b><span><strong>Studio OS v2.4 Activo</strong><small>Disponibilidad en tiempo real</small></span></span><em>ABIERTO HOY</em></div>
+            <div class="studio-location"><i></i> {{ panelEyebrow() }}</div>
+            <div class="panel-message"><span class="pill">✂ {{ panelPill() }}</span><h1>{{ panelHeadline() }}</h1><p>{{ panelBody() }}</p></div>
+            <div class="panel-status"><span><b>✓</b><span><strong>{{ panelStatusTitle() }}</strong><small>{{ panelStatusDetail() }}</small></span></span><em>ABIERTO HOY</em></div>
           </div>
         </section>
         <section class="form-panel">
-          <div class="form-brand"><a routerLink="/" class="brand-name"><span>✂</span><span><strong>Navaja Studio</strong><small>PORTAL DE CLIENTES & STUDIO OS</small></span></a><span class="location-chip"><i></i> Roma Norte</span></div>
+          <div class="form-brand"><a routerLink="/" class="brand-name"><span>✂</span><span><strong>{{ brandName() }}</strong><small>{{ brandSubtitle() }}</small></span></a><span class="location-chip"><i></i> {{ locationLabel() }}</span></div>
           <div class="form-content">
             <div class="role-tabs"><button [class.active]="role === 'client'" (click)="role = 'client'" type="button">◉ Acceso Clientes</button><button [class.active]="role === 'staff'" (click)="role = 'staff'" type="button">▣ Equipo / Studio OS</button><button [class.active]="role === 'platform'" (click)="role = 'platform'" type="button">◉ Admin Plataforma</button></div>
             <div class="role-notice"><span>ⓘ</span><p>{{ role === 'client' ? 'Inicia sesión para gestionar tus citas programadas, consultar membresías activas y canjear puntos de fidelidad.' : role === 'platform' ? 'Acceso de super administrador para gestionar todas las sedes de la plataforma.' : 'Acceso restringido para maestros barberos, recepcionistas y administración de la sede Roma Norte.' }}</p></div>
@@ -35,9 +35,9 @@ import { AuthService } from '../../core/auth/auth.service'
             </form>
             <div class="divider"><span>O continúa con</span></div>
             <div class="sso-grid"><button type="button" (click)="signInWithGoogle()">● Google</button><button type="button">● Apple</button></div>
-            <div class="new-customer"><span class="diamond">◆</span><div><strong>¿Eres nuevo en Navaja Studio?</strong><p>Crea tu perfil en 1 minuto para agendar y acumular puntos de fidelidad.</p></div><a class="register-link" routerLink="/onboarding" type="button">Registrarme</a></div>
+            <div class="new-customer"><span class="diamond">◆</span><div><strong>¿Quieres administrar tu barbería como se debe?</strong><p>Registra tu negocio y tu equipo en minutos: agenda, caja, clientes e inventario, todo en un solo lugar.</p></div><a class="register-link" routerLink="/onboarding" type="button">Registrarme</a></div>
           </div>
-          <div class="form-footer"><span>⌑ Conexión cifrada de extremo a extremo</span><span>Navaja Studio v2.4 · <a href="#" (click)="$event.preventDefault()">Privacidad</a></span></div>
+          <div class="form-footer"><span>⌑ Conexión cifrada de extremo a extremo</span><span>BarberShop Management System v2.4 · <a href="#" (click)="$event.preventDefault()">Privacidad</a></span></div>
         </section>
       </div>
     </main>
@@ -58,6 +58,39 @@ export class LoginComponent {
   role: 'client' | 'staff' | 'platform' = 'staff'
   showPassword = false
   remember = true
+
+  readonly isPlatform = (): boolean => this.role === 'platform'
+
+  readonly brandName = (): string =>
+    this.isPlatform() ? 'Navaja Studio OS' : 'BarberShop'
+
+  readonly brandSubtitle = (): string =>
+    this.isPlatform() ? 'PLATAFORMA SAAS MULTI-TENANT' : 'MANAGEMENT SYSTEM'
+
+  readonly locationLabel = (): string =>
+    this.isPlatform() ? 'Plataforma Global' : 'Roma Norte'
+
+  readonly panelEyebrow = (): string =>
+    this.isPlatform() ? 'NAVAJA STUDIO OS · PLATAFORMA SAAS' : 'SEDE ROMA NORTE · CDMX'
+
+  readonly panelPill = (): string =>
+    this.isPlatform() ? 'Infraestructura multi-tenant' : 'Artisan Grooming & Atelier'
+
+  readonly panelHeadline = (): string =>
+    this.isPlatform()
+      ? 'Un solo lugar para operar todas tus sedes.'
+      : 'La artesanía del detalle en cada corte.'
+
+  readonly panelBody = (): string =>
+    this.isPlatform()
+      ? 'Gestiona tenants, aprovisionamiento de bases de datos dedicadas y estado de cada estudio de barbería desde un único panel de control.'
+      : 'Plataforma centralizada para reservas exclusivas, gestión de agenda artesanal y membresías de cuidado personal.'
+
+  readonly panelStatusTitle = (): string =>
+    this.isPlatform() ? 'Plataforma v2.4 Activa' : 'Studio OS v2.4 Activo'
+
+  readonly panelStatusDetail = (): string =>
+    this.isPlatform() ? 'Aislamiento multi-tenant disponible' : 'Disponibilidad en tiempo real'
 
   constructor(private authService: AuthService, private router: Router) {}
 

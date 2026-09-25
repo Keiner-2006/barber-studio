@@ -1,5 +1,8 @@
 @use '@angular/material' as mat;
 
+@tailwind components;
+@tailwind utilities;
+
 @include mat.core();
 
 $navaja-primary: mat.m2-define-palette(mat.$m2-amber-palette);
@@ -101,4 +104,47 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray);
+}
+
+/*
+ * Platform Admin console.
+ * Tailwind's preflight is disabled, so form controls inside the Super Admin
+ * console need the reset the design assumes. Scoped to `.platform-admin` so the
+ * rest of the app is untouched.
+ */
+.platform-admin {
+  background-color: #fbf9f5;
+  color: #1b1c1a;
+}
+
+.platform-admin input,
+.platform-admin select,
+.platform-admin textarea,
+.platform-admin button {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  border: 0 solid transparent;
+  margin: 0;
+}
+
+.platform-admin input::placeholder,
+.platform-admin textarea::placeholder {
+  opacity: 1;
+}
+
+.platform-admin button {
+  cursor: pointer;
+}
+
+.platform-admin button:disabled {
+  cursor: not-allowed;
+}
+
+.platform-admin table {
+  border-collapse: collapse;
+}
+
+.platform-admin svg {
+  display: block;
 }

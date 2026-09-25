@@ -36,6 +36,9 @@ load(): Observable<void> {
             }
             if (resp.data.tenant) {
               this.currentTenant.set(resp.data.tenant)
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('navaja_tenant_id', resp.data.tenant.id)
+              }
             }
             if (resp.data.branches) {
               this.availableBranches.set(resp.data.branches)

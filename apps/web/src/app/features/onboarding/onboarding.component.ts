@@ -148,6 +148,7 @@ export class OnboardingComponent implements OnInit {
   }
 
   nextStep(): void {
+    if (!this.store.canContinue()) return
     const current = this.store.currentStep()
     if (current >= this.store.totalSteps) return
     this.store.nextStep()

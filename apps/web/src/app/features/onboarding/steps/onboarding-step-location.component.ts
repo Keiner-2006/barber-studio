@@ -11,7 +11,7 @@ import { OnboardingStore } from '../onboarding.store'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">location_on</span>
+          <span class="material-symbols-outlined text-sm">location_on</span>
           Paso 3 de {{ store.totalSteps }} · Sedes y Atención Directa
         </span>
         <h2>Ubicación física y canales de Colombia</h2>
@@ -23,21 +23,21 @@ import { OnboardingStore } from '../onboarding.store'
           <div class="form-group">
             <label for="city">Ciudad / Departamento (Colombia)</label>
             <div class="input-wrap">
-              <span class="material-icons">apartment</span>
+              <span class="material-symbols-outlined">apartment</span>
               <select id="city" [(ngModel)]="location().city" name="city" required>
                 <option value="" disabled>Selecciona una ciudad</option>
                 @for (c of cities; track c) {
                   <option [value]="c">{{ c }}</option>
                 }
               </select>
-              <span class="material-icons select-arrow">expand_more</span>
+              <span class="material-symbols-outlined select-arrow">expand_more</span>
             </div>
           </div>
 
           <div class="form-group">
             <label for="neighborhood">Barrio / Sector</label>
             <div class="input-wrap">
-              <span class="material-icons">explore</span>
+              <span class="material-symbols-outlined">explore</span>
               <input id="neighborhood" [(ngModel)]="location().neighborhood" name="neighborhood" placeholder="Ej. Parque de la 93" />
             </div>
           </div>
@@ -46,7 +46,7 @@ import { OnboardingStore } from '../onboarding.store'
         <div class="form-group">
           <label for="address">Dirección Nomenclatura Oficial</label>
           <div class="input-wrap">
-            <span class="material-icons">pin_drop</span>
+            <span class="material-symbols-outlined">pin_drop</span>
             <input id="address" [(ngModel)]="location().address" name="address" placeholder="Ej. Calle 93B # 13 - 45, Local 201" />
           </div>
         </div>
@@ -54,7 +54,7 @@ import { OnboardingStore } from '../onboarding.store'
         <div class="form-grid">
           <div class="form-group">
             <label for="whatsapp">
-              <span class="material-icons text-sm">chat</span>
+              <span class="material-symbols-outlined text-sm">chat</span>
               WhatsApp Concierge (Colombia)
               <span class="optional">Recordatorios SMS / WA</span>
             </label>
@@ -67,7 +67,7 @@ import { OnboardingStore } from '../onboarding.store'
           <div class="form-group">
             <label for="email">Correo Electrónico de Notificaciones</label>
             <div class="input-wrap">
-              <span class="material-icons">mail</span>
+              <span class="material-symbols-outlined">mail</span>
               <input id="email" type="email" [(ngModel)]="location().email" name="email" placeholder="citas@tunegocio.co" />
             </div>
           </div>
@@ -75,13 +75,13 @@ import { OnboardingStore } from '../onboarding.store'
 
         <div class="map-preview">
           <span class="map-title">
-            <span class="material-icons text-sm">my_location</span>
+            <span class="material-symbols-outlined text-sm">my_location</span>
             Geolocalización en Google Maps
           </span>
           <div class="map-box">
             <div class="map-overlay">
               <div class="map-info">
-                <span class="material-icons text-sm">my_location</span>
+                <span class="material-symbols-outlined text-sm">my_location</span>
                 <span>Ubicación Georreferenciada</span>
               </div>
               <span>Lat: 4.6781° N · Lon: -74.0532° W (Zona Rosa Bogotá)</span>
@@ -103,10 +103,10 @@ import { OnboardingStore } from '../onboarding.store'
     .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
     .optional { color: #50443e; font-size: 10px; font-weight: 400; }
     .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-icons { position: absolute; left: 12px; color: #50443e; font-size: 18px; }
-    .input-wrap input, .input-wrap select { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white; }
+    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
+    .input-wrap input, .input-wrap select { width: 100%; padding: 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white; }
     .input-wrap input:focus, .input-wrap select:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
-    .select-arrow { position: absolute; right: 12px; color: #50443e; pointer-events: none; font-size: 18px; }
+    .select-arrow { position: absolute !important; right: 12px; left: auto; color: #50443e; pointer-events: none; font-size: 18px; user-select: none; }
     .hint { font-size: 11px; color: #50443e; }
     .whatsapp-input .prefix { background: #f5f0e8; padding: 12px; font-size: 13px; font-weight: 600; border-right: 1px solid #e6e2d9; white-space: nowrap; }
     .whatsapp-input input { padding-left: 12px; }

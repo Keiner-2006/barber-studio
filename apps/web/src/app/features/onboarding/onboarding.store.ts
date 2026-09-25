@@ -24,6 +24,7 @@ export class OnboardingStore {
 
   private _account = signal<OwnerAccount>({
     name: '',
+    lastName: '',
     email: '',
     password: '',
   })
@@ -126,6 +127,22 @@ export class OnboardingStore {
     if (this._currentStep() < this.totalSteps) {
       this._currentStep.set((this._currentStep() + 1) as OnboardingStep)
     }
+  }
+
+  canContinue(step?: number): boolean {
+    const s = step ?? this._currentStep()
+    if (s === 2) {
+      const b = this._business()
+      return !!b.tradeName && !!b.legalName && !!b.slug
+    }
+    if (s === 3) {
+      const l = this._location()
+      return !!l.city && !!l.address
+    }
+    if (s === 4) {
+      return this._schedule().services.some((svc) => svc.selected)
+    }
+    return true
   }
 
   prevStep(): void {

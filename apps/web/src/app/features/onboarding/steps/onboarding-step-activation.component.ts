@@ -16,7 +16,7 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-icons text-sm">rocket_launch</span>
+          <span class="material-symbols-outlined text-sm">rocket_launch</span>
           Paso {{ store.currentStep() }} de {{ store.totalSteps }} · Último Paso
         </span>
         <h2>Resumen y Activación</h2>
@@ -56,7 +56,7 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
         </div>
 
         <div class="info-banner">
-          <span class="material-icons text-lg">verified</span>
+          <span class="material-symbols-outlined text-lg">verified</span>
           <div>
             <span class="title">Cuenta Verificada</span>
             <span class="text">{{ store.account().name }} • {{ store.account().email }}</span>
@@ -89,7 +89,7 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
 
       <div *ngIf="!isSubmitting && !isComplete" class="action-bar">
         <button class="btn btn-primary" (click)="provision()" [disabled]="submitting" type="button">
-          <span class="material-icons">rocket</span>
+          <span class="material-symbols-outlined">rocket</span>
           Activar Mi Barbería
         </button>
         <span class="terms">Al crear tu cuenta, aceptas los Términos de Uso del servicio.</span>
@@ -121,7 +121,7 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
     .summary-item .label { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #50443e; }
     .summary-item .value { font-weight: 700; color: #412311; font-size: 13px; font-family: 'Fira Code', monospace; }
     .info-banner { display: flex; gap: 12px; padding: 16px; background: #f5f0e8; border-radius: 8px; margin-bottom: 20px; align-items: flex-start; }
-    .info-banner > .material-icons { color: #944928; font-size: 24px; margin-top: 2px; }
+    .info-banner > .material-symbols-outlined { color: #944928; font-size: 24px; margin-top: 2px; }
     .info-banner .title { font-weight: 600; color: #412311; font-size: 13px; display: block; }
     .info-banner .text { font-size: 11px; color: #50443e; display: block; }
     .provisioning-section { margin-bottom: 20px; }
@@ -187,6 +187,7 @@ export class OnboardingStepActivationComponent {
     const data: OnboardingSubmitData = {
       account: {
         name: this.store.account().name,
+        lastName: this.store.account().lastName,
         email: this.store.account().email,
         userId: this.store.userId(),
       },
@@ -297,9 +298,8 @@ export class OnboardingStepActivationComponent {
   private loginAfterOnboarding(): void {
     const email = this.store.account().email
     const password = this.store.account().password
-    const name = this.store.account().name
     const tenantId = this.store.tenantId()
-    this.authService.register(email, password, name, tenantId).subscribe({
+    this.authService.login(email, password, undefined, tenantId).subscribe({
       next: () => {
         this.isSubmitting = false
         this.isComplete = true
