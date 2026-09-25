@@ -3,7 +3,7 @@ import { signIn, demoAuthEnabled, demoUser } from '@/shared/auth/config'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
 import { resolveUserRole, validateRoleForFlow, getRoleCategory } from '@/shared/auth/role-resolver'
 
-const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin', 'platform_admin']
+const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin']
 const CUSTOMER_FLOWS = ['customer', 'client']
 const PLATFORM_MEMBER_FLOWS = ['platform_admin', 'platform_support']
 

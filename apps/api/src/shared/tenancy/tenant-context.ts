@@ -54,36 +54,11 @@ function getSessionToken(session: NonNullable<Awaited<ReturnType<typeof getSessi
 }
 
 export function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) {
-  const ref = tenant.databaseSecretRef
-  if (ref?.startsWith('postgres://') || ref?.startsWith('postgresql://')) {
-    const u = new URL(ref)
-    if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
-      return process.env.DATABASE_URL
-    }
-    if (process.env.DATABASE_URL) {
-      return process.env.DATABASE_URL
-    }
-    return ref
-  }
-
-  // PRIORIDAD 1: Construir URL del tenant desde DATABASE_URL + databaseName
-  if (process.env.DATABASE_URL && tenant.databaseName) {
-    const url = new URL(process.env.DATABASE_URL)
-    url.pathname = `/${tenant.databaseName}`
-    return url.toString()
-  }
-
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL
-  }
-
-  // PRIORIDAD 2: TENANT_DATABASE_URL_TEMPLATE (fallback)
-  const template = process.env.TENANT_DATABASE_URL_TEMPLATE
-  if (template && tenant.databaseName) {
-    return template.replace('{database}', encodeURIComponent(tenant.databaseName))
-  }
-
-  throw new Error('TENANT_DATABASE_NOT_CONFIGURED')
+  // Usar la platform DB (guadua_db) directamente.
+  // El aislamiento multi-tenant se logra filtrando por tenant_id en cada query
+  // (ya implementado en withTenantRequest y los adapters).
+  // Esto evita necesitar BD separadas por tenant en Render.
+  return process.env.DATABASE_URL || process.env.PLATFORM_DATABASE_URL || ''
 }
 
 function getCachedIdentity(cacheKey: string): ResolvedIdentity | null {
