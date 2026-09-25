@@ -60,14 +60,19 @@ export function resolveDatabaseUrl(tenant: typeof platformTenants.$inferSelect) 
     if (u.password && u.password.length < 8 && process.env.DATABASE_URL) {
       return process.env.DATABASE_URL
     }
-    // Si DATABASE_URL existe, siempre usarlo (el ref puede apuntar a una DB que no existe)
     if (process.env.DATABASE_URL) {
       return process.env.DATABASE_URL
     }
     return ref
   }
 
-  // PRIORIDAD 1: DATABASE_URL (como en commit 3c2324d)
+  // PRIORIDAD 1: Construir URL del tenant desde DATABASE_URL + databaseName
+  if (process.env.DATABASE_URL && tenant.databaseName) {
+    const url = new URL(process.env.DATABASE_URL)
+    url.pathname = `/${tenant.databaseName}`
+    return url.toString()
+  }
+
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL
   }
