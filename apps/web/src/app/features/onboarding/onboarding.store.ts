@@ -88,6 +88,9 @@ export class OnboardingStore {
 
   private _summary = signal<OnboardingSummary | null>(null)
 
+  private _userId = signal('')
+
+  readonly userId = this._userId.asReadonly()
   readonly currentStep = this._currentStep.asReadonly()
   readonly loading = this._loading.asReadonly()
   readonly submitting = this._submitting.asReadonly()
@@ -174,7 +177,8 @@ export class OnboardingStore {
   registerAndLogin(): void {
     const acc = this._account()
     this.auth.register(acc.email, acc.password, acc.name).subscribe({
-      next: () => {
+      next: (response: any) => {
+        this._userId.set(response.user?.id || '')
         this.setSubmitting(false)
         this.nextStep()
         this.router.navigate(['/onboarding'])

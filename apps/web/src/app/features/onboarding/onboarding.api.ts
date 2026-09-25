@@ -19,7 +19,7 @@ export class OnboardingApi {
     return this.http.get<{ cloudName: string; uploadPreset: string; uploadUrl: string; folder: string }>(`${this.apiUrl}/media/upload`, { params })
   }
 
-  submitAll(data: { account: { name: string; email: string; password: string }; business: { tradeName: string; legalName: string; slug: string; businessType: string; description: string }; location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }; schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }; branding: { primaryColor: string; colorPreset: string; logoUrl: string; instagram: string; tiktok: string } }) {
+  submitAll(data: { account: { name: string; email: string; userId: string }; business: { tradeName: string; legalName: string; slug: string; businessType: string; description: string }; location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }; schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }; branding: { primaryColor: string; colorPreset: string; logoUrl: string; instagram: string; tiktok: string } }) {
     return this.http.post<{ jobId: string }>(`${this.apiUrl}/onboarding/tenants`, data)
   }
 

@@ -188,7 +188,7 @@ export class OnboardingStepActivationComponent {
       account: {
         name: this.store.account().name,
         email: this.store.account().email,
-        password: this.store.account().password,
+        userId: this.store.userId(),
       },
       business: {
         tradeName: this.store.business().tradeName,

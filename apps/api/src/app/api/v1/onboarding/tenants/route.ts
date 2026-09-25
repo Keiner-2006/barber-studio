@@ -15,19 +15,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { account, business, branding } = body
 
-    const { legalName, tradeName, slug, businessType, email, password, ownerName, phone } = {
+    const { legalName, tradeName, slug, businessType, email, ownerName, phone } = {
       legalName: business?.legalName ?? body.legalName,
       tradeName: business?.tradeName ?? body.tradeName,
       slug: business?.slug ?? body.slug,
       businessType: business?.businessType ?? body.businessType,
       email: account?.email ?? body.email,
-      password: account?.password ?? body.password,
       ownerName: account?.name ?? body.ownerName,
       phone: body.phone,
     }
 
-    if (!legalName || !tradeName || !slug || !email || !password || !ownerName) {
-      throw new AppError('VALIDATION_ERROR', 'Faltan campos requeridos: legalName, tradeName, slug, email, password, ownerName')
+    if (!legalName || !tradeName || !slug || !email || !ownerName) {
+      throw new AppError('VALIDATION_ERROR', 'Faltan campos requeridos: legalName, tradeName, slug, email, ownerName')
     }
 
     const result = await service.createTenantAndJob({
@@ -36,7 +35,6 @@ export async function POST(request: NextRequest) {
       slug,
       businessType,
       email,
-      password,
       ownerName,
       phone,
       logoUrl: branding?.logoUrl,

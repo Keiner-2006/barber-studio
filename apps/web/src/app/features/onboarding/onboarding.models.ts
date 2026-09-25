@@ -54,7 +54,7 @@ export interface BrandingInfo {
 }
 
 export interface OnboardingSubmitData {
-  account: { name: string; email: string; password: string }
+  account: { name: string; email: string; userId: string }
   business: { tradeName: string; legalName: string; slug: string; businessType: string; description: string }
   location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }
   schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }

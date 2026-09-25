@@ -15,9 +15,8 @@ export interface CreateTenantInput {
   slug: string
   businessType: 'barberia' | 'peluqueria' | 'grooming' | 'otro'
   email: string
-  password: string
-  phone?: string
   ownerName: string
+  phone?: string
   logoUrl?: string
   primaryColor?: string
 }
@@ -32,19 +31,26 @@ export class ProvisioningService {
   async createTenantAndJob(input: CreateTenantInput): Promise<ProvisioningResult> {
     const platformDb = getPlatformDb()
     const tenantId = randomUUID()
-    const userId = randomUUID()
     const jobId = randomUUID()
     const membershipId = randomUUID()
 
-    const passwordHash = await this.hashPassword(input.password)
+    const [existingUser] = await platformDb
+      .select({ id: platformUsers.id, email: platformUsers.email, name: platformUsers.name })
+      .from(platformUsers)
+      .where(eq(platformUsers.email, input.email))
+      .limit(1)
 
-    await platformDb.insert(platformUsers).values({
-      id: userId,
-      email: input.email,
-      name: input.ownerName,
-      passwordHash,
-      status: 'active',
-    })
+    const userId = existingUser?.id || randomUUID()
+
+    if (!existingUser) {
+      await platformDb.insert(platformUsers).values({
+        id: userId,
+        email: input.email,
+        name: input.ownerName,
+        passwordHash: 'oauth:better-auth',
+        status: 'active',
+      })
+    }
 
     await platformDb.insert(platformTenants).values({
       id: tenantId,
@@ -154,7 +160,6 @@ export class ProvisioningService {
           platformUserId,
           email: platformUser?.email || '',
           name: platformUser?.name || '',
-          passwordHash: '',
           status: 'active',
         })
 
@@ -223,10 +228,4 @@ export class ProvisioningService {
     return tenant || null
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const crypto = await import('node:crypto')
-    const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex')
-    return `${salt}:${hash}`
   }
-}
