@@ -95,7 +95,7 @@ async function seed() {
   }
 
   await createBetterAuthUser(ADMIN_EMAIL, 'Administrador Navaja', 'admin123')
-  await createBetterAuthUser(APP_EMAIL, 'Usuario App', 'app123')
+  await createBetterAuthUser(APP_EMAIL, 'Usuario App', 'app123456')
   await createBetterAuthUser(PLATFORM_ADMIN_EMAIL, 'Super Administrador Plataforma', 'admin123')
 
   await db.insert(platformMemberships).values([
