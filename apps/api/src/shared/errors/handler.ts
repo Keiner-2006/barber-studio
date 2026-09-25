@@ -14,12 +14,14 @@ export function handleApiError(error: unknown, requestId?: string): NextResponse
     return NextResponse.json(response, { status: error.statusCode })
   }
 
-  console.error('Unexpected error:', error)
+  const errorMessage = error instanceof Error ? error.message : String(error)
+  console.error(`[ERROR] ${requestId}:`, error)
 
   const response: ApiErrorResponse = {
     error: {
       code: 'INTERNAL_ERROR',
-      message: 'Error interno del servidor',
+      message: errorMessage,
+      details: { rawError: errorMessage, stack: error instanceof Error ? error.stack : undefined },
     },
     requestId,
   }

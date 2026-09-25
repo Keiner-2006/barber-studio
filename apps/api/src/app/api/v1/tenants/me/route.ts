@@ -53,9 +53,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    if (membership.role === 'platform_admin' && !requestedTenantId) {
+      const allTenants = await db.query.platformTenants.findMany({
+        where: eq(platformTenants.status, 'active'),
+        orderBy: (t, { desc }) => [desc(t.createdAt)],
+      })
+      return NextResponse.json({
+        data: {
+          user: { id: platformUser.id, email: platformUser.email, name: platformUser.name },
+          role: 'platform_admin',
+          tenants: allTenants.map(t => ({ id: t.id, legalName: t.legalName, tradeName: t.tradeName, slug: t.slug, status: t.status })),
+        }
+      }, { status: 200 })
+    }
+
     const tenant = await db.query.platformTenants.findFirst({
       where: and(
-        eq(platformTenants.id, membership.tenantId),
+        eq(platformTenants.id, membership.tenantId!),
         eq(platformTenants.status, 'active')
       ),
     })

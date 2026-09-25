@@ -31,6 +31,7 @@ import {
 const DEMO_TENANT_SLUG = 'navaja-demo'
 const ADMIN_EMAIL = 'admin@navaja.local'
 const APP_EMAIL = 'app@navaja.local'
+const PLATFORM_ADMIN_EMAIL = 'adminbarbershop@gmail.com'
 
 async function seed() {
   const db = getPlatformDb()
@@ -66,14 +67,24 @@ async function seed() {
     .values({ email: APP_EMAIL, name: 'Usuario App', passwordHash: 'seed-managed-by-auth', status: 'active' })
     .onConflictDoNothing({ target: platformUsers.email })
     .returning()
+  const [platformSuperAdmin] = await db
+    .insert(platformUsers)
+    .values({ email: PLATFORM_ADMIN_EMAIL, name: 'Super Administrador Plataforma', passwordHash: 'seed-managed-by-auth', status: 'active' })
+    .onConflictDoNothing({ target: platformUsers.email })
+    .returning()
 
   const adminPlatformUser = platformAdmin || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, ADMIN_EMAIL) })
   const appPlatformUser = platformApp || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, APP_EMAIL) })
-  if (!adminPlatformUser || !appPlatformUser) throw new Error('Could not create platform users')
+  const superAdminPlatformUser = platformSuperAdmin || await db.query.platformUsers.findFirst({ where: eq(platformUsers.email, PLATFORM_ADMIN_EMAIL) })
+  if (!adminPlatformUser || !appPlatformUser || !superAdminPlatformUser) throw new Error('Could not create platform users')
 
   await db.insert(platformMemberships).values([
     { tenantId: tenant.id, userId: adminPlatformUser.id, role: 'owner', status: 'active' },
     { tenantId: tenant.id, userId: appPlatformUser.id, role: 'owner', status: 'active' },
+  ]).onConflictDoNothing()
+
+  await db.insert(platformMemberships).values([
+    { userId: superAdminPlatformUser.id, role: 'platform_admin', status: 'active' },
   ]).onConflictDoNothing()
 
   const [branch] = await db

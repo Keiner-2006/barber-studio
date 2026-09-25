@@ -2,8 +2,8 @@
 
 @include mat.core();
 
-$navaja-primary: mat.m2-define-palette(mat.$m2-indigo-palette);
-$navaja-accent: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400);
+$navaja-primary: mat.m2-define-palette(mat.$m2-amber-palette);
+$navaja-accent: mat.m2-define-palette(mat.$m2-orange-palette, A200, A100, A400);
 $navaja-warn: mat.m2-define-palette(mat.$m2-red-palette);
 
 $navaja-theme: mat.m2-define-light-theme((
@@ -13,7 +13,7 @@ $navaja-theme: mat.m2-define-light-theme((
     warn: $navaja-warn,
   ),
   typography: mat.m2-define-typography-config(
-    $font-family: '"Inter", sans-serif',
+    $font-family: '"Plus Jakarta Sans", sans-serif',
   ),
   density: 0,
 ));
@@ -28,9 +28,9 @@ $navaja-theme: mat.m2-define-light-theme((
 
 html, body {
   height: 100%;
-  font-family: 'Inter', sans-serif;
-  background-color: #fafaf8;
-  color: #1a1a1a;
+  font-family: '"Plus Jakarta Sans", sans-serif';
+  background-color: #17120f;
+  color: #ece0db;
 }
 
 :root {
@@ -42,17 +42,46 @@ html, body {
   --color-gray-light: #e5e7eb;
   --color-green: #22c55e;
   --color-red: #ef4444;
-  --color-amber: #f59e0b;
+  --color-amber: #ffb86f;
+  --color-amber-dark: #d98e3a;
+  --color-brown: #17120f;
+  --color-brown-light: #241e1b;
+  --color-brown-darker: #120d0a;
+  --color-brown-mid: #201a17;
+  --color-cream: #ece0db;
+  --color-outline: #524437;
 
-  --font-serif: 'DM Serif Display', serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Vollkorn', serif;
+  --font-sans: '"Plus Jakarta Sans"', sans-serif;
 
   --sidebar-width: 264px;
   --topbar-height: 64px;
+
+  --bg-surface: #17120f;
+  --bg-surface-container: #241e1b;
+  --bg-surface-container-low: #201a17;
+  --bg-surface-container-lowest: #120d0a;
+  --bg-surface-container-high: #2f2925;
+  --bg-surface-container-highest: #3a3330;
+  --color-primary: #ffb86f;
+  --color-primary-container: #d98e3a;
+  --color-on-primary: #4a2800;
+  --color-on-primary-container: #2c1600;
+  --color-on-surface: #ece0db;
+  --color-on-surface-variant: #d7c3b2;
+  --color-surface: #17120f;
+  --color-surface-dim: #17120f;
+  --color-surface-bright: #3e3834;
+  --color-secondary: #d2c4bd;
+  --color-tertiary: #a0d2ae;
+  --color-tertiary-container: #79aa88;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-outline-variant: #524437;
 }
 
 ::selection {
-  background-color: var(--color-copper);
+  background-color: var(--color-amber-dark);
   color: white;
 }
 

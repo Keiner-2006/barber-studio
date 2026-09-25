@@ -41,6 +41,7 @@ export function clearRequestContext(): void {
 export function hasPermission(permission: string, userRole: string): boolean {
   const rolePermissions: Record<string, string[]> = {
     owner: ['*'],
+    platform_admin: ['*'],
     admin: [
       'branches:read', 'branches:write',
       'catalog:read', 'catalog:write',
@@ -86,6 +87,10 @@ export function hasPermission(permission: string, userRole: string): boolean {
     customer: [
       'appointments:read',
       'customers:read',
+    ],
+    platform_support: [
+      'reports:read',
+      'users:read',
     ],
   }
 

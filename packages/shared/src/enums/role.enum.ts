@@ -7,6 +7,8 @@ export const ROLES = {
   INVENTORY_MANAGER: 'inventory_manager',
   ACCOUNTANT: 'accountant',
   CUSTOMER: 'customer',
+  PLATFORM_ADMIN: 'platform_admin',
+  PLATFORM_SUPPORT: 'platform_support',
 } as const
 
 export type Role = (typeof ROLES)[keyof typeof ROLES]
@@ -20,4 +22,6 @@ export const ROLE_LABELS: Record<Role, string> = {
   inventory_manager: 'Gerente de Inventario',
   accountant: 'Contador',
   customer: 'Cliente',
+  platform_admin: 'Administrador de Plataforma',
+  platform_support: 'Soporte de Plataforma',
 }

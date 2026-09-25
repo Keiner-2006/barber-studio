@@ -28,8 +28,10 @@ export interface TenantInfo {
 
 export interface TenantMeResponse {
     data: {
-        tenant: TenantInfo
-        branches: Branch[]
+        tenant?: TenantInfo
+        branches?: Branch[]
+        role?: string
+        tenants?: { id: string; legalName: string; tradeName: string; slug: string; status: string }[]
     }
 }
 

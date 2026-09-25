@@ -26,11 +26,12 @@ export class AuthService {
   ) {
     this.loadFromStorage()
     if (this.currentSession() && !environment.production && environment.demoAuth) {
+      const isSuperAdmin = this.currentUser()?.email === 'adminbarbershop@gmail.com'
       this.currentUser.set({
-        id: '00000000-0000-0000-0000-000000000001',
-        email: 'admin@navaja.local',
-        name: 'Administrador Navaja',
-        role: 'admin',
+        id: isSuperAdmin ? '00000000-0000-0000-0000-000000000002' : '00000000-0000-0000-0000-000000000001',
+        email: isSuperAdmin ? 'adminbarbershop@gmail.com' : 'admin@navaja.local',
+        name: isSuperAdmin ? 'Super Administrador Plataforma' : 'Administrador Navaja',
+        role: isSuperAdmin ? 'platform_admin' : 'admin',
       })
       this.currentSession.set({
         token: 'navaja-demo-session',
@@ -40,6 +41,8 @@ export class AuthService {
     if (this.currentSession()) {
       this.tenantService.load().subscribe({
         error: () => {
+          const user = this.currentUser()
+          if (user?.role === 'platform_admin') return
           this.clearSession()
         },
       })
@@ -60,6 +63,25 @@ export class AuthService {
           catchError(() => {
             this.clearSession()
             return throwError(() => new Error('No se pudo cargar la información del estudio'))
+          })
+        )
+      )
+    )
+  }
+
+  loginPlatform(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, {}).pipe(
+      tap((response) => {
+        this.currentUser.set(response.user)
+        this.currentSession.set(response.session)
+        this.saveToStorage(response)
+      }),
+      switchMap((response) =>
+        this.tenantService.load().pipe(
+          map(() => response),
+          catchError(() => {
+            this.clearSession()
+            return throwError(() => new Error('No se pudo cargar la información de la plataforma'))
           })
         )
       )

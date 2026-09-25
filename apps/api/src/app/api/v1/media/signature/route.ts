@@ -19,6 +19,7 @@ function getCloudinaryParams(): Record<string, string> {
     upload_preset: uploadPreset,
   }
   const stringToSign = Object.entries(params)
+    .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
     .join('&')
   const signature = crypto.createHmac('sha256', CLOUDINARY_API_SECRET).update(stringToSign).digest('hex')
@@ -64,10 +65,11 @@ export async function GET(request: NextRequest) {
     params['public_id'] = publicId
     params['type'] = 'upload'
 
-    const stringToSign = Object.entries(params)
+    const sortedParams = Object.entries(params)
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => `${k}=${v}`)
       .join('&')
-    const signature = crypto.createHmac('sha256', CLOUDINARY_API_SECRET).update(stringToSign).digest('hex')
+    const signature = crypto.createHmac('sha256', CLOUDINARY_API_SECRET).update(sortedParams).digest('hex')
     params['signature'] = signature
 
     const destroyUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/destroy`

@@ -22,10 +22,10 @@ import { AuthService } from '../../core/auth/auth.service'
         <section class="form-panel">
           <div class="form-brand"><a routerLink="/" class="brand-name"><span>✂</span><span><strong>Navaja Studio</strong><small>PORTAL DE CLIENTES & STUDIO OS</small></span></a><span class="location-chip"><i></i> Roma Norte</span></div>
           <div class="form-content">
-            <div class="role-tabs"><button [class.active]="role === 'client'" (click)="role = 'client'" type="button">◉ Acceso Clientes</button><button [class.active]="role === 'staff'" (click)="role = 'staff'" type="button">▣ Equipo / Studio OS</button></div>
-            <div class="role-notice"><span>ⓘ</span><p>{{ role === 'client' ? 'Inicia sesión para gestionar tus citas programadas, consultar membresías activas y canjear puntos de fidelidad.' : 'Acceso restringido para maestros barberos, recepcionistas y administración de la sede Roma Norte.' }}</p></div>
+            <div class="role-tabs"><button [class.active]="role === 'client'" (click)="role = 'client'" type="button">◉ Acceso Clientes</button><button [class.active]="role === 'staff'" (click)="role = 'staff'" type="button">▣ Equipo / Studio OS</button><button [class.active]="role === 'platform'" (click)="role = 'platform'" type="button">◉ Admin Plataforma</button></div>
+            <div class="role-notice"><span>ⓘ</span><p>{{ role === 'client' ? 'Inicia sesión para gestionar tus citas programadas, consultar membresías activas y canjear puntos de fidelidad.' : role === 'platform' ? 'Acceso de super administrador para gestionar todas las sedes de la plataforma.' : 'Acceso restringido para maestros barberos, recepcionistas y administración de la sede Roma Norte.' }}</p></div>
             <form (ngSubmit)="onLogin()">
-              <label for="email">{{ role === 'client' ? 'Correo electrónico o teléfono celular' : 'ID de Barbero / Correo de Colaborador' }}</label>
+              <label for="email">{{ role === 'client' ? 'Correo electrónico o teléfono celular' : role === 'platform' ? 'Correo de Super Administrador' : 'ID de Barbero / Correo de Colaborador' }}</label>
               <div class="input-wrap"><span>✉</span><input id="email" type="email" [(ngModel)]="email" name="email" placeholder="ejemplo@correo.com" required /></div>
               <div class="password-label"><label for="password">Contraseña</label><a href="#" (click)="$event.preventDefault()">¿Olvidaste tu contraseña?</a></div>
               <div class="input-wrap"><span>⌑</span><input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" placeholder="Ingresa tu clave de acceso" required /><button type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ showPassword ? '◉' : '◌' }}</button></div>
@@ -55,7 +55,7 @@ export class LoginComponent {
   password = ''
   loading = false
   error = ''
-  role: 'client' | 'staff' = 'staff'
+  role: 'client' | 'staff' | 'platform' = 'staff'
   showPassword = false
   remember = true
 
@@ -69,7 +69,7 @@ export class LoginComponent {
     if (!this.email || !this.password) return
     this.loading = true
     this.error = ''
-    const expectedRole = this.role === 'client' ? 'customer' : 'admin'
+    const expectedRole = this.role === 'client' ? 'customer' : this.role === 'platform' ? 'platform_admin' : 'admin'
     this.authService.login(this.email, this.password, expectedRole).subscribe({
       next: (response: any) => {
         const role = response?.user?.role
@@ -77,6 +77,8 @@ export class LoginComponent {
           this.router.navigate(['/booking'])
         } else if (role === 'barber') {
           this.router.navigate(['/agenda'])
+        } else if (role === 'platform_admin') {
+          this.router.navigate(['/platform-admin'])
         } else {
           this.router.navigate(['/dashboard'])
         }

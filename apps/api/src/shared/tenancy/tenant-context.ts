@@ -32,6 +32,7 @@ type ResolvedIdentity = {
   platformUserId: string
   localUserId: string | null
   userRole: string
+  isPlatformAdmin: boolean
 }
 
 const IDENTITY_CACHE_TTL_MS = 30_000
@@ -42,7 +43,9 @@ function getRequestedTenantId(headers: Headers, sessionUser: unknown) {
     typeof sessionUser === 'object' && sessionUser !== null && 'tenantId' in sessionUser
       ? (sessionUser as { tenantId?: unknown }).tenantId
       : undefined
-  return headers.get('x-tenant-id') || (typeof tenantId === 'string' ? tenantId : undefined)
+  const fromHeaders = headers.get('x-tenant-id')
+  if (fromHeaders) return fromHeaders
+  return typeof tenantId === 'string' ? tenantId : undefined
 }
 
 function getSessionToken(session: NonNullable<Awaited<ReturnType<typeof getSession>>>) {
@@ -108,46 +111,91 @@ async function resolveIdentity(
   requestedTenantId: string,
   expectedFlow?: RoleCategory
 ): Promise<ResolvedIdentity | null> {
-  const cacheKey = `${getSessionToken(session)}:${requestedTenantId}`
+  const cacheKey = `${getSessionToken(session)}:${requestedTenantId || '*'}`
   const cached = getCachedIdentity(cacheKey)
   if (cached) return cached
 
   const platformDb = getPlatformDb()
 
-  const [row] = await platformDb
+  const platformUserResult = await platformDb
     .select({
-      membershipId: platformMemberships.id,
-      membershipRole: platformMemberships.role,
-      tenantId: platformTenants.id,
-      tenantStatus: platformTenants.status,
-      databaseName: platformTenants.databaseName,
-      databaseSecretRef: platformTenants.databaseSecretRef,
-      platformUserId: platformUsers.id,
+      id: platformUsers.id,
+      email: platformUsers.email,
     })
-    .from(platformMemberships)
-    .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
-    .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
-    .where(
-      and(
-        eq(platformUsers.email, session.user.email),
-        eq(platformMemberships.tenantId, requestedTenantId),
-        eq(platformMemberships.status, 'active'),
-        eq(platformTenants.status, 'active')
-      )
-    )
+    .from(platformUsers)
+    .where(eq(platformUsers.email, session.user.email))
     .limit(1)
+
+  const platformUserId = platformUserResult[0]?.id
+  let row: {
+    membershipRole: string
+    tenantId: string | null
+    tenantStatus: string
+    databaseName: string | null
+    databaseSecretRef: string | null
+    platformUserId: string
+  } | null = null
+
+  if (platformUserId) {
+    if (!requestedTenantId) {
+      row = await platformDb
+        .select({
+          membershipRole: platformMemberships.role,
+          tenantId: platformTenants.id,
+          tenantStatus: platformTenants.status,
+          databaseName: platformTenants.databaseName,
+          databaseSecretRef: platformTenants.databaseSecretRef,
+          platformUserId: platformUsers.id,
+        })
+        .from(platformMemberships)
+        .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+        .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
+        .where(
+          and(
+            eq(platformMemberships.userId, platformUserId),
+            eq(platformMemberships.status, 'active'),
+            eq(platformTenants.status, 'active')
+          )
+        )
+        .limit(1) as any
+    } else {
+      row = await platformDb
+        .select({
+          membershipRole: platformMemberships.role,
+          tenantId: platformTenants.id,
+          tenantStatus: platformTenants.status,
+          databaseName: platformTenants.databaseName,
+          databaseSecretRef: platformTenants.databaseSecretRef,
+          platformUserId: platformUsers.id,
+        })
+        .from(platformMemberships)
+        .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+        .innerJoin(platformTenants, eq(platformMemberships.tenantId, platformTenants.id))
+        .where(
+          and(
+            eq(platformMemberships.userId, platformUserId),
+            eq(platformMemberships.tenantId, requestedTenantId),
+            eq(platformMemberships.status, 'active'),
+            eq(platformTenants.status, 'active')
+          )
+        )
+        .limit(1) as any
+    }
+  }
 
   if (!row) return null
 
-  if (expectedFlow) {
+  const isPlatformAdmin = row.membershipRole === 'platform_admin'
+
+  if (expectedFlow && !isPlatformAdmin) {
     const identity = await resolveUserRole(session.user.email, requestedTenantId)
     if (!identity.role || !validateRoleForFlow(identity.role, expectedFlow)) {
       return null
     }
   }
 
-  const identity: ResolvedIdentity = {
-    tenantId: row.tenantId,
+const identity: ResolvedIdentity = {
+    tenantId: row.tenantId || '',
     tenantStatus: row.tenantStatus,
     databaseUrl: resolveDatabaseUrl({
       databaseName: row.databaseName,
@@ -156,9 +204,9 @@ async function resolveIdentity(
     platformUserId: row.platformUserId,
     localUserId: null,
     userRole: row.membershipRole,
+    isPlatformAdmin: row.membershipRole === 'platform_admin',
   }
 
-  // Local user identity comes from the tenant DB in a single joined query.
   try {
     const [local] = await getTenantDb()
       .select({
@@ -191,8 +239,19 @@ async function buildContext(
   const localUserId = identity.localUserId || sessionUserId
   let staffId: string | undefined
 
-  // Query staff profile if we have a local user ID
-  if (localUserId) {
+  if (identity.isPlatformAdmin && !identity.tenantId) {
+    return {
+      tenantId: '',
+      userId: localUserId,
+      userRole: identity.userRole,
+      databaseUrl: '',
+      requestId: headers.get('x-request-id') || crypto.randomUUID(),
+      ipAddress: headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+      userAgent: headers.get('user-agent') || undefined,
+    }
+  }
+
+  if (localUserId && identity.tenantId) {
     try {
       const [staff] = await getTenantDb()
         .select({ id: staffProfiles.id })
@@ -206,7 +265,7 @@ async function buildContext(
   }
 
   return {
-    tenantId: identity.tenantId,
+    tenantId: identity.tenantId || '',
     userId: localUserId,
     userRole: identity.userRole,
     staffId,
@@ -225,10 +284,18 @@ export async function resolveTenantRequest(
   if (!session) return null
 
   const requestedTenantId = getRequestedTenantId(headers, session.user)
-  if (!requestedTenantId) return null
 
-  const identity = await resolveIdentity(headers, session, requestedTenantId, expectedFlow)
+  const identity = await resolveIdentity(headers, session, requestedTenantId || '', expectedFlow)
   if (!identity) return null
+
+  if (identity.isPlatformAdmin && !requestedTenantId) {
+    return {
+      session,
+      context: await buildContext(headers, identity, session.user.id),
+    }
+  }
+
+  if (!requestedTenantId) return null
 
   return {
     session,

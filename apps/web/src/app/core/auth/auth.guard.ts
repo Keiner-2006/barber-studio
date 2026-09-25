@@ -10,7 +10,10 @@ const COMPANY_MEMBER_ROLES = [
   'barber',
   'inventory_manager',
   'accountant',
+  'platform_admin',
 ]
+
+const PLATFORM_ROLES = ['platform_admin', 'platform_support']
 
 function userHasRole(userRole: string | undefined, requiredRoles: string[]): boolean {
   if (!userRole) return false
@@ -18,6 +21,7 @@ function userHasRole(userRole: string | undefined, requiredRoles: string[]): boo
     if (role === '*') return true
     if (role === userRole) return true
     if (role === 'company_member') return COMPANY_MEMBER_ROLES.includes(userRole)
+    if (role === 'platform_member') return PLATFORM_ROLES.includes(userRole)
     if (role === 'customer') return userRole === 'customer'
     return false
   })

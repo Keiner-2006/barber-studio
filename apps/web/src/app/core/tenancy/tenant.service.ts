@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core'
-import { Observable, tap, map } from 'rxjs'
+import { Observable, tap, map, catchError, throwError } from 'rxjs'
 import { ApiClient } from '../http/api-client'
 import { Branch, TenantInfo, TenantMeResponse, BranchesResponse } from './tenant.models'
 
@@ -23,21 +23,39 @@ export class TenantService {
     }
   }
 
-  load(): Observable<void> {
+load(): Observable<void> {
     return this.api
       .get<TenantMeResponse>('/tenants/me')
       .pipe(
-      tap((resp) => {
-          this.currentTenant.set(resp.data.tenant)
-          this.availableBranches.set(resp.data.branches)
-          const savedBranchId =
-              typeof localStorage !== 'undefined'
-                  ? localStorage.getItem('navaja_branch_id')
-                  : null
-          const saved = resp.data.branches.find((b) => b.id === savedBranchId)
-          this.currentBranch.set(saved ?? resp.data.branches[0] ?? null)
-      }),
-        map(() => undefined as void)
+        tap((resp) => {
+            if (resp.data.role === 'platform_admin') {
+              this.currentTenant.set(null)
+              this.currentBranch.set(null)
+              this.availableBranches.set([])
+              return
+            }
+            if (resp.data.tenant) {
+              this.currentTenant.set(resp.data.tenant)
+            }
+            if (resp.data.branches) {
+              this.availableBranches.set(resp.data.branches)
+              const savedBranchId =
+                  typeof localStorage !== 'undefined'
+                      ? localStorage.getItem('navaja_branch_id')
+                      : null
+              const saved = resp.data.branches!.find((b) => b.id === savedBranchId)
+              this.currentBranch.set(saved ?? resp.data.branches![0] ?? null)
+            }
+        }),
+        map(() => undefined as void),
+        catchError((err) => {
+          if (err.status === 403 || err.status === 401) {
+            this.currentTenant.set(null)
+            this.currentBranch.set(null)
+            this.availableBranches.set([])
+          }
+          return throwError(() => err)
+        })
       )
   }
 

@@ -54,6 +54,7 @@ export const platformUsers = pgTable('platform_users', {
 
 export const platformMembershipRoleEnum = pgEnum('platform_membership_role', [
   'owner',
+  'platform_admin',
   'admin',
   'reception',
   'barber',
@@ -64,7 +65,7 @@ export const platformMembershipRoleEnum = pgEnum('platform_membership_role', [
 
 export const platformMemberships = pgTable('platform_memberships', {
   id: uuid('id').primaryKey().defaultRandom(),
-  tenantId: uuid('tenant_id').notNull().references(() => platformTenants.id),
+  tenantId: uuid('tenant_id').references(() => platformTenants.id),
   userId: uuid('user_id').notNull().references(() => platformUsers.id),
   role: platformMembershipRoleEnum('role').notNull(),
   status: text('status').notNull().default('active'),

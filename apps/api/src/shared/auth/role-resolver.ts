@@ -16,6 +16,7 @@ export type UserRole =
 export const ROLE_CATEGORIES = {
   company_member: ['owner', 'admin', 'app', 'reception', 'barber', 'inventory_manager', 'accountant'],
   customer: ['customer'],
+  platform_member: ['platform_admin', 'platform_support'],
 } as const
 
 export type RoleCategory = keyof typeof ROLE_CATEGORIES
@@ -81,7 +82,7 @@ export async function resolveUserRole(
 
 export function validateRoleForFlow(
   userRole: string | null,
-  expectedFlow: 'company_member' | 'customer'
+  expectedFlow: 'company_member' | 'customer' | 'platform_member'
 ): boolean {
   if (!userRole) return false
   return (ROLE_CATEGORIES[expectedFlow] as readonly string[]).includes(userRole)

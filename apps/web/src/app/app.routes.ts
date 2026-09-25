@@ -87,5 +87,18 @@ export const routes: Routes = [
       },
     ],
   },
+  {
+    path: 'platform-admin',
+    component: AppShellComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['platform_admin'] },
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./features/platform-admin/platform-admin.routes').then((m) => m.routes),
+      },
+    ],
+  },
   { path: '**', redirectTo: 'dashboard' },
 ]

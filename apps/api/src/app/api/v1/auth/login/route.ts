@@ -3,12 +3,14 @@ import { signIn, demoAuthEnabled, demoUser } from '@/shared/auth/config'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
 import { resolveUserRole, validateRoleForFlow, getRoleCategory } from '@/shared/auth/role-resolver'
 
-const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin']
+const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin', 'platform_admin']
 const CUSTOMER_FLOWS = ['customer', 'client']
+const PLATFORM_MEMBER_FLOWS = ['platform_admin', 'platform_support']
 
-function mapExpectedRoleToFlow(expectedRole: string): 'company_member' | 'customer' | null {
+function mapExpectedRoleToFlow(expectedRole: string): 'company_member' | 'customer' | 'platform_member' | null {
   if (COMPANY_MEMBER_FLOWS.includes(expectedRole.toLowerCase())) return 'company_member'
   if (CUSTOMER_FLOWS.includes(expectedRole.toLowerCase())) return 'customer'
+  if (PLATFORM_MEMBER_FLOWS.includes(expectedRole.toLowerCase())) return 'platform_member'
   return null
 }
 
@@ -55,12 +57,12 @@ export async function POST(request: NextRequest) {
       }
 
       if (!validateRoleForFlow(identity.role, expectedFlow)) {
-        const targetType = expectedFlow === 'customer' ? 'cliente' : 'miembro de la empresa'
+        const targetType = expectedFlow === 'customer' ? 'cliente' : expectedFlow === 'platform_member' ? 'administrador de plataforma' : 'miembro de la empresa'
         return NextResponse.json(
           {
             error: {
               code: 'ROLE_MISMATCH',
-              message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : 'administrador'}.`,
+              message: `Estas credenciales no corresponden a un ${targetType}. Utiliza el flujo de ${expectedFlow === 'customer' ? 'cliente' : expectedFlow === 'platform_member' ? 'plataforma' : 'administrador'}.`,
             },
             requestId,
           },
