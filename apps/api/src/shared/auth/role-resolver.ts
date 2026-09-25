@@ -1,7 +1,7 @@
 import { getPlatformDb, getTenantDb } from '@/shared/db'
 import { platformUsers, platformMemberships } from '@/shared/db/schema/platform-schema'
 import { users, userRoles, roles } from '@/shared/db/schema/identity'
-import { eq } from 'drizzle-orm'
+import { eq, or, and, ne } from 'drizzle-orm'
 
 export type UserRole =
   | 'owner'
@@ -58,6 +58,7 @@ export async function resolveUserRole(
   }
 
   const platformDb = getPlatformDb()
+
   const [platformUser] = await platformDb
     .select({
       userId: platformUsers.id,
@@ -65,7 +66,7 @@ export async function resolveUserRole(
     })
     .from(platformUsers)
     .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
-    .where(eq(platformUsers.email, email))
+    .where(and(eq(platformUsers.email, email), or(eq(platformMemberships.role, 'platform_admin'), eq(platformMemberships.role, 'platform_support'))))
     .limit(1)
 
   if (platformUser) {
@@ -74,6 +75,25 @@ export async function resolveUserRole(
       role: platformUser.membershipRole,
       category,
       platformUserId: platformUser.userId,
+    }
+  }
+
+  const [fallbackMembership] = await platformDb
+    .select({
+      userId: platformUsers.id,
+      membershipRole: platformMemberships.role,
+    })
+    .from(platformUsers)
+    .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
+    .where(and(eq(platformUsers.email, email), ne(platformMemberships.role, 'platform_admin'), ne(platformMemberships.role, 'platform_support')))
+    .limit(1)
+
+  if (fallbackMembership) {
+    const category = getRoleCategory(fallbackMembership.membershipRole)
+    return {
+      role: fallbackMembership.membershipRole,
+      category,
+      platformUserId: fallbackMembership.userId,
     }
   }
 
