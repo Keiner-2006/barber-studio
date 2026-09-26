@@ -470,7 +470,7 @@ interface NavItem {
       overflow-y: auto;
       padding: 24px;
     }
-  `])
+  `]
 })
 export class PlatformAdminShellComponent implements OnInit {
   menuOpen = signal(false)
