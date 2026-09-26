@@ -21,7 +21,7 @@ import { BusinessType } from '../onboarding.models'
       </div>
 
       <form (ngSubmit)="onContinue()" class="step-form">
-        <div class="form-grid">
+    <div class="form-grid">
           <div class="form-group">
             <label for="tradeName">
               Nombre Comercial del Atelier
@@ -57,6 +57,27 @@ import { BusinessType } from '../onboarding.models'
             </div>
             <span class="hint">Para emisión de comprobantes fiscales y configuración de facturas.</span>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label for="countryCode">
+            País de Operación
+            <span class="required">Requerido</span>
+          </label>
+          <div class="input-wrap">
+            <span class="material-symbols-outlined">public</span>
+            <select
+              id="countryCode"
+              [(ngModel)]="business().countryCode"
+              name="countryCode"
+              required
+            >
+              @for (country of countries; track country.code) {
+                <option [value]="country.code">{{ country.flag }} {{ country.name }}</option>
+              }
+            </select>
+          </div>
+          <span class="hint">Afecta la moneda, zona horaria y configuración fiscal por defecto.</span>
         </div>
 
         <div class="form-group slug-group">
@@ -179,6 +200,22 @@ import { BusinessType } from '../onboarding.models'
     textarea:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
     .char-count { font-size: 11px; color: #50443e; font-weight: 400; }
     @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .business-types { grid-template-columns: 1fr 1fr; } }
+    .input-wrap select {
+      width: 100%;
+      padding: 12px 14px 12px 38px;
+      border: 1px solid #e6e2d9;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      box-sizing: border-box;
+      appearance: none;
+    }
+    .input-wrap select:focus {
+      outline: none;
+      border-color: #944928;
+      box-shadow: 0 0 0 3px #94492822;
+    }
     @media (max-width: 480px) { .business-types { grid-template-columns: 1fr; } }
   `],
 })
@@ -192,6 +229,16 @@ export class OnboardingStepIdentityComponent {
 
   roles = ['Propietario / Dueño', 'Gerente General', 'Master Barber & Fundador', 'Administrador de Sede']
   selectedRole = 'Propietario / Dueño'
+  
+  countries = [
+    { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+    { code: 'MX', name: 'México', flag: '🇲🇽' },
+    { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+    { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+    { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+    { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+    { code: 'ES', name: 'España', flag: '🇪🇸' },
+  ]
 
   constructor(
     public store: OnboardingStore,
@@ -206,7 +253,7 @@ export class OnboardingStepIdentityComponent {
   }
 
    onContinue(): void {
-     if (!this.store.business().tradeName || !this.store.business().legalName || !this.store.business().slug) return
+     if (!this.store.business().tradeName || !this.store.business().legalName || !this.store.business().slug || !this.store.business().countryCode) return
      this.store.nextStep()
    }
 }

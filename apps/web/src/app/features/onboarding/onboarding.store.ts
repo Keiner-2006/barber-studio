@@ -41,6 +41,7 @@ export class OnboardingStore {
     legalName: '',
     slug: '',
     businessType: 'barberia',
+    countryCode: 'CO',
     description: '',
   })
 
@@ -230,13 +231,14 @@ export class OnboardingStore {
         birthDate: acc.birthDate || undefined,
         city: acc.city || undefined,
       },
-      business: {
-        tradeName: this._business().tradeName,
-        legalName: this._business().legalName,
-        slug: this._business().slug,
-        businessType: this._business().businessType,
-        description: this._business().description,
-      },
+       business: {
+         tradeName: this._business().tradeName,
+         legalName: this._business().legalName,
+         slug: this._business().slug,
+         businessType: this._business().businessType,
+         countryCode: this._business().countryCode,
+         description: this._business().description,
+       },
       location: {
         city: this._location().city,
         neighborhood: this._location().neighborhood,
