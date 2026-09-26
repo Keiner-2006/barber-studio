@@ -10,7 +10,6 @@ const COMPANY_MEMBER_ROLES = [
   'barber',
   'inventory_manager',
   'accountant',
-  'platform_admin',
 ]
 
 const PLATFORM_ROLES = ['platform_admin', 'platform_support']

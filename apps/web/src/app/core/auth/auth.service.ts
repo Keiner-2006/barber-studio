@@ -30,7 +30,7 @@ export class AuthService {
       this.currentUser.set({
         id: isSuperAdmin ? '00000000-0000-0000-0000-000000000002' : '00000000-0000-0000-0000-000000000001',
         email: isSuperAdmin ? 'adminbarbershop@gmail.com' : 'admin@navaja.local',
-        name: isSuperAdmin ? 'Super Administrador Plataforma' : 'Administrador Navaja',
+        name: isSuperAdmin ? 'Super Administrador BarberShop' : 'Administrador BarberShop',
         role: isSuperAdmin ? 'platform_admin' : 'admin',
       })
       this.currentSession.set({

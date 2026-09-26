@@ -67,7 +67,7 @@ export async function resolveUserRole(
     .from(platformUsers)
     .innerJoin(platformMemberships, eq(platformMemberships.userId, platformUsers.id))
     .where(eq(platformUsers.email, email))
-    .limit(5)
+    .limit(1)
 
   const platformMember = platformUser.find((u) => u.membershipRole === 'platform_admin' || u.membershipRole === 'platform_support')
   if (platformMember) {

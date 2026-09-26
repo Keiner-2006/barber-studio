@@ -31,6 +31,27 @@ export const routes: Routes = [
             (m) => m.PlatformAdminTenantDetailComponent
           ),
       },
+      {
+        path: 'services',
+        loadComponent: () =>
+          import('./platform-admin-services.component').then(
+            (m) => m.PlatformAdminServicesComponent
+          ),
+      },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./platform-admin-appointments.component').then(
+            (m) => m.PlatformAdminAppointmentsComponent
+          ),
+      },
+      {
+        path: 'cash',
+        loadComponent: () =>
+          import('./platform-admin-cash.component').then(
+            (m) => m.PlatformAdminCashComponent
+          ),
+      },
     ],
   },
 ]

@@ -61,24 +61,23 @@ export class LoginComponent {
 
   readonly isPlatform = (): boolean => this.role === 'platform'
 
-  readonly brandName = (): string =>
-    this.isPlatform() ? 'Navaja Studio OS' : 'BarberShop'
+  readonly brandName = (): string => 'BarberShop Management System'
 
   readonly brandSubtitle = (): string =>
-    this.isPlatform() ? 'PLATAFORMA SAAS MULTI-TENANT' : 'MANAGEMENT SYSTEM'
+    this.isPlatform() ? 'PLATAFORMA MULTI-TENANT' : 'MANAGEMENT SYSTEM'
 
   readonly locationLabel = (): string =>
     this.isPlatform() ? 'Plataforma Global' : 'Roma Norte'
 
   readonly panelEyebrow = (): string =>
-    this.isPlatform() ? 'NAVAJA STUDIO OS · PLATAFORMA SAAS' : 'SEDE ROMA NORTE · CDMX'
+    this.isPlatform() ? 'BARBERSHOP MANAGEMENT SYSTEM · PLATAFORMA SAAS' : 'SEDE ROMA NORTE · CDMX'
 
   readonly panelPill = (): string =>
-    this.isPlatform() ? 'Infraestructura multi-tenant' : 'Artisan Grooming & Atelier'
+    this.isPlatform() ? 'Infraestructura multi-tenant BarberShop' : 'BarberShop Management System'
 
   readonly panelHeadline = (): string =>
     this.isPlatform()
-      ? 'Un solo lugar para operar todas tus sedes.'
+      ? 'Opera todas tus sedes desde un solo lugar.'
       : 'La artesanía del detalle en cada corte.'
 
   readonly panelBody = (): string =>
@@ -87,7 +86,7 @@ export class LoginComponent {
       : 'Plataforma centralizada para reservas exclusivas, gestión de agenda artesanal y membresías de cuidado personal.'
 
   readonly panelStatusTitle = (): string =>
-    this.isPlatform() ? 'Plataforma v2.4 Activa' : 'Studio OS v2.4 Activo'
+    this.isPlatform() ? 'BarberShop System v2.4 Activo' : 'Studio OS v2.4 Activo'
 
   readonly panelStatusDetail = (): string =>
     this.isPlatform() ? 'Aislamiento multi-tenant disponible' : 'Disponibilidad en tiempo real'
