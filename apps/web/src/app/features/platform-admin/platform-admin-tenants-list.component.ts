@@ -33,7 +33,7 @@ import {
         <div class="flex items-center gap-space-xs text-pa-on-surface-variant font-label-md text-label-md">
           <a routerLink="/platform-admin" class="hover:text-pa-on-surface cursor-pointer transition-colors">Plataforma</a>
           <span class="text-pa-outline">/</span>
-          <span class="text-pa-on-surface font-semibold">Tenants</span>
+          <span class="text-pa-on-surface font-semibold">Negocios Registrados</span>
           <span class="text-pa-outline">/</span>
           <span class="bg-pa-surface-container-high px-space-xs py-0.5 rounded text-pa-primary font-mono text-label-sm font-semibold">
             {{ totalBadge() }} Instancias
@@ -41,9 +41,9 @@ import {
         </div>
         <div class="flex items-center gap-space-md">
           <div class="flex items-center gap-space-xs bg-pa-surface-container-low px-space-sm py-1 rounded-full shadow-sm">
-            <span class="material-symbols-outlined text-[16px] text-pa-primary">dns</span>
+            <span class="material-symbols-outlined text-[16px] text-pa-primary">domain</span>
             <span class="font-label-sm text-label-sm text-pa-on-surface-variant font-medium">Fuente:</span>
-            <span class="font-label-sm text-label-sm text-pa-on-surface font-semibold font-mono">/admin/tenants</span>
+            <span class="font-label-sm text-label-sm text-pa-on-surface font-semibold font-mono">/admin/negocios</span>
           </div>
           <div class="flex items-center gap-space-xs bg-pa-surface-container-low px-space-sm py-1 rounded-full shadow-sm">
             <span
@@ -81,8 +81,8 @@ import {
             <span class="material-symbols-outlined text-pa-primary text-[22px]">domain</span>
             <span class="font-label-sm text-label-sm tracking-wider uppercase font-semibold text-pa-primary">Catálogo Multi-Tenant Central</span>
           </div>
-          <h1 class="font-headline-lg text-headline-lg text-pa-on-surface font-semibold tracking-tight">Directorio Global de Tenants</h1>
-          <p class="font-body-md text-body-md text-pa-on-surface-variant">Gestión de instancias aisladas registradas en la plataforma SaaS.</p>
+          <h1 class="font-headline-lg text-headline-lg text-pa-on-surface font-semibold tracking-tight">Directorio Global de Negocios</h1>
+          <p class="font-body-md text-body-md text-pa-on-surface-variant">Gestión de negocios registrados aislados en la plataforma SaaS.</p>
         </div>
         <div class="flex flex-wrap items-center gap-space-sm relative z-10">
           <button
@@ -119,18 +119,18 @@ import {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md mt-space-md">
         <div class="bg-pa-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-pa-on-surface-variant">Tenants Totales</span>
+            <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-pa-on-surface-variant">Negocios Totales</span>
             <span class="p-1.5 rounded-lg bg-pa-surface-container text-pa-on-surface-variant flex items-center justify-center">
               <span class="material-symbols-outlined text-[18px]">storefront</span>
             </span>
           </div>
           <div class="flex items-baseline justify-between mt-space-sm">
-            <span class="font-headline-lg text-headline-lg font-semibold text-pa-on-surface">{{ value(store.metrics().totalTenants) }}</span>
+            <span class="font-headline-lg text-headline-lg font-semibold text-pa-on-surface">{{ value(store.negocios().length) }}</span>
             <span class="inline-flex items-center font-label-sm text-label-sm text-pa-primary font-semibold bg-pa-primary-fixed/50 px-2 py-0.5 rounded-full">
               {{ loadedLabel() }}
             </span>
           </div>
-          <span class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">{{ store.metrics().activeTenants }} activos en producción</span>
+          <span class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">{{ store.metrics().activeNegocios }} activos en producción</span>
         </div>
         <div class="bg-pa-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
           <div class="flex items-center justify-between">
@@ -141,9 +141,9 @@ import {
           </div>
           <div class="flex items-baseline justify-between mt-space-sm">
             <span class="font-headline-lg text-headline-lg font-semibold text-pa-on-surface">{{ activeRatioLabel() }}</span>
-            <span class="inline-flex items-center font-label-sm text-label-sm text-pa-on-surface-variant font-semibold bg-pa-surface-container px-2 py-0.5 rounded-full">
-              {{ store.metrics().suspendedTenants }} en riesgo
-            </span>
+<span class="inline-flex items-center font-label-sm text-label-sm text-pa-on-surface-variant font-semibold bg-pa-surface-container px-2 py-0.5 rounded-full">
+               {{ store.metrics().suspendedTenants }} negocios en riesgo
+             </span>
           </div>
           <div class="w-full bg-pa-surface-container-high h-1.5 rounded-full overflow-hidden mt-space-sm">
             <div class="bg-pa-primary h-full rounded-full transition-all" [style.width.%]="activeRatioWidth()"></div>
@@ -157,9 +157,9 @@ import {
             </span>
           </div>
           <div class="flex items-baseline justify-between mt-space-sm">
-            <span class="font-headline-lg text-headline-lg font-semibold text-pa-on-surface">{{ value(store.metrics().provisioningTenants) }}</span>
-            <span class="inline-flex items-center font-label-sm text-label-sm text-pa-primary font-semibold bg-pa-primary-fixed/50 px-2 py-0.5 rounded-full">
-              {{ value(store.metrics().deletingTenants) }} en purga
+<span class="font-headline-lg text-headline-lg font-semibold text-pa-on-surface">{{ value(store.metrics().provisioningNegocios) }}</span>
+              <span class="inline-flex items-center font-label-sm text-label-sm text-pa-primary font-semibold bg-pa-primary-fixed/50 px-2 py-0.5 rounded-full">
+                {{ value(store.metrics().deletingTenants) }} en purga
             </span>
           </div>
           <span class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">Instancias en transición</span>
@@ -296,7 +296,7 @@ import {
           <div class="flex items-center gap-space-sm">
             <span>
               Mostrando <strong>{{ store.pagination().from }}–{{ store.pagination().to }}</strong> de
-              <strong>{{ store.pagination().total }}</strong> tenants
+              <strong>{{ store.pagination().total }}</strong> negocios
             </span>
             @if (store.hasActiveFilters()) {
               <span class="text-pa-outline">·</span>
@@ -321,15 +321,15 @@ import {
         } @else if (!store.filteredTenants().length) {
           <div class="p-space-xl flex flex-col items-center gap-space-sm text-center">
             <span class="material-symbols-outlined text-[40px] text-pa-outline">search_off</span>
-            <p class="font-headline-sm text-headline-sm text-pa-on-surface">Sin resultados</p>
-            <p class="font-body-sm text-body-sm text-pa-on-surface-variant">
-              @if (store.offline()) {
-                No se pudo consultar la API de plataforma.
-              } @else if (store.hasActiveFilters()) {
-                Ningún tenant coincide con los filtros aplicados.
-              } @else {
-                Todavía no hay tenants registrados en la plataforma.
-              }
+<p class="font-headline-sm text-headline-sm text-pa-on-surface">Sin resultados</p>
+                  <p class="font-body-sm text-body-sm text-pa-on-surface-variant">
+                    @if (store.offline()) {
+                      No se pudo consultar la API de plataforma.
+                    } @else if (store.hasActiveFilters()) {
+                      Ningún negocio coincide con los filtros aplicados.
+                    } @else {
+                      Todavía no hay negocios registrados en la plataforma.
+                    }
             </p>
             @if (store.hasActiveFilters()) {
               <button
@@ -382,6 +382,7 @@ import {
               <thead>
                 <tr class="bg-pa-surface-container font-label-sm text-label-sm text-pa-on-surface-variant uppercase tracking-wider select-none">
                   <th class="py-3 px-space-md">Negocio</th>
+                  <th class="py-3 px-space-md">Dueño</th>
                   <th class="py-3 px-space-md">Razón Social</th>
                   <th class="py-3 px-space-md">Tipo</th>
                   <th class="py-3 px-space-md">Estado</th>
@@ -420,6 +421,13 @@ import {
                           </div>
                         </div>
                       </div>
+                    </td>
+                    <td class="py-3 px-space-md">
+                      <div *ngIf="tenant.owner; else noOwner" class="flex flex-col">
+                        <span class="font-label-md text-label-md text-pa-on-surface font-medium truncate">{{ tenant.owner.name }}</span>
+                        <span class="font-body-sm text-body-sm text-pa-on-surface-variant font-mono truncate">{{ tenant.owner.email }}</span>
+                      </div>
+                      <ng-template #noOwner><span class="font-body-sm text-body-sm text-pa-on-surface-variant">—</span></ng-template>
                     </td>
                     <td class="py-3 px-space-md">
                       <div class="flex flex-col min-w-[170px]">

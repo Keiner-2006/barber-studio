@@ -30,6 +30,10 @@ const EMPTY_METRICS: PlatformMetrics = {
   deletedTenants: 0,
   activeRatio: 0,
   isEmpty: true,
+  totalNegocios: 0,
+  activeNegocios: 0,
+  provisioningNegocios: 0,
+  suspendedNegocios: 0,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -111,8 +115,16 @@ export class PlatformAdminStore {
       deletedTenants: counts.deleted ?? 0,
       activeRatio: totalTenants > 0 ? activeTenants / totalTenants : 0,
       isEmpty: totalTenants === 0,
+      totalNegocios: totalTenants,
+      activeNegocios: activeTenants,
+      provisioningNegocios: counts.provisioning ?? 0,
+      suspendedNegocios: counts.suspended ?? 0,
     };
   });
+
+  readonly negocios = computed(() => this.tenants());
+  readonly recentNegocios = computed(() => this.recentTenants());
+  readonly totalNegocios = computed(() => this.totalTenants());
 
   /** Real data for the dashboard chart: countsByStatus, never a static series. */
   readonly statusDistribution = computed<StatusSlice[]>(() => {

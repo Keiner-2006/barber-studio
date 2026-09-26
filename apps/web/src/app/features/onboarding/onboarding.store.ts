@@ -9,6 +9,7 @@ import {
   OnboardingStep,
   OnboardingState,
   OwnerAccount,
+  OwnerDocumentType,
 } from './onboarding.models'
 import { OnboardingApi } from './onboarding.api'
 import { AuthService } from '../../core/auth/auth.service'
@@ -21,12 +22,18 @@ export class OnboardingStore {
   private _completed = signal(false)
   private _jobId = signal('')
   private _tenantId = signal('')
+  private _userId = signal('')
 
   private _account = signal<OwnerAccount>({
     name: '',
     lastName: '',
     email: '',
     password: '',
+    documentType: 'CC' as OwnerDocumentType,
+    documentNumber: '',
+    phone: '',
+    birthDate: '',
+    city: '',
   })
 
   private _business = signal<BusinessInfo>({
@@ -89,8 +96,6 @@ export class OnboardingStore {
 
   private _summary = signal<OnboardingSummary | null>(null)
 
-  private _userId = signal('')
-
   readonly userId = this._userId.asReadonly()
   readonly currentStep = this._currentStep.asReadonly()
   readonly loading = this._loading.asReadonly()
@@ -131,6 +136,10 @@ export class OnboardingStore {
 
   canContinue(step?: number): boolean {
     const s = step ?? this._currentStep()
+    if (s === 1) {
+      const a = this._account()
+      return !!a.name && !!a.lastName && !!a.email && !!a.password && !!a.documentNumber && !!a.phone
+    }
     if (s === 2) {
       const b = this._business()
       return !!b.tradeName && !!b.legalName && !!b.slug
@@ -199,6 +208,52 @@ export class OnboardingStore {
         this.setSubmitting(false)
         this.nextStep()
         this.router.navigate(['/onboarding'])
+      },
+      error: () => {
+        this.setSubmitting(false)
+      },
+    })
+  }
+
+  submitAll(): void {
+    const acc = this._account()
+    this.setSubmitting(true)
+    this.api.submitAll({
+      account: {
+        name: acc.name,
+        lastName: acc.lastName,
+        email: acc.email,
+        userId: this._userId(),
+        documentType: acc.documentType,
+        documentNumber: acc.documentNumber,
+        phone: acc.phone,
+        birthDate: acc.birthDate || undefined,
+        city: acc.city || undefined,
+      },
+      business: {
+        tradeName: this._business().tradeName,
+        legalName: this._business().legalName,
+        slug: this._business().slug,
+        businessType: this._business().businessType,
+        description: this._business().description,
+      },
+      location: {
+        city: this._location().city,
+        neighborhood: this._location().neighborhood,
+        address: this._location().address,
+        whatsapp: this._location().whatsapp,
+        email: this._location().email,
+      },
+      schedule: this._schedule(),
+      branding: this._branding(),
+    }).subscribe({
+      next: (response: any) => {
+        const jobId = response.data?.jobId
+        if (jobId) {
+          this.setJobId(jobId)
+          this.setSubmitting(false)
+          this.nextStep()
+        }
       },
       error: () => {
         this.setSubmitting(false)

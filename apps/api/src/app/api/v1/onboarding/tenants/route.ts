@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { account, business, location, branding } = body
 
-    const { legalName, tradeName, slug, businessType, email, ownerName, ownerLastName, phone } = {
+    const { legalName, tradeName, slug, businessType, email, ownerName, ownerLastName, phone, documentType, documentNumber, birthDate, city } = {
       legalName: business?.legalName ?? body.legalName,
       tradeName: business?.tradeName ?? body.tradeName,
       slug: business?.slug ?? body.slug,
@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
       email: account?.email ?? body.email,
       ownerName: account?.name ?? body.ownerName,
       ownerLastName: account?.lastName ?? body.ownerLastName,
-      phone: location?.whatsapp ?? body.phone,
+      phone: account?.phone ?? location?.whatsapp ?? body.phone,
+      documentType: account?.documentType ?? body.documentType,
+      documentNumber: account?.documentNumber ?? body.documentNumber,
+      birthDate: account?.birthDate ?? body.birthDate,
+      city: account?.city ?? body.city,
     }
 
     if (!legalName || !tradeName || !slug || !email || !ownerName) {
@@ -39,6 +43,10 @@ export async function POST(request: NextRequest) {
       ownerName,
       ownerLastName,
       phone,
+      documentType,
+      documentNumber,
+      birthDate,
+      city,
       logoUrl: branding?.logoUrl,
       primaryColor: branding?.primaryColor,
     })

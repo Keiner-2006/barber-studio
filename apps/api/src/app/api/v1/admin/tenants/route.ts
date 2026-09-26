@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const membership = await db.query.platformMemberships.findFirst({
       where: and(
         eq(platformMemberships.userId, platformUser.id),
-        eq(platformMemberships.role, 'platform_support')
+        inArray(platformMemberships.role, ['platform_admin', 'platform_support'])
       ),
     })
     if (!membership) {
@@ -113,9 +113,32 @@ export async function GET(request: NextRequest) {
         brandingMap[b.tenantId] = { logoUrl: b.logoUrl, primaryColor: b.primaryColor }
       }
 
+      const ownerRows = await db
+        .select({
+          tenantId: platformMemberships.tenantId,
+          ownerName: platformUsers.name,
+          ownerEmail: platformUsers.email,
+        })
+        .from(platformMemberships)
+        .innerJoin(platformUsers, eq(platformMemberships.userId, platformUsers.id))
+        .where(
+          and(
+            eq(platformMemberships.role, 'owner'),
+            inArray(platformMemberships.tenantId, tenantRows.map((t) => t.id))
+          )
+        )
+
+      const ownerMap: Record<string, { name: string; email: string }> = {}
+      for (const o of ownerRows) {
+        if (o.tenantId) {
+          ownerMap[o.tenantId] = { name: o.ownerName, email: o.ownerEmail }
+        }
+      }
+
       tenants = tenantRows.map((t) => ({
         ...t,
         branding: brandingMap[t.id] ?? null,
+        owner: ownerMap[t.id] ?? null,
       }))
     }
 

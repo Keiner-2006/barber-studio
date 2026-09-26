@@ -59,7 +59,11 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
           <span class="material-symbols-outlined text-lg">verified</span>
           <div>
             <span class="title">Cuenta Verificada</span>
-            <span class="text">{{ store.account().name }} • {{ store.account().email }}</span>
+            <span class="text">{{ store.account().name }} {{ store.account().lastName }}</span>
+            <span class="text">{{ store.account().email }}</span>
+            <span *ngIf="store.account().documentType && store.account().documentNumber" class="text">{{ store.account().documentType }} {{ store.account().documentNumber }}</span>
+            <span *ngIf="store.account().phone" class="text">{{ store.account().phone }}</span>
+            <span *ngIf="store.account().city" class="text">{{ store.account().city }}</span>
             <span class="text">Acceso Completo al Sistema</span>
           </div>
         </div>
@@ -190,6 +194,11 @@ export class OnboardingStepActivationComponent {
         lastName: this.store.account().lastName,
         email: this.store.account().email,
         userId: this.store.userId(),
+        documentType: this.store.account().documentType,
+        documentNumber: this.store.account().documentNumber,
+        phone: this.store.account().phone,
+        birthDate: this.store.account().birthDate || undefined,
+        city: this.store.account().city || undefined,
       },
       business: {
         tradeName: this.store.business().tradeName,

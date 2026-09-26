@@ -20,6 +20,8 @@ export interface CreateTenantInput {
   phone?: string
   documentType?: string
   documentNumber?: string
+  birthDate?: string
+  city?: string
   logoUrl?: string
   primaryColor?: string
 }
@@ -45,19 +47,32 @@ export class ProvisioningService {
 
     const userId = existingUser?.id || randomUUID()
 
-    if (!existingUser) {
+if (!existingUser) {
        await platformDb.insert(platformUsers).values({
-        id: userId,
-        email: input.email,
-        name: input.ownerName,
-        lastName: input.ownerLastName || null,
-        phone: input.phone || null,
-        documentType: input.documentType || null,
-        documentNumber: input.documentNumber || null,
-        passwordHash: 'oauth:better-auth',
-        status: 'active',
-      })
-    }
+         id: userId,
+         email: input.email,
+         name: input.ownerName,
+         lastName: input.ownerLastName || null,
+         phone: input.phone || null,
+         documentType: input.documentType || null,
+         documentNumber: input.documentNumber || null,
+         birthDate: input.birthDate || null,
+         city: input.city || null,
+         passwordHash: 'oauth:better-auth',
+         status: 'active',
+       })
+     } else {
+       await platformDb.update(platformUsers)
+         .set({
+           ...(input.ownerLastName && { lastName: input.ownerLastName }),
+           ...(input.phone && { phone: input.phone }),
+           ...(input.documentType && { documentType: input.documentType }),
+           ...(input.documentNumber && { documentNumber: input.documentNumber }),
+           ...(input.birthDate && { birthDate: input.birthDate }),
+           ...(input.city && { city: input.city }),
+         })
+         .where(eq(platformUsers.id, existingUser.id))
+     }
 
     await platformDb.insert(platformTenants).values({
       id: tenantId,

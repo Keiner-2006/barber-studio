@@ -27,6 +27,7 @@ export interface PlatformTenant {
   phone: string | null;
   createdAt: string;
   branding: TenantBranding | null;
+  owner: { name: string; email: string } | null;
 }
 
 /**
@@ -48,6 +49,10 @@ export interface PlatformMetrics {
   deletedTenants: number;
   activeRatio: number;
   isEmpty: boolean;
+  totalNegocios: number;
+  activeNegocios: number;
+  provisioningNegocios: number;
+  suspendedNegocios: number;
 }
 
 /** One bar of the status distribution chart. Always derived, never hardcoded. */

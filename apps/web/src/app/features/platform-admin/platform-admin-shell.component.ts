@@ -17,7 +17,7 @@ interface NavItem {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="platform-shell">
+    <div class="platform-shell platform-admin">
       <aside class="sidebar" [class.open]="menuOpen()">
         <div class="sidebar-header">
           <div class="brand">
@@ -196,7 +196,7 @@ export class PlatformAdminShellComponent implements OnInit {
 
   readonly primaryNav: NavItem[] = [
     { label: 'Dashboard General', icon: 'monitoring', path: '/platform-admin' },
-    { label: 'Lista de Tenants', icon: 'domain', path: '/platform-admin/tenants' },
+    { label: 'Negocios Registrados', icon: 'domain', path: '/platform-admin/negocios' },
     { label: 'Gestión de Servicios', icon: 'services', path: '/platform-admin/services' },
     { label: 'Citas Globales', icon: 'calendar_today', path: '/platform-admin/appointments' },
     { label: 'Caja Central', icon: 'accounting', path: '/platform-admin/cash' },

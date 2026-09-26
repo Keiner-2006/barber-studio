@@ -1,4 +1,4 @@
-import { uuid, text, timestamp, pgEnum, pgTable, uniqueIndex, jsonb, integer, boolean } from 'drizzle-orm/pg-core'
+import { uuid, text, timestamp, date, pgEnum, pgTable, uniqueIndex, jsonb, integer, boolean } from 'drizzle-orm/pg-core'
 
 export const tenantStatusEnum = pgEnum('tenant_status', [
   'provisioning',
@@ -49,6 +49,8 @@ export const platformUsers = pgTable('platform_users', {
   phone: text('phone'),
   documentType: text('document_type'),
   documentNumber: text('document_number'),
+  birthDate: date('birth_date'),
+  city: text('city'),
   passwordHash: text('password_hash').notNull(),
   status: platformUserStatusEnum('status').notNull().default('active'),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),

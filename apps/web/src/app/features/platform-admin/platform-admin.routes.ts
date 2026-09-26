@@ -18,14 +18,14 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'tenants',
+        path: 'negocios',
         loadComponent: () =>
           import('./platform-admin-tenants-list.component').then(
             (m) => m.PlatformAdminTenantsListComponent
           ),
       },
       {
-        path: 'tenants/:id',
+        path: 'negocios/:id',
         loadComponent: () =>
           import('./platform-admin-tenant-detail.component').then(
             (m) => m.PlatformAdminTenantDetailComponent
