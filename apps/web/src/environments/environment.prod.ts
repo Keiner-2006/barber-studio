@@ -3,4 +3,5 @@ export const environment = {
   apiUrl: 'https://barber-studio-1ook.onrender.com/api/v1',
   demoAuth: false,
   betterAuthUrl: 'https://barber-studio-1ook.onrender.com',
+  frontendUrl: 'https://barber-studio-1ook.onrender.com',
 }

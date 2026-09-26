@@ -26,6 +26,7 @@ const trustedOrigins = [
   origin(process.env.VERCEL_URL),
   origin(process.env.V0_RUNTIME_URL),
   origin(process.env.V0_DEV_APP_URL),
+  origin(process.env.FRONTEND_URL),
 ].filter(Boolean) as string[]
 
 if (process.env.NODE_ENV !== 'production') {
@@ -53,6 +54,9 @@ const authUrlWithSsl = authRawUrl.includes('sslmode=') ? authRawUrl : authRawUrl
 const authDbUrl = authUrlWithSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
 logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
 
+const frontendUrl = origin(process.env.FRONTEND_URL || process.env.BETTER_AUTH_URL || '')
+logConnectionInfo(frontendUrl || '', 'BETTER_AUTH_FRONTEND_URL')
+
 export const auth = demoAuthEnabled()
   ? null
   : betterAuth({
@@ -61,11 +65,7 @@ export const auth = demoAuthEnabled()
         ssl: { rejectUnauthorized: true },
       }),
       emailAndPassword: { enabled: true },
-      baseURL:
-        origin(process.env.BETTER_AUTH_URL) ||
-        origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-        origin(process.env.VERCEL_URL) ||
-        origin(process.env.V0_RUNTIME_URL),
+      baseURL: origin(process.env.BETTER_AUTH_URL) || origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) || origin(process.env.VERCEL_URL) || origin(process.env.V0_RUNTIME_URL),
       trustedOrigins,
       plugins: [
         bearer(),

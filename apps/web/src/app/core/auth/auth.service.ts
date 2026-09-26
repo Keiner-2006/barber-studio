@@ -95,6 +95,10 @@ export class AuthService {
     window.location.href = `${environment.betterAuthUrl}/api/auth/signin/google`
   }
 
+  signUpWithGoogle(): void {
+    window.location.href = `${environment.betterAuthUrl}/api/auth/signup/google`
+  }
+
   register(email: string, password: string, name: string, tenantId?: string): Observable<LoginResponse> {
     const body: RegisterRequest = { email, password, name }
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, body).pipe(

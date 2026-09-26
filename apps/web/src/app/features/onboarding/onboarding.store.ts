@@ -205,4 +205,8 @@ export class OnboardingStore {
       },
     })
   }
+
+  signUpWithGoogle(): void {
+    this.auth.signUpWithGoogle()
+  }
 }
