@@ -103,9 +103,14 @@ async function seed() {
     { tenantId: tenant.id, userId: appPlatformUser.id, role: 'owner', status: 'active' },
   ]).onConflictDoNothing()
 
-  await db.insert(platformMemberships).values([
-    { userId: superAdminPlatformUser.id, role: 'platform_admin', status: 'active' },
-  ]).onConflictDoNothing()
+  const existingSuperAdmin = await db.query.platformMemberships.findFirst({
+    where: eq(platformMemberships.userId, superAdminPlatformUser.id),
+  })
+  if (existingSuperAdmin) {
+    await db.update(platformMemberships).set({ role: 'platform_admin', status: 'active' }).where(eq(platformMemberships.userId, superAdminPlatformUser.id))
+  } else {
+    await db.insert(platformMemberships).values({ userId: superAdminPlatformUser.id, role: 'platform_admin', status: 'active' })
+  }
 
   const [branch] = await db
     .insert(branches)
