@@ -57,7 +57,7 @@ import {
           </div>
           <div class="kpi-value">{{ store.metrics().activeTenants }}</div>
           <div class="kpi-trend positive">
-            {{ store.totalTenants() > 0 ? ((store.metrics().activeTenants / store.totalTenants() * 100) | number:'1.0-0') : 0 }}% activos
+            {{ (store.totalTenants() ?? 0) > 0 ? ((store.metrics().activeTenants / (store.totalTenants() ?? 0) * 100) | number:'1.0-0') : 0 }}% activos
           </div>
         </div>
         <div class="kpi-card">

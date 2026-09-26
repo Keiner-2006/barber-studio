@@ -125,7 +125,7 @@ import { ROLE_LABELS } from '@navaja/shared'
                   <div class="grid">
                     @for (staff of store.staff(); track staff.id) {
                       <div class="staff-card" [class.selected]="store.selectedStaff()?.id === staff.id" (click)="store.selectStaff(staff)">
-                        <div class="staff-avatar">{{ staff.name?.charAt(0) }}</div>
+                        <div class="staff-avatar">{{ staff.name.charAt(0) }}</div>
                         <p>{{ staff.name }}</p>
                         @if (staff.role) { <p class="specialty">{{ getRoleLabel(staff.role) }}</p> }
                         @if (staff.specialty) { <p class="specialty">{{ staff.specialty }}</p> }
