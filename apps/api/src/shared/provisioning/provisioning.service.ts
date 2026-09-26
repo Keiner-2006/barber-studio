@@ -14,6 +14,7 @@ export interface CreateTenantInput {
   tradeName: string
   slug: string
   businessType: 'barberia' | 'peluqueria' | 'grooming' | 'otro'
+  countryCode?: string
   email: string
   ownerName: string
   ownerLastName?: string
@@ -74,7 +75,7 @@ if (!existingUser) {
          .where(eq(platformUsers.id, existingUser.id))
      }
 
-    await platformDb.insert(platformTenants).values({
+await platformDb.insert(platformTenants).values({
       id: tenantId,
       legalName: input.legalName,
       tradeName: input.tradeName,
@@ -82,6 +83,10 @@ if (!existingUser) {
       businessType: input.businessType,
       status: 'provisioning',
       phone: input.phone || null,
+      countryCode: 'CO',
+      timezone: 'America/Bogota',
+      currencyCode: 'COP',
+      locale: 'es',
     })
 
     await platformDb.insert(platformMemberships).values({

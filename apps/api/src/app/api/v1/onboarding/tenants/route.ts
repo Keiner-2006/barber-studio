@@ -15,11 +15,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { account, business, location, branding } = body
 
-    const { legalName, tradeName, slug, businessType, email, ownerName, ownerLastName, phone, documentType, documentNumber, birthDate, city } = {
+    const { legalName, tradeName, slug, businessType, countryCode, email, ownerName, ownerLastName, phone, documentType, documentNumber, birthDate, city } = {
       legalName: business?.legalName ?? body.legalName,
       tradeName: business?.tradeName ?? body.tradeName,
       slug: business?.slug ?? body.slug,
       businessType: business?.businessType ?? body.businessType,
+      countryCode: business?.countryCode ?? location?.countryCode ?? body.countryCode,
       email: account?.email ?? body.email,
       ownerName: account?.name ?? body.ownerName,
       ownerLastName: account?.lastName ?? body.ownerLastName,
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       documentType: account?.documentType ?? body.documentType,
       documentNumber: account?.documentNumber ?? body.documentNumber,
       birthDate: account?.birthDate ?? body.birthDate,
-      city: account?.city ?? body.city,
+      city: account?.city ?? location?.city ?? body.city,
     }
 
     if (!legalName || !tradeName || !slug || !email || !ownerName) {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       tradeName,
       slug,
       businessType,
+      countryCode,
       email,
       ownerName,
       ownerLastName,

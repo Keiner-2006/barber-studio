@@ -21,6 +21,7 @@ export interface BusinessInfo {
   legalName: string
   slug: string
   businessType: BusinessType
+  countryCode: string
   description: string
 }
 
@@ -63,7 +64,7 @@ export interface BrandingInfo {
 
 export interface OnboardingSubmitData {
   account: { name: string; lastName: string; email: string; userId: string; documentType: OwnerDocumentType; documentNumber: string; phone: string; birthDate?: string; city?: string }
-  business: { tradeName: string; legalName: string; slug: string; businessType: string; description: string }
+  business: { tradeName: string; legalName: string; slug: string; businessType: string; countryCode: string; description: string }
   location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }
   schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }
   branding: { primaryColor: string; colorPreset: string; logoUrl: string; instagram: string; tiktok: string }

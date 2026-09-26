@@ -97,5 +97,8 @@ export function validateRoleForFlow(
   expectedFlow: 'company_member' | 'customer' | 'platform_member'
 ): boolean {
   if (!userRole) return false
+  if (userRole === 'platform_admin' || userRole === 'platform_support') {
+    return true
+  }
   return (ROLE_CATEGORIES[expectedFlow] as readonly string[]).includes(userRole)
 }

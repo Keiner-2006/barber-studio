@@ -1,4 +1,4 @@
-import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer } from 'drizzle-orm/pg-core'
+import { uuid, text, timestamp, pgEnum, pgTable, boolean, integer, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const userStatusEnum = pgEnum('user_status', [
   'invited',
@@ -25,12 +25,14 @@ export const users = pgTable('users', {
 export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull(),
-  name: text('name').notNull().unique(),
+  name: text('name').notNull(),
   description: text('description'),
   isSystem: boolean('is_system').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [
+  uniqueIndex('roles_tenant_name_unique').on(table.tenantId, table.name)
+])
 
 export const permissions = pgTable('permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
