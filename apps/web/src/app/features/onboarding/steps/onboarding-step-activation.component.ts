@@ -205,6 +205,7 @@ export class OnboardingStepActivationComponent {
         legalName: this.store.business().legalName,
         slug: this.store.business().slug,
         businessType: this.store.business().businessType,
+        countryCode: this.store.business().countryCode,
         description: this.store.business().description,
       },
       location: {
@@ -238,69 +239,82 @@ export class OnboardingStepActivationComponent {
           this.submitting = false
         }
       },
-      error: () => {
+      error: (err: any) => {
         this.submitting = false
+        const errorMsg = err.error?.message || err.message || 'Error inesperado'
+        if (errorMsg.includes('slug') || errorMsg.includes('already exists')) {
+          this.terminalLogs = ['Error: El nombre de subdominio ya está en uso. Intenta con otro.']
+        } else {
+          this.terminalLogs = ['Error: ' + errorMsg]
+        }
       },
     })
   }
 
-  private async pollJob(jobId: string): Promise<void> {
+  private pollJob(jobId: string): void {
     const steps = [
-      { percent: 25, message: 'Configurando tu barbería...', log: 'Creando tu cuenta...' },
-      { percent: 50, message: 'Creando sucursal y roles...', log: 'Agregando servicios...' },
-      { percent: 75, message: 'Finalizando configuración...', log: 'Configurando marca...' },
-      { percent: 100, message: '¡Tu barbería está activa!', log: 'Todo completado.' },
+      { percent: 25, message: 'Creando tu cuenta en la plataforma...', log: 'Registrando en platform_users' },
+      { percent: 50, message: 'Preparando base de datos del negocio...', log: 'Creando tenant en platform_tenants' },
+      { percent: 75, message: 'Configurando roles y sucursal...', log: 'Creando branch, roles y usuarios' },
+      { percent: 100, message: '¡Todo listo! Activando tu barbería...', log: 'Tenant activado correctamente' },
     ]
 
-    let i = 0
-    const poll = async () => {
-      if (i >= steps.length) {
-        this.api.getJobStatus(jobId).subscribe({
-          next: (resp: any) => {
-            if (resp.data?.status === 'succeeded') {
-              const tenantId = resp.data?.tenantId
-              if (tenantId) {
-                this.store.setTenantId(tenantId)
-                if (typeof localStorage !== 'undefined') {
-                  localStorage.setItem('navaja_tenant_id', tenantId)
-                }
-              }
-              this.loginAfterOnboarding()
-            } else {
-              i++
-              if (i < steps.length) {
-                this.submittingPercent = steps[i].percent
-                this.submittingMessage = steps[i].message
-                this.terminalLogs = [...this.terminalLogs, steps[i].log]
-                setTimeout(poll, 1000)
-              }
-            }
-          },
-          error: () => {
-            i++
-            if (i < steps.length) {
-              this.submittingPercent = steps[i].percent
-              this.submittingMessage = steps[i].message
-              this.terminalLogs = [...this.terminalLogs, steps[i].log]
-              setTimeout(poll, 1000)
-            }
-          },
-        })
+    let stepIndex = 0
+    let attempts = 0
+    const maxAttempts = 30
+
+    const poll = () => {
+      if (attempts >= maxAttempts) {
+        this.isSubmitting = false
+        this.submitting = false
+        this.terminalLogs = [...this.terminalLogs, 'Error: Timeout de aprovisionamiento. Contacta al soporte.']
         return
       }
-      this.submittingPercent = steps[i].percent
-      this.submittingMessage = steps[i].message
-      this.terminalLogs = [...this.terminalLogs, steps[i].log]
-      i++
-      this.api.completeJob(jobId, 'succeeded').subscribe({
-        next: () => {
-          setTimeout(poll, 500)
+      attempts++
+
+      this.submittingPercent = steps[stepIndex].percent
+      this.submittingMessage = steps[stepIndex].message
+      if (stepIndex < this.terminalLogs.filter(l => l.startsWith('✓')).length + 1) {
+        this.terminalLogs = [...this.terminalLogs, steps[stepIndex].log]
+      }
+
+      this.api.getJobStatus(jobId).subscribe({
+        next: (resp: any) => {
+          const status = resp.data?.status
+          const tenantId = resp.data?.tenantId
+
+          if (status === 'succeeded') {
+            if (tenantId) {
+              this.store.setTenantId(tenantId)
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('navaja_tenant_id', tenantId)
+              }
+            }
+            this.terminalLogs = [...this.terminalLogs, '✓ Aprovisionamiento completado']
+            this.loginAfterOnboarding()
+          } else if (status === 'failed' || status === 'compensated') {
+            this.isSubmitting = false
+            this.submitting = false
+            this.terminalLogs = [...this.terminalLogs, '✗ Error en el aprovisionamiento: ' + (resp.data?.errorDetail || 'Error desconocido')]
+          } else {
+            // Job aún en progreso (queued, running)
+            if (stepIndex < steps.length - 1) stepIndex++
+            setTimeout(poll, 2000)
+          }
         },
-        error: () => {
-          setTimeout(poll, 1000)
+        error: (err: any) => {
+          attempts += 0.5 // Error cuenta medio intento
+          if (attempts >= maxAttempts) {
+            this.isSubmitting = false
+            this.submitting = false
+            this.terminalLogs = [...this.terminalLogs, '✗ Error consultando estado del job']
+          } else {
+            setTimeout(poll, 3000)
+          }
         },
       })
     }
+
     setTimeout(poll, 1500)
   }
 
