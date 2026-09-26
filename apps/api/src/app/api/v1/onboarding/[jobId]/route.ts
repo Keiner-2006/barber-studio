@@ -28,14 +28,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ jo
     if (!status) {
       throw new AppError('VALIDATION_ERROR', 'status es requerido')
     }
-    const job = await service.getJob(params.jobId)
-    if (!job) {
-      throw new AppError('NOT_FOUND', 'Job de provisioning no encontrado')
-    }
     await service.advanceJob(params.jobId, 'completed', status, body.error)
-    if (status === 'succeeded') {
-      await service.activateTenant(job.tenantId)
-    }
     const updatedJob = await service.getJob(params.jobId)
     return NextResponse.json({ data: updatedJob, requestId })
   } catch (error) {

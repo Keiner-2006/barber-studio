@@ -141,7 +141,7 @@ import { TenantService } from '../../../core/tenancy/tenant.service'
     .terminal-log { background: #17120f; border-radius: 8px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 11px; color: #d2c4bd; max-height: 200px; overflow-y: auto; }
     .log-line { padding: 2px 0; }
     .log-line .prompt { color: #944928; margin-right: 8px; }
-    .action-bar { margin-top: 20px; }
+    .action-bar { margin-top: 20px; text-align: center; }
     .btn { padding: 14px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 0; cursor: pointer; transition: .2s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn-primary { background: #d98e3a; color: #181310; }
@@ -252,16 +252,8 @@ export class OnboardingStepActivationComponent {
   }
 
   private pollJob(jobId: string): void {
-    const steps = [
-      { percent: 25, message: 'Creando tu cuenta en la plataforma...', log: 'Registrando en platform_users' },
-      { percent: 50, message: 'Preparando base de datos del negocio...', log: 'Creando tenant en platform_tenants' },
-      { percent: 75, message: 'Configurando roles y sucursal...', log: 'Creando branch, roles y usuarios' },
-      { percent: 100, message: '¡Todo listo! Activando tu barbería...', log: 'Tenant activado correctamente' },
-    ]
-
-    let stepIndex = 0
     let attempts = 0
-    const maxAttempts = 30
+    const maxAttempts = 15
 
     const poll = () => {
       if (attempts >= maxAttempts) {
@@ -272,23 +264,15 @@ export class OnboardingStepActivationComponent {
       }
       attempts++
 
-      this.submittingPercent = steps[stepIndex].percent
-      this.submittingMessage = steps[stepIndex].message
-      if (stepIndex < this.terminalLogs.filter(l => l.startsWith('✓')).length + 1) {
-        this.terminalLogs = [...this.terminalLogs, steps[stepIndex].log]
-      }
-
       this.api.getJobStatus(jobId).subscribe({
         next: (resp: any) => {
           const status = resp.data?.status
           const tenantId = resp.data?.tenantId
 
-          if (status === 'succeeded') {
+          if (status === 'succeeded' || status === 'completed') {
             if (tenantId) {
               this.store.setTenantId(tenantId)
-              if (typeof localStorage !== 'undefined') {
-                localStorage.setItem('navaja_tenant_id', tenantId)
-              }
+              localStorage.setItem('navaja_tenant_id', tenantId)
             }
             this.terminalLogs = [...this.terminalLogs, '✓ Aprovisionamiento completado']
             this.loginAfterOnboarding()
@@ -297,13 +281,13 @@ export class OnboardingStepActivationComponent {
             this.submitting = false
             this.terminalLogs = [...this.terminalLogs, '✗ Error en el aprovisionamiento: ' + (resp.data?.errorDetail || 'Error desconocido')]
           } else {
-            // Job aún en progreso (queued, running)
-            if (stepIndex < steps.length - 1) stepIndex++
+            // Job still queued/running
+            this.submittingPercent = Math.min(25 + (attempts * 5), 90)
             setTimeout(poll, 2000)
           }
         },
-        error: (err: any) => {
-          attempts += 0.5 // Error cuenta medio intento
+        error: () => {
+          attempts += 0.5
           if (attempts >= maxAttempts) {
             this.isSubmitting = false
             this.submitting = false
@@ -315,7 +299,7 @@ export class OnboardingStepActivationComponent {
       })
     }
 
-    setTimeout(poll, 1500)
+    setTimeout(poll, 1000)
   }
 
   private loginAfterOnboarding(): void {

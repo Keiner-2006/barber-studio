@@ -113,7 +113,19 @@ await platformDb.insert(platformTenants).values({
       step: 'tenant_created',
     })
 
-    return { jobId, tenantId, status: 'queued' }
+    // Execute provisioning synchronously so tenant data (branches, roles, users)
+    // is created immediately. This keeps the onboarding flow simple while we
+    // don't yet have a dedicated background worker.
+    try {
+      await this.advanceJob(jobId, 'provisioning', 'running')
+      await this.activateTenant(tenantId)
+      await this.advanceJob(jobId, 'completed', 'succeeded')
+    } catch (provisioningError) {
+      console.error('[PROVISIONING_ERROR]', provisioningError)
+      await this.advanceJob(jobId, 'failed', 'failed', String(provisioningError))
+    }
+
+    return { jobId, tenantId, status: 'succeeded' }
   }
 
   async createTenantData(tenantId: string, tenant: typeof platformTenants.$inferSelect, platformUserId: string): Promise<void> {
