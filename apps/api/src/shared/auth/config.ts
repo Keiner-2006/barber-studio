@@ -56,35 +56,45 @@ logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
 const frontendUrl = origin(process.env.FRONTEND_URL || process.env.BETTER_AUTH_URL || '')
 logConnectionInfo(frontendUrl || '', 'BETTER_AUTH_FRONTEND_URL')
 
-export const auth = demoAuthEnabled()
-  ? null
-  : betterAuth({
-      database: new Pool({
-        connectionString: authDbUrl,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000,
+let authInstance: any = null
+
+function createAuth() {
+  if (demoAuthEnabled()) return null
+  return betterAuth({
+    database: new Pool({
+      connectionString: authDbUrl,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 5000,
+    }),
+    emailAndPassword: { enabled: true },
+    baseURL: origin(process.env.BETTER_AUTH_URL) || origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) || origin(process.env.VERCEL_URL) || origin(process.env.V0_RUNTIME_URL),
+    trustedOrigins,
+    plugins: [
+      bearer(),
+      google({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       }),
-      emailAndPassword: { enabled: true },
-      baseURL: origin(process.env.BETTER_AUTH_URL) || origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) || origin(process.env.VERCEL_URL) || origin(process.env.V0_RUNTIME_URL),
-      trustedOrigins,
-      plugins: [
-        bearer(),
-        google({
-          clientId: process.env.GOOGLE_CLIENT_ID!,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        }),
-      ],
-      ...(process.env.NODE_ENV === 'development'
-        ? {
-            advanced: {
-              defaultCookieAttributes: {
-                sameSite: 'lax' as const,
-                secure: false,
-              },
+    ],
+    ...(process.env.NODE_ENV === 'development'
+      ? {
+          advanced: {
+            defaultCookieAttributes: {
+              sameSite: 'lax' as const,
+              secure: false,
             },
-          }
-        : {}),
-    })
+          },
+        }
+      : {}),
+  })
+}
+
+export function getAuth() {
+  if (!authInstance) {
+    authInstance = createAuth()
+  }
+  return authInstance
+}
 
 type Credentials = {
   email: string
@@ -102,7 +112,7 @@ export async function getSession(headers: Headers) {
       : null
   }
 
-  return (await auth?.api.getSession({ headers })) ?? null
+  return (await getAuth()?.api.getSession({ headers })) ?? null
 }
 
 export async function signIn(credentials: Credentials, headers: Headers) {
@@ -114,7 +124,7 @@ export async function signIn(credentials: Credentials, headers: Headers) {
     }
   }
 
-  return auth!.api.signInEmail({
+  return getAuth()!.api.signInEmail({
     body: credentials,
     headers,
   })
@@ -128,7 +138,7 @@ export async function signUp(registration: Registration, headers: Headers) {
     }
   }
 
-  return auth!.api.signUpEmail({
+  return getAuth()!.api.signUpEmail({
     body: registration,
     headers,
   })
@@ -139,5 +149,5 @@ export async function signOut(headers: Headers) {
     return
   }
 
-  return auth!.api.signOut({ headers })
+  return getAuth()!.api.signOut({ headers })
 }
