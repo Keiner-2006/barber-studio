@@ -98,24 +98,17 @@ interface NavItem {
         <header class="topbar">
           <button class="hamburger" (click)="menuOpen.set(true)">☰</button>
           <div class="topbar-right">
-            <div class="connection-badge" [class.connected]="!store.offline()" [class.disconnected]="store.offline()">
-              <span class="connection-dot"></span>
-              <span>{{ connectionLabel() }}</span>
-              @if (store.lastSyncedAt(); as syncedAt) {
-                <span class="sync-info">· Sync {{ syncedAt | date: 'HH:mm' }}</span>
-              }
+            <div class="admin-info">
+              <span class="admin-role">Administrador de Plataforma</span>
             </div>
-            <span class="admin-badge">Super Admin</span>
             <div class="user-actions">
               <div class="user-actions-info">
-                <span class="user-display-name">{{ store.viewer()?.name || 'Plataforma' }}</span>
+                <span class="user-display-name">{{ store.viewer()?.name || 'Super Administrador' }}</span>
                 <span class="user-email">{{ store.viewer()?.email || 'admin@barbershop.local' }}</span>
               </div>
-              <div class="user-actions-avatar">
-                <span class="material_symbols-outlined">person</span>
-              </div>
+              <div class="user-actions-avatar">{{ userInitials }}</div>
             </div>
-            <button class="logout-btn" (click)="onLogout()">
+            <button class="logout-btn" (click)="onLogout()" title="Cerrar sesión">
               <span class="material_symbols-outlined">logout</span>
             </button>
           </div>
@@ -377,37 +370,12 @@ interface NavItem {
       align-items: center;
       gap: 12px;
     }
-    .connection-badge {
+    .admin-info {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: #f3f4f6;
+    }
+    .admin-role {
       font-size: 12px;
-      font-weight: 500;
-    }
-    .connection-badge.connected {
-      background: rgba(16, 185, 129, 0.1);
-      color: #059669;
-    }
-    .connection-badge.disconnected {
-      background: rgba(239, 68, 68, 0.1);
-      color: #dc2626;
-    }
-    .connection-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-    .sync-info {
-      color: #9ca3af;
-      margin-left: 4px;
-      font-weight: 400;
-    }
-    .admin-badge {
-      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.15em;
@@ -444,9 +412,8 @@ interface NavItem {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .user-actions-avatar .material_symbols-outlined {
-      font-size: 18px;
+      font-size: 12px;
+      font-weight: 600;
     }
     .logout-btn {
       width: 36px;
@@ -491,18 +458,6 @@ export class PlatformAdminShellComponent implements OnInit {
     { label: 'Auditoría y Logs', icon: 'receipt_long', pending: true },
     { label: 'Configuración', icon: 'settings', pending: true },
   ]
-
-  readonly connectionLabel = computed(() => {
-    if (this.store.loading()) return 'Sincronizando'
-    return this.store.offline() ? 'API no disponible' : 'Conectado'
-  })
-
-  readonly apiStateLabel = computed(() => (this.store.offline() ? 'Offline' : 'Online'))
-  readonly syncLabel = computed(() => {
-    const syncedAt = this.store.lastSyncedAt()
-    if (!syncedAt) return this.store.offline() ? 'sin datos' : 'pendiente'
-    return syncedAt.toLocaleTimeString()
-  })
 
   readonly roleLabel = computed(() => {
     const role = this.store.viewer()?.role as Role | undefined
