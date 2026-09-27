@@ -50,8 +50,7 @@ const createDemoSession = () => ({
 })
 
 const authRawUrl = process.env.DATABASE_URL || ''
-const authUrlWithSsl = authRawUrl.includes('sslmode=') ? authRawUrl : authRawUrl + '?sslmode=require'
-const authDbUrl = authUrlWithSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
+const authDbUrl = authRawUrl.includes('sslmode=') ? authRawUrl : authRawUrl + '?sslmode=require'
 logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
 
 const frontendUrl = origin(process.env.FRONTEND_URL || process.env.BETTER_AUTH_URL || '')
@@ -62,7 +61,8 @@ export const auth = demoAuthEnabled()
   : betterAuth({
       database: new Pool({
         connectionString: authDbUrl,
-        ssl: { rejectUnauthorized: true },
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 5000,
       }),
       emailAndPassword: { enabled: true },
       baseURL: origin(process.env.BETTER_AUTH_URL) || origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) || origin(process.env.VERCEL_URL) || origin(process.env.V0_RUNTIME_URL),

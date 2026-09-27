@@ -19,8 +19,7 @@ function logConnectionInfo(url: string, label: string) {
 let _logged = false
 function getConnectionString(): string {
   const url = process.env.DATABASE_URL || process.env.PLATFORM_DATABASE_URL || ''
-  const withSsl = url.includes('sslmode=') ? url : url + '?sslmode=require'
-  return withSsl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full')
+  return url.includes('sslmode=') ? url : url + '?sslmode=require'
 }
 
 function getPlatformPool(): Pool {
@@ -35,7 +34,7 @@ function getPlatformPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-    ssl: { rejectUnauthorized: true },
+    ssl: { rejectUnauthorized: false },
   })
 }
 
@@ -65,11 +64,11 @@ export function getTenantDb() {
 
   const tenantUrl = databaseUrl.includes('sslmode=') ? databaseUrl : databaseUrl + '?sslmode=require'
   const pool = new Pool({
-    connectionString: tenantUrl.replace(/sslmode=(prefer|require|verify-ca|verify-full)/i, 'sslmode=verify-full'),
+    connectionString: tenantUrl,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-    ssl: { rejectUnauthorized: true },
+    ssl: { rejectUnauthorized: false },
   })
   const db = drizzle(pool, { schema }) as typeof platformDb
   tenantPools.set(tenantId, pool)
