@@ -63,23 +63,6 @@ interface NavItem {
         </nav>
 
         <div class="sidebar-footer">
-          <div class="api-status">
-            <div class="api-status-header">
-              <span class="api-dot" [class.online]="!store.offline()" [class.offline]="store.offline()"></span>
-              <span class="api-label">API de Plataforma</span>
-            </div>
-            <div class="api-status-body">
-              <div class="api-row">
-                <span class="api-row-label">Estado</span>
-                <span class="api-row-value">{{ apiStateLabel() }}</span>
-              </div>
-              <div class="api-row">
-                <span class="api-row-label">Última sincronización</span>
-                <span class="api-row-value">{{ syncLabel() }}</span>
-              </div>
-            </div>
-          </div>
-
           <div class="user-info">
             <div class="user-avatar">{{ userInitials }}</div>
             <div class="user-details">
@@ -256,46 +239,6 @@ interface NavItem {
       padding: 16px;
       border-top: 1px solid #e5e7eb;
     }
-    .api-status {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 16px;
-    }
-    .api-status-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .api-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #d1d5db;
-    }
-    .api-dot.online { background: #10b981; }
-    .api-dot.offline { background: #ef4444; }
-    .api-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #374151;
-    }
-    .api-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .api-row-label {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-    .api-row-value {
-      font-size: 12px;
-      font-weight: 500;
-      color: #374151;
-    }
-
     .user-info {
       display: flex;
       align-items: center;
