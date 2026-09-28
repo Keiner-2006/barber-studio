@@ -7,7 +7,10 @@ import {
   PlatformTenant,
   TenantStatus,
   TENANT_STATUS_LABELS,
+  CreateTenantInput,
 } from './platform-admin.models';
+
+export type { CreateTenantInput };
 
 export interface TenantsQuery {
   limit: number;
@@ -30,6 +33,10 @@ export class PlatformAdminApi {
       limit: filters.limit,
       ...(filters.status ? { status: filters.status } : {}),
     });
+  }
+
+  createTenant(input: CreateTenantInput): Observable<ApiResponse<{ jobId: string; tenantId: string; status: string }>> {
+    return this.api.post<ApiResponse<{ jobId: string; tenantId: string; status: string }>>('/admin/tenants', input);
   }
 }
 

@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { signIn, demoAuthEnabled, demoUser } from '@/shared/auth/config'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
 import { resolveUserRole, validateRoleForFlow, getRoleCategory } from '@/shared/auth/role-resolver'
+import { checkLoginRateLimit, resetLoginRateLimit } from '@/shared/http/rate-limit'
+import { z } from 'zod'
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(1, 'Contraseña requerida'),
+  expectedRole: z.enum(['admin', 'company_member', 'owner', 'customer', 'client', 'platform_admin', 'platform_support']).optional(),
+  tenantId: z.string().uuid('Tenant ID inválido').optional(),
+})
 
 const COMPANY_MEMBER_FLOWS = ['company_member', 'staff', 'admin']
 const CUSTOMER_FLOWS = ['customer', 'client']
@@ -18,13 +27,47 @@ export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { email, password, expectedRole, tenantId } = body
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'Email y contraseña son requeridos' }, requestId },
-        { status: 400 }
-      )
+    let parsed: { email: string; password: string; expectedRole?: string; tenantId?: string }
+    try {
+      parsed = loginSchema.parse(body)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Datos de entrada inválidos',
+              details: error.issues.map((issue) => ({
+                field: issue.path.join('.'),
+                message: issue.message,
+                code: issue.code,
+              })),
+            },
+            requestId,
+          },
+          { status: 400 }
+        )
+      }
+      throw error
+    }
+
+    const { email, password, expectedRole, tenantId } = parsed
+
+    if (process.env.NODE_ENV !== 'development' && !demoAuthEnabled()) {
+      const rateLimitKey = `${email}:${request.headers.get('x-forwarded-for') || 'unknown'}`
+      if (!checkLoginRateLimit(rateLimitKey)) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'RATE_LIMITED',
+              message: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.',
+            },
+            requestId,
+          },
+          { status: 429, headers: { 'Retry-After': '900' } }
+        )
+      }
     }
 
     if (expectedRole) {
@@ -75,6 +118,11 @@ export async function POST(request: NextRequest) {
       { email, password },
       request.headers
     )
+
+    if (process.env.NODE_ENV !== 'development' && !demoAuthEnabled()) {
+      const rateLimitKey = `${email}:${request.headers.get('x-forwarded-for') || 'unknown'}`
+      resetLoginRateLimit(rateLimitKey)
+    }
 
     if (result.user) {
       const identity = await resolveUserRole(email, tenantId)

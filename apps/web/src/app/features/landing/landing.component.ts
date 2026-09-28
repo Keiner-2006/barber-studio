@@ -13,9 +13,9 @@ import { RouterLink } from '@angular/router'
           <span>BarberShop Management System</span>
         </a>
         <nav class="desktop-nav" aria-label="Navegación principal">
-          <a href="#caracteristicas">Características</a>
-          <a href="#planes">Planes</a>
-          <a href="#testimonios">Testimonios</a>
+          <a routerLink="/booking" class="nav-link">Características</a>
+          <a routerLink="/booking" class="nav-link">Planes</a>
+          <a routerLink="/booking" class="nav-link">Testimonios</a>
         </nav>
         <div class="header-actions">
           <a class="login-link" routerLink="/login">Iniciar sesión</a>
@@ -132,7 +132,9 @@ import { RouterLink } from '@angular/router'
     .brand, .footer-brand { align-items: center; color: var(--ink); display: flex; font: 700 22px/1 'Vollkorn', serif; gap: 10px; text-decoration: none; }
     .brand small { font: 400 11px/1 'Plus Jakarta Sans', sans-serif; color: var(--brown); margin-left: 4px; }
     .brand-mark { align-items: center; background: var(--deep); border-radius: 8px; color: #ffdbca; display: flex; font: 18px sans-serif; height: 34px; justify-content: center; width: 34px; }
-    .desktop-nav { display: flex; gap: 8px; }
+    .desktop-nav { display: flex; gap: 4px; }
+    .nav-link { color: #50443e; padding: 10px 14px; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px; transition: all 0.2s ease; }
+    .nav-link:hover { color: var(--brown); background: rgba(184, 115, 51, 0.08); }
     .desktop-nav a, .login-link { color: #50443e; padding: 10px 12px; text-decoration: none; }
     .desktop-nav a:hover, .login-link:hover { color: var(--brown); }
     .header-actions { align-items: center; display: flex; gap: 14px; }

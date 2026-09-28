@@ -1,19 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { signUp } from '@/shared/auth/config'
 import { handleApiError, generateRequestId } from '@/shared/errors/handler'
+import { z } from 'zod'
+
+const registerSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  name: z.string().min(1, 'Nombre requerido').max(100, 'Nombre demasiado largo'),
+  tenantId: z.string().uuid('Tenant ID inválido').optional(),
+})
 
 export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   try {
     const body = await request.json()
-    const { email, password, name } = body
 
-    if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'Email, contraseña y nombre son requeridos' }, requestId },
-        { status: 400 }
-      )
+    let parsed: { email: string; password: string; name: string; tenantId?: string }
+    try {
+      parsed = registerSchema.parse(body)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Datos de entrada inválidos',
+              details: error.issues.map((issue) => ({
+                field: issue.path.join('.'),
+                message: issue.message,
+                code: issue.code,
+              })),
+            },
+            requestId,
+          },
+          { status: 400 }
+        )
+      }
+      throw error
     }
+
+    const { email, password, name, tenantId } = parsed
 
     const result = await signUp(
       { email, password, name },

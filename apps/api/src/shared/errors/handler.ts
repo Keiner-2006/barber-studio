@@ -20,8 +20,7 @@ export function handleApiError(error: unknown, requestId?: string): NextResponse
   const response: ApiErrorResponse = {
     error: {
       code: 'INTERNAL_ERROR',
-      message: errorMessage,
-      details: { rawError: errorMessage, stack: error instanceof Error ? error.stack : undefined },
+      message: 'An unexpected error occurred',
     },
     requestId,
   }

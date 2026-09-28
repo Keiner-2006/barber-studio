@@ -35,7 +35,7 @@ interface DetailTab {
             <div class="flex items-center gap-space-xs text-pa-on-surface-variant font-label-md text-label-md">
               <a routerLink="/platform-admin" class="hover:text-pa-primary transition-colors cursor-pointer">Platform</a>
               <span class="text-pa-outline-variant">/</span>
-              <a routerLink="/platform-admin/tenants" class="hover:text-pa-primary transition-colors cursor-pointer">Tenants</a>
+              <a routerLink="/platform-admin/negocios" class="hover:text-pa-primary transition-colors cursor-pointer">Negocios</a>
               <span class="text-pa-outline-variant">/</span>
               <span class="text-pa-on-surface font-semibold">{{ tenant.tradeName }}</span>
               <span class="bg-pa-surface-container-high text-pa-on-surface-variant font-mono px-2 py-0.5 rounded text-[11px] ml-space-xs">
@@ -424,7 +424,7 @@ interface DetailTab {
                   </div>
                 </div>
                 <a
-                  routerLink="/platform-admin/tenants"
+                  routerLink="/platform-admin/negocios"
                   class="w-full mt-space-md py-2 rounded-lg bg-pa-secondary text-pa-on-secondary hover:bg-pa-tertiary font-label-md text-label-md transition-all shadow-sm text-center"
                 >
                   Volver al directorio
@@ -503,7 +503,7 @@ interface DetailTab {
           </p>
           <div class="flex items-center gap-space-sm mt-space-sm">
             <a
-              routerLink="/platform-admin/tenants"
+              routerLink="/platform-admin/negocios"
               class="bg-pa-surface-container hover:bg-pa-surface-container-high text-pa-on-surface px-space-md py-2 rounded-lg font-label-md text-label-md"
             >
               Volver al directorio

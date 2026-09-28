@@ -390,12 +390,14 @@ export class PlatformAdminShellComponent implements OnInit {
   readonly primaryNav: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', path: '/platform-admin' },
     { label: 'Negocios Registrados', icon: 'domain', path: '/platform-admin/negocios' },
-    { label: 'Servicios', icon: 'category', path: '/platform-admin/services' },
-    { label: 'Citas Globales', icon: 'calendar_today', path: '/platform-admin/appointments' },
-    { label: 'Caja Central', icon: 'payments', path: '/platform-admin/cash' },
+    { label: 'Clientes', icon: 'people', path: '/platform-admin/clientes' },
+    { label: 'Agregar Negocio', icon: 'add_circle', path: '/platform-admin/negocios/nuevo' },
   ]
 
   readonly pendingNav: NavItem[] = [
+    { label: 'Servicios', icon: 'category', pending: true },
+    { label: 'Citas Globales', icon: 'calendar_today', pending: true },
+    { label: 'Caja Central', icon: 'payments', pending: true },
     { label: 'Detalle de Negocio', icon: 'business_center', pending: true },
     { label: 'Jobs de Aprovisionamiento', icon: 'hourglass_empty', pending: true },
     { label: 'Auditoría y Logs', icon: 'receipt_long', pending: true },
@@ -418,8 +420,8 @@ export class PlatformAdminShellComponent implements OnInit {
 
   onSearch(term: string): void {
     this.store.setSearch(term)
-    if (!this.router.url.endsWith('/tenants')) {
-      this.router.navigate(['/platform-admin/tenants'])
+    if (!this.router.url.endsWith('/negocios')) {
+      this.router.navigate(['/platform-admin/negocios'])
     }
   }
 

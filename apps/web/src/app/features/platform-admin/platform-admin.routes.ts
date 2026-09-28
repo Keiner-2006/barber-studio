@@ -7,7 +7,9 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: { roles: ['platform_admin'] },
     loadComponent: () =>
-      import('./platform-admin-shell.component').then((m) => m.PlatformAdminShellComponent),
+      import('./platform-admin-shell.component').then(
+        (m) => m.PlatformAdminShellComponent
+      ),
     children: [
       {
         path: '',
@@ -25,11 +27,23 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'negocios/nuevo',
+        loadComponent: () =>
+          import('./platform-admin-new-tenant.component').then(
+            (m) => m.PlatformAdminNewTenantComponent
+          ),
+      },
+      {
         path: 'negocios/:id',
         loadComponent: () =>
           import('./platform-admin-tenant-detail.component').then(
             (m) => m.PlatformAdminTenantDetailComponent
           ),
+      },
+      {
+        path: 'clientes',
+        loadChildren: () =>
+          import('./clients/clients.routes').then((m) => m.routes),
       },
       {
         path: 'services',

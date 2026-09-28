@@ -20,9 +20,9 @@ const origin = (value?: string) =>
   value ? (value.startsWith('http') ? value : `https://${value}`) : undefined
 
 const trustedOrigins = [
+  origin(process.env.BETTER_AUTH_URL),
   origin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
   origin(process.env.NEXT_PUBLIC_APP_URL),
-  origin(process.env.BETTER_AUTH_URL),
   origin(process.env.VERCEL_URL),
   origin(process.env.V0_RUNTIME_URL),
   origin(process.env.V0_DEV_APP_URL),
@@ -56,6 +56,11 @@ logConnectionInfo(authDbUrl, 'BETTER_AUTH_DATABASE_URL')
 const frontendUrl = origin(process.env.FRONTEND_URL || process.env.BETTER_AUTH_URL || '')
 logConnectionInfo(frontendUrl || '', 'BETTER_AUTH_FRONTEND_URL')
 
+const authSecret = process.env.AUTH_SECRET || process.env.BETTER_AUTH_SECRET || ''
+if (process.env.NODE_ENV !== 'development' && (!authSecret || authSecret.length < 32)) {
+  throw new Error('AUTH_SECRET (or BETTER_AUTH_SECRET) must be at least 32 characters')
+}
+
 let authInstance: any = null
 
 function createAuth() {
@@ -69,6 +74,20 @@ function createAuth() {
     emailAndPassword: { enabled: true },
     baseURL: origin(process.env.BETTER_AUTH_URL) || origin(process.env.VERCEL_PROJECT_PRODUCTION_URL) || origin(process.env.VERCEL_URL) || origin(process.env.V0_RUNTIME_URL),
     trustedOrigins,
+    secret: authSecret,
+    session: {
+      cookieName: 'auth_session',
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+    },
+    advanced: {
+      defaultCookieAttributes: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+      },
+      generateShortSessionToken: true,
+    },
     plugins: [
       bearer(),
       google({
@@ -76,16 +95,6 @@ function createAuth() {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       }),
     ],
-    ...(process.env.NODE_ENV === 'development'
-      ? {
-          advanced: {
-            defaultCookieAttributes: {
-              sameSite: 'lax' as const,
-              secure: false,
-            },
-          },
-        }
-      : {}),
   })
 }
 

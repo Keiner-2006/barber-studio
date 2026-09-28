@@ -163,3 +163,19 @@ export const COUNTRY_NAMES: Record<string, string> = {
   US: 'Estados Unidos',
   ES: 'España',
 };
+
+export interface CreateTenantInput {
+  legalName: string
+  tradeName: string
+  slug: string
+  businessType: 'barberia' | 'peluqueria' | 'grooming' | 'otro'
+  email: string
+  ownerName: string
+  ownerLastName?: string
+  phone?: string
+  countryCode?: string
+  documentType?: string
+  documentNumber?: string
+  primaryColor?: string
+}
+

@@ -28,35 +28,15 @@ import {
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="flex flex-col w-full pb-16 space-y-space-md">
-      <!-- Top Breadcrumb & Quick Platform Counters -->
+      <!-- Top Bar -->
       <div class="flex flex-wrap items-center justify-between gap-space-md py-space-md">
         <div class="flex items-center gap-space-xs text-pa-on-surface-variant font-label-md text-label-md">
-          <a routerLink="/platform-admin" class="hover:text-pa-on-surface cursor-pointer transition-colors">Plataforma</a>
+          <a routerLink="/platform-admin" class="hover:text-pa-primary transition-colors cursor-pointer">Platform</a>
           <span class="text-pa-outline">/</span>
           <span class="text-pa-on-surface font-semibold">Negocios Registrados</span>
-          <span class="text-pa-outline">/</span>
-          <span class="bg-pa-surface-container-high px-space-xs py-0.5 rounded text-pa-primary font-mono text-label-sm font-semibold">
-            {{ totalBadge() }} Instancias
-          </span>
         </div>
-        <div class="flex items-center gap-space-md">
-          <div class="flex items-center gap-space-xs bg-pa-surface-container-low px-space-sm py-1 rounded-full shadow-sm">
-            <span class="material-symbols-outlined text-[16px] text-pa-primary">domain</span>
-            <span class="font-label-sm text-label-sm text-pa-on-surface-variant font-medium">Fuente:</span>
-            <span class="font-label-sm text-label-sm text-pa-on-surface font-semibold font-mono">/admin/negocios</span>
-          </div>
-          <div class="flex items-center gap-space-xs bg-pa-surface-container-low px-space-sm py-1 rounded-full shadow-sm">
-            <span
-              class="w-2 h-2 rounded-full"
-              [class.bg-pa-primary]="!store.offline()"
-              [class.animate-ping]="!store.offline()"
-              [class.bg-pa-error]="store.offline()"
-            ></span>
-            <span class="font-label-sm text-label-sm text-pa-on-surface-variant">
-              Estado API:
-              <strong class="text-pa-on-surface">{{ apiStatusLabel() }}</strong>
-            </span>
-          </div>
+        <div class="flex items-center gap-space-sm">
+          <span class="font-label-sm text-label-sm text-pa-on-surface-variant">{{ totalBadge() }} negocios</span>
         </div>
       </div>
 
@@ -103,15 +83,10 @@ import {
             <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="store.loading()">cached</span>
             <span>{{ store.loading() ? 'Sincronizando...' : 'Sincronizar' }}</span>
           </button>
-          <button
-            type="button"
-            disabled
-            title="Aprovisionamiento de tenants: pendiente de endpoint en la API de plataforma"
-            class="flex items-center gap-space-xs bg-pa-primary hover:bg-pa-primary-container text-pa-on-primary px-space-md py-2 rounded-lg font-label-md text-label-md transition-all shadow-sm opacity-40 cursor-not-allowed"
-          >
+          <a routerLink="/platform-admin/negocios/nuevo" class="flex items-center gap-space-xs bg-pa-primary hover:bg-pa-primary-container text-pa-on-primary px-space-md py-2 rounded-lg font-label-md text-label-md transition-all shadow-sm">
             <span class="material-symbols-outlined text-[18px]">add_circle</span>
-            <span>Aprovisionar Tenant</span>
-          </button>
+            <span>Agregar Negocio</span>
+          </a>
         </div>
       </div>
 
@@ -369,9 +344,9 @@ import {
                 </div>
                 <a
                   class="text-center bg-pa-surface-container-lowest text-pa-on-surface py-1.5 rounded-lg text-label-sm font-semibold hover:bg-pa-primary hover:text-pa-on-primary transition-colors"
-                  [routerLink]="['/platform-admin/tenants', tenant.id]"
-                >
-                  Ver ficha
+                  [routerLink]="['/platform-admin/negocios', tenant.id]"
+                 >
+                   Ver ficha
                 </a>
               </div>
             }
@@ -463,7 +438,7 @@ import {
                         <a
                           class="p-1.5 rounded-lg text-pa-primary hover:bg-pa-primary/10 transition-colors"
                           title="Ver ficha del tenant"
-                          [routerLink]="['/platform-admin/tenants', tenant.id]"
+                          [routerLink]="['/platform-admin/negocios', tenant.id]"
                         >
                           <span class="material-symbols-outlined text-[18px]">visibility</span>
                         </a>
@@ -565,6 +540,7 @@ export class PlatformAdminTenantsListComponent implements OnInit {
     return total === null ? '—' : total
   })
 
+  
   readonly apiStatusLabel = computed(() => {
     if (this.store.loading()) return 'Consultando'
     return this.store.offline() ? 'No disponible' : 'Conectada'
