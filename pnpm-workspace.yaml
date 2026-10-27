@@ -3,8 +3,9 @@ packages:
   - 'packages/*'
 
 allowBuilds:
+  '@nestjs/core': true
   '@parcel/watcher': true
-  bcrypt: set this to true or false
+  bcrypt: true
   esbuild: true
   lmdb: true
   msgpackr-extract: true

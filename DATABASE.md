@@ -135,3 +135,4 @@ Cada base requiere backups automáticos, PITR, retención configurable, restaura
 ## 7. Pruebas mínimas
 
 Migraciones desde cero, aislamiento entre bases, permisos por sucursal, concurrencia de reservas, idempotencia, reversos de caja, recepción parcial de compras, restauración de backup y pruebas de borrado/retención.
+

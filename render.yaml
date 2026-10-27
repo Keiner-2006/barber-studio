@@ -1,5 +1,29 @@
 services:
   - type: web
+    name: navaja-api-nest
+    env: node
+    plan: starter
+    sourceDir: .
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @navaja/backend build
+    startCommand: pnpm --filter @navaja/backend start:prod
+    healthCheckPath: /api/v1/health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: true
+      - key: DB_POOL_MAX
+        value: "10"
+      - key: CORS_ORIGINS
+        value: https://barber-studio-web.vercel.app
+      - key: FRONTEND_URL
+        value: https://barber-studio-web.vercel.app
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+
+  - type: web
     name: navaja-api
     env: node
     plan: starter
