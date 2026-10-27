@@ -21,6 +21,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { HealthModule } from './modules/health/health.module';
 import { PublicModule } from './modules/public/public.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { GuardsModule } from './common/guards/guards.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
@@ -39,6 +40,7 @@ import { SecurityHeadersMiddleware } from './common/middleware/security-headers.
     DatabaseModule,
     TenancyModule,
     AuthModule,
+    GuardsModule,
     ErrorsModule,
     BranchesModule,
     CatalogModule,
