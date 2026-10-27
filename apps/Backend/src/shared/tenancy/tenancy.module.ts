@@ -5,6 +5,7 @@ import { TenantContextService } from './tenant-context.service';
 @Global()
 @Module({
   providers: [
+    RequestContextService,
     { provide: REQUEST_CONTEXT_SERVICE, useClass: RequestContextService },
     TenantContextService,
   ],
