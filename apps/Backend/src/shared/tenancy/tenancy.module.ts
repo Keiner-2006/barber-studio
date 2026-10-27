@@ -9,6 +9,6 @@ import { TenantContextService } from './tenant-context.service';
     { provide: REQUEST_CONTEXT_SERVICE, useClass: RequestContextService },
     TenantContextService,
   ],
-  exports: [REQUEST_CONTEXT_SERVICE, TenantContextService],
+  exports: [RequestContextService, REQUEST_CONTEXT_SERVICE, TenantContextService],
 })
 export class TenancyModule {}
