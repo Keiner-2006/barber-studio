@@ -10,6 +10,5 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
       useClass: AllExceptionsFilter,
     },
   ],
-  exports: [APP_FILTER],
 })
 export class ErrorsModule {}
