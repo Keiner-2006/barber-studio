@@ -19,7 +19,7 @@
       "@/*": ["./src/*"],
       "@navaja/shared": ["../../packages/shared/src"]
     },
-    "types": ["node", "jest"],
+    "types": ["node"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
