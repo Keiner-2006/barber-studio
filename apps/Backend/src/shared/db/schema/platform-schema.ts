@@ -27,6 +27,8 @@ export const platformTenants = pgTable('platform_tenants', {
   currencyCode: text('currency_code').notNull().default('COP'),
   locale: text('locale').notNull().default('es'),
   phone: text('phone'),
+  whatsapp: text('whatsapp'),
+  settings: jsonb('settings'),
   databaseHost: text('database_host'),
   databaseName: text('database_name'),
   databaseSecretRef: text('database_secret_ref'),

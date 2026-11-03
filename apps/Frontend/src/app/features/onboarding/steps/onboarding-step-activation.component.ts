@@ -54,6 +54,11 @@ import { environment } from '../../../../environments/environment'
               <span class="label">Canal de Citas</span>
               <span class="value">WhatsApp + Web</span>
             </div>
+            <div class="summary-item">
+              <span class="label">WhatsApp público</span>
+              <span *ngIf="publicWhatsApp; else noPublicWhatsApp" class="value">{{ publicWhatsApp }}</span>
+              <ng-template #noPublicWhatsApp><span class="value">Sin WhatsApp público</span></ng-template>
+            </div>
           </div>
         </div>
 
@@ -65,6 +70,7 @@ import { environment } from '../../../../environments/environment'
             <span class="text">{{ store.account().email }}</span>
             <span *ngIf="store.account().documentType && store.account().documentNumber" class="text">{{ store.account().documentType }} {{ store.account().documentNumber }}</span>
             <span *ngIf="store.account().phone" class="text">{{ store.account().phone }}</span>
+            <span *ngIf="publicWhatsApp" class="text">WhatsApp público del negocio: {{ publicWhatsApp }}</span>
             <span *ngIf="store.account().city" class="text">{{ store.account().city }}</span>
             <span class="text">Acceso Completo al Sistema</span>
           </div>
@@ -196,6 +202,10 @@ export class OnboardingStepActivationComponent {
     return `${environment.frontendUrl.replace(/\/$/, '')}/b/${this.store.business().slug}`
   }
 
+  get publicWhatsApp(): string {
+    return this.store.location().whatsapp
+  }
+
   get currencyCode(): string {
     const currencies: Record<string, string> = {
       CO: 'COP',
@@ -218,16 +228,17 @@ export class OnboardingStepActivationComponent {
     this.terminalLogs = []
 
     const data: OnboardingSubmitData = {
-      consentAccepted: true,
+      consentAccepted: this.store.termsAccepted(),
       account: {
         name: this.store.account().name,
         lastName: this.store.account().lastName,
         email: this.store.account().email,
-        userId: this.store.userId(),
         documentType: this.store.account().documentType,
         documentNumber: this.store.account().documentNumber,
-        phone: this.store.account().phone,
-        whatsapp: this.store.account().whatsapp,
+        phone: this.normalizeInternationalPhone(this.store.account().phone),
+        whatsapp: this.store.account().whatsapp
+          ? this.normalizeInternationalPhone(this.store.account().whatsapp)
+          : undefined,
         birthDate: this.store.account().birthDate || undefined,
         city: this.store.account().city || undefined,
       },
@@ -260,7 +271,7 @@ export class OnboardingStepActivationComponent {
     }
 
     this.api.submitAll(data).subscribe({
-      next: (response: any) => {
+      next: (response) => {
         const jobId = response.data?.jobId
         if (jobId) {
           this.store.setJobId(jobId)
@@ -280,6 +291,12 @@ export class OnboardingStepActivationComponent {
           || 'No se pudo crear el negocio. Revisa los datos e inténtalo nuevamente.'
       },
     })
+  }
+
+  private normalizeInternationalPhone(value: string): string {
+    const trimmed = value.trim()
+    if (!trimmed.startsWith('+')) return trimmed
+    return `+${trimmed.slice(1).replace(/\D/g, '')}`
   }
 
   private pollJob(jobId: string): void {

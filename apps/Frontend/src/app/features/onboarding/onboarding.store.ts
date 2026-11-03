@@ -158,6 +158,7 @@ export class OnboardingStore {
     if (s === 2) {
       const b = this._business()
       return !!b.tradeName.trim()
+        && !!b.legalName.trim()
         && !!b.slug
         && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.slug)
         && this._slugAvailability() === 'available'

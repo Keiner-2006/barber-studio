@@ -13,13 +13,13 @@ import { RouterLink } from '@angular/router'
           <span>BarberShop Management System</span>
         </a>
         <nav class="desktop-nav" aria-label="Navegación principal">
-          <a routerLink="/booking" class="nav-link">Características</a>
-          <a routerLink="/booking" class="nav-link">Planes</a>
-          <a routerLink="/booking" class="nav-link">Testimonios</a>
+          <a href="#caracteristicas" class="nav-link">Características</a>
+          <a href="#planes" class="nav-link">Planes</a>
+          <a href="#testimonios" class="nav-link">Testimonios</a>
         </nav>
         <div class="header-actions">
           <a class="login-link" routerLink="/login">Iniciar sesión</a>
-          <a class="button button-dark" routerLink="/booking"><span>▣</span> Comenzar</a>
+          <a class="button button-dark" routerLink="/onboarding"><span>▣</span> Comenzar</a>
         </div>
       </header>
 
@@ -34,7 +34,7 @@ import { RouterLink } from '@angular/router'
             <h1>Gestiona tu barbería con<br>precisión y estilo.</h1>
             <p class="lead">Agenda citas, administra tu inventario, procesa pagos y atrae clientes — desde un solo panel diseñado para barbershops.</p>
             <div class="hero-actions">
-              <a class="button button-dark" routerLink="/booking">▣ Comenzar Gratis →</a>
+              <a class="button button-dark" routerLink="/onboarding">▣ Comenzar Gratis →</a>
               <a class="button button-light" href="#caracteristicas">Ver Funcionalidades ↓</a>
             </div>
             <div class="perks">
@@ -73,7 +73,7 @@ import { RouterLink } from '@angular/router'
                 <li>Gestión de clientes</li>
                 <li>Agenda básica</li>
               </ul>
-              <a class="button button-light" routerLink="/booking">Comenzar →</a>
+              <a class="button button-light" routerLink="/onboarding">Comenzar →</a>
             </article>
             <article class="pricing-card featured">
               <div class="pricing-badge">✦ EL MÁS POPULAR</div>
@@ -86,7 +86,7 @@ import { RouterLink } from '@angular/router'
                 <li>Página pública</li>
                 <li>Personalización de marca</li>
               </ul>
-              <a class="button button-dark" routerLink="/booking">Comenzar →</a>
+              <a class="button button-dark" routerLink="/onboarding">Comenzar →</a>
             </article>
             <article class="pricing-card">
               <div class="pricing-badge">EMPRESA</div>
@@ -114,7 +114,7 @@ import { RouterLink } from '@angular/router'
 
         <section class="cta section-shell">
           <div><p class="eyebrow">TU PRÓXIMO PASO</p><h2>Es hora de digitalizar tu barbería.</h2><p>Empieza gratis hoy y lleva tu negocio al siguiente nivel.</p></div>
-          <a class="button button-cream" routerLink="/booking">Comenzar ahora →</a>
+          <a class="button button-cream" routerLink="/onboarding">Comenzar ahora →</a>
         </section>
       </main>
 

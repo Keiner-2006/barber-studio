@@ -1,8 +1,10 @@
 import {
   Controller,
   Get,
+  Post,
   UseGuards,
   Query,
+  Body,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../../../common/guards/auth.guard';
@@ -11,7 +13,7 @@ import { Permissions } from '../../../../common/decorators/permissions.decorator
 import { Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AUTH_DATA_SOURCE } from '../../../../shared/db/database.module';
-import { PlatformTenantEntity } from '../../../auth/drivers/persistence/platform-tenant.entity';
+import { PlatformTenantEntity, TenantStatusEnum, BusinessTypeEnum } from '../../../auth/drivers/persistence/platform-tenant.entity';
 import { PlatformAuditEventEntity } from '../../../auth/drivers/persistence/platform-audit-event.entity';
 
 @ApiTags('admin')
@@ -40,8 +42,42 @@ export class AdminController {
       status: t.status,
       countryCode: t.countryCode,
       currencyCode: t.currencyCode,
+      phone: t.phone,
+      whatsapp: t.whatsapp,
       createdAt: t.createdAt,
     })) };
+  }
+
+  @Post('tenants')
+  @Permissions('admin:write')
+  @ApiOperation({ summary: 'Crear tenant (admin)' })
+  @ApiResponse({ status: 201, description: 'Tenant creado' })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
+  @ApiResponse({ status: 409, description: 'Slug duplicado' })
+  async createTenant(@Body() body: { legalName?: string; tradeName?: string; slug?: string; businessType?: string; countryCode?: string; whatsapp?: string; phone?: string }) {
+    const tenantRepo = this.dataSource.getRepository(PlatformTenantEntity);
+
+    const slugTaken = await tenantRepo.findOne({ where: { slug: body.slug } });
+    if (slugTaken) {
+      return { error: { field: 'slug', message: 'El slug ya está en uso' } };
+    }
+
+    const tenant = tenantRepo.create({
+      legalName: body.legalName,
+      tradeName: body.tradeName,
+      slug: body.slug,
+      businessType: (body.businessType || BusinessTypeEnum.BARBERIA) as BusinessTypeEnum,
+      countryCode: body.countryCode || 'CO',
+      timezone: 'America/Bogota',
+      currencyCode: 'COP',
+      status: TenantStatusEnum.PROVISIONING,
+      phone: body.phone || null,
+      whatsapp: body.whatsapp || null,
+    });
+
+    const savedTenant = await tenantRepo.save(tenant);
+
+    return { data: { id: savedTenant.id, slug: savedTenant.slug, status: savedTenant.status, whatsapp: savedTenant.whatsapp } };
   }
 
   @Get('audit-events')

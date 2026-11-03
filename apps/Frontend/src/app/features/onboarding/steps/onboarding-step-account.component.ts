@@ -20,7 +20,7 @@ import { OwnerDocumentType } from '../onboarding.models'
         <p>Ingresa tus datos para acceder a la plataforma y administrar tu barbería.</p>
       </div>
 
-      <form (ngSubmit)="onContinue()" class="step-form">
+      <form (ngSubmit)="onContinue()" class="step-form" novalidate>
         <div class="form-group">
           <label for="name">Nombre *</label>
           <div class="input-wrap">
@@ -83,6 +83,7 @@ import { OwnerDocumentType } from '../onboarding.models'
             <span class="material-symbols-outlined">phone</span>
             <input id="phone" type="tel" [(ngModel)]="account().phone" name="phone" placeholder="+57 300 123 4567" required />
           </div>
+          <span class="hint">Incluye el código internacional; se permiten espacios y guiones.</span>
         </div>
 
         <div class="form-group">
@@ -91,7 +92,7 @@ import { OwnerDocumentType } from '../onboarding.models'
             <span class="material-symbols-outlined">smartphone</span>
             <input id="whatsapp" type="tel" [(ngModel)]="account().whatsapp" name="whatsapp" placeholder="+57 300 123 4567" />
           </div>
-          <span class="hint">Número de WhatsApp para reservas y contacto directo (opcional).</span>
+          <span class="hint">WhatsApp personal del propietario (opcional), distinto al público del negocio. Incluye el código internacional.</span>
         </div>
 
         <div class="form-row">
@@ -121,8 +122,12 @@ import { OwnerDocumentType } from '../onboarding.models'
           <div class="error-message" role="alert">{{ store.registrationError() }}</div>
         }
 
+        @if (validationError) {
+          <div class="error-message" role="alert">{{ validationError }}</div>
+        }
+
         <button class="btn btn-primary" type="submit" [disabled]="store.submitting()">
-          {{ store.submitting() ? 'Creando cuenta...' : 'Continuar →' }}
+          {{ store.submitting() ? 'Creando cuenta...' : 'Crear cuenta y continuar →' }}
         </button>
 
         <p class="login-link">
@@ -165,13 +170,32 @@ import { OwnerDocumentType } from '../onboarding.models'
 })
 export class OnboardingStepAccountComponent {
   showPassword = false
+  showValidationError = false
 
   constructor(public store: OnboardingStore) {}
 
   account() { return this.store.account() }
 
+  get validationError(): string {
+    if (!this.showValidationError) return ''
+
+    const account = this.account()
+    const missing: string[] = []
+    if (!account.name.trim()) missing.push('nombre')
+    if (!account.lastName.trim()) missing.push('apellido')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account.email)) missing.push('correo válido')
+    if (account.password.length < 8) missing.push('contraseña de al menos 8 caracteres')
+    if (account.documentNumber.trim().length < 5) missing.push('número de documento de al menos 5 caracteres')
+    if (!account.phone.trim()) missing.push('celular')
+    if (!this.store.termsAccepted()) missing.push('aceptación del tratamiento de datos')
+
+    return missing.length ? `Revisa estos datos para continuar: ${missing.join(', ')}.` : ''
+  }
+
   onContinue(): void {
+    this.showValidationError = true
     if (!this.store.canContinue(1)) return
+    this.showValidationError = false
     this.store.registerAndLogin()
   }
 }

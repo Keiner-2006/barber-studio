@@ -18,7 +18,7 @@
     "db:seed": "ts-node --esm src/shared/db/seed.ts"
   },
   "dependencies": {
-    "@navaja/shared": "file:./shared",
+    "@navaja/shared": "workspace:*",
     "@nestjs/cli": "^10.4.0",
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.2.0",

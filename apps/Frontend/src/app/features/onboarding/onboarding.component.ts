@@ -31,7 +31,7 @@ import { OnboardingStepActivationComponent } from './steps/onboarding-step-activ
         <header class="onboarding-header">
           <a routerLink="/" class="brand">
             <span class="brand-mark">✂</span>
-            <span>Navaja Studio <small>OS</small></span>
+            <span>BarberShop Management System</span>
           </a>
           <span class="step-indicator">Paso {{ store.currentStep() }} de {{ store.totalSteps }}</span>
         </header>
@@ -64,7 +64,7 @@ import { OnboardingStepActivationComponent } from './steps/onboarding-step-activ
           <app-onboarding-step-activation *ngIf="store.currentStep() === 6" />
         </div>
 
-        <div class="action-bar" *ngIf="store.currentStep() < store.totalSteps">
+        <div class="action-bar" *ngIf="store.currentStep() > 1 && store.currentStep() < store.totalSteps">
           <button
             class="btn btn-secondary"
             (click)="store.prevStep()"

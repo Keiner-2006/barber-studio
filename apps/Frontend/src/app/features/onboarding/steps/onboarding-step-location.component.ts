@@ -21,10 +21,10 @@ import { OnboardingStore } from '../onboarding.store'
       <form (ngSubmit)="onContinue()" class="step-form">
         <div class="form-grid">
           <div class="form-group">
-            <label for="city">Ciudad</label>
+            <label for="city">Ciudad <span class="required">Requerido</span></label>
             <div class="input-wrap">
               <span class="material-symbols-outlined">apartment</span>
-              <input id="city" [(ngModel)]="location().city" name="city" placeholder="Ciudad" required />
+              <input id="city" [(ngModel)]="location().city" name="city" placeholder="Ciudad" required maxlength="100" />
               <span class="material-symbols-outlined select-arrow">expand_more</span>
             </div>
           </div>
@@ -39,10 +39,10 @@ import { OnboardingStore } from '../onboarding.store'
         </div>
 
         <div class="form-group">
-          <label for="address">Dirección Nomenclatura Oficial</label>
+          <label for="address">Dirección Nomenclatura Oficial <span class="required">Requerido</span></label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">pin_drop</span>
-            <input id="address" [(ngModel)]="location().address" name="address" placeholder="Ej. Calle 93B # 13 - 45, Local 201" />
+            <input id="address" [(ngModel)]="location().address" name="address" placeholder="Ej. Calle 93B # 13 - 45, Local 201" required maxlength="200" />
           </div>
         </div>
 
@@ -50,13 +50,14 @@ import { OnboardingStore } from '../onboarding.store'
           <div class="form-group">
             <label for="whatsapp">
               <span class="material-symbols-outlined text-sm">chat</span>
-              WhatsApp Concierge (Colombia)
+              WhatsApp público del negocio
               <span class="optional">Opcional</span>
             </label>
             <div class="input-wrap whatsapp-input">
                 <div class="prefix">{{ countryDialCode }}</div>
-                <input id="whatsapp" [(ngModel)]="location().whatsapp" name="whatsapp" placeholder="Número de contacto" type="tel" />
+                <input id="whatsapp" [(ngModel)]="location().whatsapp" name="whatsapp" placeholder="Número de contacto" type="tel" maxlength="24" />
             </div>
+            <span class="hint">Número que verán los clientes para contactar o reservar. Se almacena con código internacional.</span>
           </div>
 
           <div class="form-group">
@@ -81,6 +82,7 @@ import { OnboardingStore } from '../onboarding.store'
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+    .required { color: #944928; font-size: 10px; font-weight: 600; }
     .optional { color: #50443e; font-size: 10px; font-weight: 400; }
     .input-wrap { display: flex; align-items: center; position: relative; }
     .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
@@ -120,6 +122,12 @@ export class OnboardingStepLocationComponent {
 
   onContinue(): void {
     if (!this.store.location().city || !this.store.location().address) return
+    const raw = (this.store.location().whatsapp || '').trim()
+    if (raw) {
+      const digits = raw.replace(/\D/g, '')
+      const normalized = raw.startsWith('+') ? `+${digits}` : `${this.countryDialCode}${digits}`
+      this.store.updateLocation({ whatsapp: normalized })
+    }
     this.store.nextStep()
   }
 }

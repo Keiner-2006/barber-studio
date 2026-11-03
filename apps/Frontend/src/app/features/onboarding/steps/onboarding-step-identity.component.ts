@@ -45,7 +45,7 @@ import { environment } from '../../../../environments/environment'
           <div class="form-group">
             <label for="legalName">
               Razón Social / Registro DIAN
-              <span class="optional">Opcional</span>
+              <span class="required">Requerido</span>
             </label>
             <div class="input-wrap">
               <span class="material-symbols-outlined">receipt_long</span>
@@ -54,9 +54,11 @@ import { environment } from '../../../../environments/environment'
                 [(ngModel)]="business().legalName"
                 name="legalName"
                 placeholder="Ej. Inversiones Valhalla S.A.S."
+                required
+                maxlength="150"
               />
             </div>
-            <span class="hint">Puedes agregarla después desde la configuración del negocio.</span>
+            <span class="hint">Debe coincidir con la razón social registrada del negocio.</span>
           </div>
         </div>
 
@@ -85,6 +87,7 @@ import { environment } from '../../../../environments/environment'
           <label for="slug">
             <span class="material-symbols-outlined text-sm">link</span>
             Enlace público de tu negocio
+            <span class="required">Requerido</span>
           </label>
           <div class="input-wrap slug-input">
             <div class="slug-prefix">
@@ -120,15 +123,17 @@ import { environment } from '../../../../environments/environment'
           <label>Tipo de Negocio & Enfoque Operativo</label>
           <div class="business-types">
             @for (type of businessTypes; track type.value) {
-              <div
+              <button
+                type="button"
                 class="type-card"
                 [class.selected]="business().businessType === type.value"
+                [attr.aria-pressed]="business().businessType === type.value"
                 (click)="selectBusinessType(type.value)"
               >
                 <span class="material-symbols-outlined">{{ type.icon }}</span>
                 <span class="type-title">{{ type.label }}</span>
                 <span class="type-desc">{{ type.description }}</span>
-              </div>
+              </button>
             }
           </div>
         </div>
@@ -179,8 +184,9 @@ import { environment } from '../../../../environments/environment'
     .slug-info { display: flex; justify-content: space-between; font-size: 11px; color: #50443e; }
     .slug-preview { color: #944928; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
     .business-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .type-card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+    .type-card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; font: inherit; text-align: left; color: inherit; width: 100%; }
     .type-card:hover { background: #e6e2d9; }
+    .type-card:focus-visible { outline: 2px solid #944928; outline-offset: 2px; }
     .type-card.selected { border-color: #944928; background: #fdf9f0; }
     .type-card .material-symbols-outlined { color: #944928; font-size: 24px; }
     .type-title { font-weight: 700; color: #412311; font-size: 14px; }

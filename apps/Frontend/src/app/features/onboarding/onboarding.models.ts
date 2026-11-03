@@ -64,12 +64,12 @@ export interface BrandingInfo {
 }
 
 export interface OnboardingSubmitData {
-  consentAccepted: true
-  account: { name: string; lastName: string; email: string; userId: string; documentType: OwnerDocumentType; documentNumber: string; phone: string; whatsapp: string; birthDate?: string; city?: string }
+  consentAccepted: boolean
+  account: { name: string; lastName: string; email: string; documentType: OwnerDocumentType; documentNumber: string; phone: string; whatsapp?: string; birthDate?: string; city?: string }
   business: { tradeName: string; legalName: string; slug: string; businessType: BusinessType; countryCode: string; description: string }
-  location: { city: string; neighborhood: string; address: string; whatsapp: string; email: string }
-  schedule: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }
-  branding: { primaryColor: string; colorPreset: string; logoUrl: string; instagram: string; tiktok: string }
+  location: { city: string; neighborhood: string; address: string; whatsapp?: string; email?: string }
+  schedule?: { schedules: { days: string; open: string; close: string; active: boolean }[]; services: { id: string; name: string; description: string; duration: string; price: number; selected: boolean }[] }
+  branding?: { primaryColor: string; colorPreset: string; logoUrl: string; instagram: string; tiktok: string }
 }
 
 export type SlugAvailability = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'error'

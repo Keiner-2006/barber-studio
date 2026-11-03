@@ -61,6 +61,12 @@ export class PlatformTenantEntity {
   @Column({ name: 'phone', type: 'text', nullable: true })
   phone: string | null;
 
+  @Column({ name: 'whatsapp', type: 'text', nullable: true })
+  whatsapp: string | null;
+
+  @Column({ name: 'settings', type: 'jsonb', nullable: true })
+  settings: Record<string, unknown> | null;
+
   @Column({ name: 'database_host', type: 'text', nullable: true })
   databaseHost: string | null;
 

@@ -1,6 +1,7 @@
 {
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @navaja/web build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @navaja/frontend build",
+  "outputDirectory": "apps/Frontend/dist/frontend",
   "framework": "angular",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
