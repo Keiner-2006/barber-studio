@@ -25,10 +25,12 @@ class BetterAuthPoolLifecycle implements OnModuleDestroy {
       useFactory: (configService: ConfigService) => {
         const config = configService.get<Record<string, any>>('auth');
         if (config?.demoEnabled) return null;
-        if (!config?.databaseUrl) throw new Error('DATABASE_URL or AUTH_DATABASE_URL must be configured');
+        if (!config?.databaseUrl) {
+          throw new Error('DATABASE_INTERNAL_URL, AUTH_DATABASE_URL, PLATFORM_DATABASE_URL, or DATABASE_URL must be configured');
+        }
         return new Pool({
           connectionString: config.databaseUrl,
-          ssl: { rejectUnauthorized: false },
+          ssl: config.databaseSsl ? { rejectUnauthorized: false } : false,
           connectionTimeoutMillis: 5000,
         });
       },

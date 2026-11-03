@@ -3,7 +3,8 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('auth', () => ({
   secret: process.env.AUTH_SECRET || process.env.BETTER_AUTH_SECRET || '',
   url: process.env.BETTER_AUTH_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || process.env.V0_RUNTIME_URL || '',
-  databaseUrl: process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL || process.env.PLATFORM_DATABASE_URL || '',
+  databaseUrl: process.env.DATABASE_INTERNAL_URL || process.env.AUTH_DATABASE_URL || process.env.PLATFORM_DATABASE_URL || process.env.DATABASE_URL || '',
+  databaseSsl: process.env.AUTH_DB_SSL !== 'false' && process.env.DB_SSL !== 'false',
   frontendUrl: process.env.FRONTEND_URL || '',
   demoEnabled: process.env.DEMO_AUTH === 'true',
   demoToken: 'navaja-demo-session',
