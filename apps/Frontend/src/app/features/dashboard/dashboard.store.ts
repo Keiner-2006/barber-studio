@@ -50,7 +50,7 @@ export class DashboardStore {
         trend: count > 0 ? '+ hoy' : 'Sin citas',
         detail: `${pending.length} pendientes · ${confirmed.length} confirmadas`,
         icon: '👤',
-        color: 'text-amber-400',
+        color: 'text-amber-800',
         bg: 'bg-amber-500/10',
       },
       {
@@ -59,7 +59,7 @@ export class DashboardStore {
         trend: `${count} servicios`,
         detail: 'Citas completadas',
         icon: '💰',
-        color: 'text-emerald-400',
+        color: 'text-emerald-700',
         bg: 'bg-emerald-500/10',
       },
       {
@@ -68,8 +68,8 @@ export class DashboardStore {
         trend: count > 0 ? 'por visita' : '—',
         detail: 'Promedio por servicio',
         icon: '🧾',
-        color: 'text-primary-400',
-        bg: 'bg-primary-500/10',
+        color: 'text-primary-700',
+        bg: 'bg-primary-100',
       },
       {
         label: 'Citas hoy',
@@ -77,8 +77,8 @@ export class DashboardStore {
         trend: `${completed.length} completadas`,
         detail: `${pending.length} pendientes · ${confirmed.length} confirmadas`,
         icon: '📅',
-        color: 'text-primary-fixed-dim',
-        bg: 'bg-primary-fixed-dim/10',
+        color: 'text-primary-700',
+        bg: 'bg-primary-100',
       },
     ]
   })
@@ -89,10 +89,10 @@ export class DashboardStore {
     const revenue = completed.reduce((sum, a) => sum + parseFloat(a.priceSnapshot || '0'), 0)
     const count = completed.length
     return [
-      { label: 'Clientes atendidos', value: String(count), icon: '👤', color: 'text-amber-400' },
-      { label: 'Ingresos generados', value: `$${revenue.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '💰', color: 'text-emerald-400' },
-      { label: 'Ticket promedio', value: `$${Math.round(count > 0 ? revenue / count : 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '🧾', color: 'text-primary-400' },
-      { label: 'Tasa de completación', value: `${todays.length > 0 ? Math.round((count / todays.length) * 100) : 0}%`, icon: '📊', color: 'text-tertiary-400' },
+      { label: 'Clientes atendidos', value: String(count), icon: '👤', color: 'text-amber-800' },
+      { label: 'Ingresos generados', value: `$${revenue.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '💰', color: 'text-emerald-700' },
+      { label: 'Ticket promedio', value: `$${Math.round(count > 0 ? revenue / count : 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '🧾', color: 'text-primary-700' },
+      { label: 'Tasa de completación', value: `${todays.length > 0 ? Math.round((count / todays.length) * 100) : 0}%`, icon: '📊', color: 'text-teal-700' },
     ]
   })
 
@@ -214,7 +214,7 @@ export class DashboardStore {
       barber: barberName,
       status: s ? s.label : appt.status,
       initials: this.getInitials(customerName),
-      avatarColor: 'bg-amber-500/20 text-amber-600',
+      avatarColor: 'bg-amber-100 text-amber-800',
       statusClass: s ? s.cls : '',
       statusColor: s ? s.color : 'text-slate-500',
     }

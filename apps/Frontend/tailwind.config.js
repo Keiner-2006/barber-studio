@@ -103,6 +103,29 @@ const PLATFORM_COLORS = {
   'on-error': '#ffffff',
 }
 
+const STUDIO_COLORS = {
+  brown: '#f7f4ef',
+  'brown-light': '#ffffff',
+  'brown-hover': '#f5f0e8',
+  cream: '#1b1c1a',
+  secondary: '#57534e',
+  'on-surface-variant': '#57534e',
+  outline: '#d6cec5',
+  primary: {
+    DEFAULT: '#944928',
+    50: '#fdf5f0',
+    100: '#f9e8dd',
+    200: '#f1d0bb',
+    300: '#e5b18f',
+    400: '#d58b61',
+    500: '#c16b42',
+    600: '#a85232',
+    700: '#8c4029',
+    800: '#743627',
+    900: '#602f24',
+  },
+}
+
 module.exports = {
   darkMode: 'class',
   content: ['./src/**/*.{html,ts}', '!./src/stitch_barbershop_landing_and_login/**'],
@@ -111,7 +134,7 @@ module.exports = {
   corePlugins: { preflight: false },
   theme: {
     extend: {
-      colors: { ...DARK_COLORS, pa: PLATFORM_COLORS },
+      colors: { ...DARK_COLORS, ...STUDIO_COLORS, pa: PLATFORM_COLORS },
       borderRadius: { DEFAULT: '0.125rem', lg: '0.25rem', xl: '0.5rem', full: '0.75rem' },
       spacing: {
         'margin-lg': '3rem',

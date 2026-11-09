@@ -116,6 +116,7 @@ import { ROLES } from '@navaja/shared'
       display: flex;
       min-height: 100vh;
       background: #fafaf8;
+      color: #1b1c1a;
     }
 
     /* Sidebar */

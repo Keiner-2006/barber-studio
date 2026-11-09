@@ -32,8 +32,8 @@ $navaja-theme: mat.m2-define-light-theme((
 html, body {
   height: 100%;
   font-family: '"Plus Jakarta Sans", sans-serif';
-  background-color: #17120f;
-  color: #ece0db;
+  background-color: #faf9f6;
+  color: #1b1c1a;
 }
 
 :root {
@@ -45,14 +45,14 @@ html, body {
   --color-gray-light: #e5e7eb;
   --color-green: #22c55e;
   --color-red: #ef4444;
-  --color-amber: #ffb86f;
-  --color-amber-dark: #d98e3a;
-  --color-brown: #17120f;
-  --color-brown-light: #241e1b;
-  --color-brown-darker: #120d0a;
-  --color-brown-mid: #201a17;
-  --color-cream: #ece0db;
-  --color-outline: #524437;
+  --color-amber: #944928;
+  --color-amber-dark: #74361f;
+  --color-brown: #faf9f6;
+  --color-brown-light: #ffffff;
+  --color-brown-darker: #f5f0e8;
+  --color-brown-mid: #f7f4ef;
+  --color-cream: #1b1c1a;
+  --color-outline: #d6cec5;
 
   --font-serif: 'Vollkorn', serif;
   --font-sans: '"Plus Jakarta Sans"', sans-serif;
@@ -60,27 +60,27 @@ html, body {
   --sidebar-width: 264px;
   --topbar-height: 64px;
 
-  --bg-surface: #17120f;
-  --bg-surface-container: #241e1b;
-  --bg-surface-container-low: #201a17;
-  --bg-surface-container-lowest: #120d0a;
-  --bg-surface-container-high: #2f2925;
-  --bg-surface-container-highest: #3a3330;
-  --color-primary: #ffb86f;
-  --color-primary-container: #d98e3a;
-  --color-on-primary: #4a2800;
-  --color-on-primary-container: #2c1600;
-  --color-on-surface: #ece0db;
-  --color-on-surface-variant: #d7c3b2;
-  --color-surface: #17120f;
-  --color-surface-dim: #17120f;
-  --color-surface-bright: #3e3834;
-  --color-secondary: #d2c4bd;
-  --color-tertiary: #a0d2ae;
-  --color-tertiary-container: #79aa88;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
-  --color-outline-variant: #524437;
+  --bg-surface: #faf9f6;
+  --bg-surface-container: #ffffff;
+  --bg-surface-container-low: #f7f4ef;
+  --bg-surface-container-lowest: #ffffff;
+  --bg-surface-container-high: #f5f0e8;
+  --bg-surface-container-highest: #ece7df;
+  --color-primary: #944928;
+  --color-primary-container: #f1d0bb;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #412311;
+  --color-on-surface: #1b1c1a;
+  --color-on-surface-variant: #57534e;
+  --color-surface: #faf9f6;
+  --color-surface-dim: #e8e4de;
+  --color-surface-bright: #ffffff;
+  --color-secondary: #57534e;
+  --color-tertiary: #32704d;
+  --color-tertiary-container: #d4eadb;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-outline-variant: #d6cec5;
 }
 
 ::selection {

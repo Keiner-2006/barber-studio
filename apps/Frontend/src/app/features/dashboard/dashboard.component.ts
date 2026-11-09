@@ -23,7 +23,7 @@ import { DashboardStore } from './dashboard.store'
               Resumen del día en tu estudio
             </p>
           </div>
-          <button class="px-5 py-3 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-foreground transition-colors flex items-center gap-2" routerLink="/agenda">
+          <button class="px-5 py-3 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2" routerLink="/agenda">
             <span class="text-lg">+</span> Nueva reserva
           </button>
         </div>
@@ -50,7 +50,7 @@ import { DashboardStore } from './dashboard.store'
       <div class="px-6 md:px-10 lg:px-12 mb-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           @for (kpi of store.kpis(); track kpi.label) {
-            <div class="bg-brown-light border border-outline rounded-xl p-5 hover:border-primary-foreground/30 transition-colors">
+            <div class="bg-brown-light border border-outline rounded-xl p-5 hover:border-primary/30 transition-colors">
               <div class="flex items-center justify-between mb-4">
                 <div class="w-10 h-10 rounded-lg {{ kpi.bg }} flex items-center justify-center">
                   {{ kpi.icon }}
@@ -121,7 +121,7 @@ import { DashboardStore } from './dashboard.store'
                   <div
                     class="w-full max-w-[40px] rounded-t-lg transition-all duration-500 bg-primary"
                     [class.opacity-100]="day.isToday"
-                    [class.opacity-30]="!day.isToday"
+                    [class.opacity-60]="!day.isToday"
                     [style.height.%]="day.height"
                   ></div>
                   <span class="text-[10px] text-secondary">{{ day.label }}</span>
