@@ -84,7 +84,11 @@ export class RoleResolverService {
     } as any);
   }
 
-  async resolveUserRole(email: string, tenantId?: string): Promise<ResolvedUserRole> {
+  async resolveUserRole(
+    email: string,
+    tenantId?: string,
+    expectedFlow?: RoleCategory,
+  ): Promise<ResolvedUserRole> {
     if (tenantId) {
       const tenantDataSource = await this.createTenantDataSource(tenantId);
       if (tenantDataSource) {
@@ -99,7 +103,7 @@ export class RoleResolverService {
             const userRoles = await userRoleRepoT.find({ where: { userId: user.id } });
             for (const ur of userRoles) {
               const role = await roleRepoT.findOne({ where: { id: ur.roleId } });
-              if (role?.name) {
+              if (role?.name && (!expectedFlow || this.validateRoleForFlow(role.name, expectedFlow))) {
                 await tenantDataSource.destroy();
                 return {
                   role: role.name,
@@ -121,8 +125,18 @@ export class RoleResolverService {
       return { role: null, category: null };
     }
 
-    const memberships = await this.platformMembershipRepo.find({ where: { userId: platformUser.id } });
-    for (const membership of memberships) {
+    const memberships = await this.platformMembershipRepo.find({
+      where: {
+        userId: platformUser.id,
+        status: 'active',
+        ...(tenantId ? { tenantId } : {}),
+      },
+    });
+    const membership = memberships.find(
+      (candidate) =>
+        !expectedFlow || this.validateRoleForFlow(candidate.role, expectedFlow),
+    );
+    if (membership) {
       return {
         role: membership.role,
         category: this.getRoleCategory(membership.role),
@@ -138,9 +152,6 @@ export class RoleResolverService {
     expectedFlow: 'company_member' | 'customer' | 'platform_member'
   ): boolean {
     if (!userRole) return false;
-    if (userRole === 'platform_admin' || userRole === 'platform_support') {
-      return true;
-    }
     return (ROLE_CATEGORIES[expectedFlow] as readonly string[]).includes(userRole);
   }
 }

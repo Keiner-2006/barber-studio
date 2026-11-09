@@ -43,7 +43,7 @@ export class MediaController {
   @ApiResponse({ status: 200, description: 'Lista de activos multimedia' })
   async listAssets(@RequestContext('tenantId') tenantId: string) {
     const assets = await this.mediaRepo.findAll(tenantId);
-    return { data: assets.map((a) => a.toPlain()) };
+    return assets.map((a) => a.toPlain()) ;
   }
 
   @Post('signature')
@@ -78,7 +78,7 @@ export class MediaController {
   @ApiOperation({ summary: 'Obtener URL de subida' })
   @ApiResponse({ status: 200, description: 'URL de subida' })
   async getUploadUrl(@Param('uploadId') uploadId: string) {
-    return { data: { uploadId, url: `/api/v1/media/upload/${uploadId}` } };
+    return { uploadId, url: `/api/v1/media/upload/${uploadId}` } ;
   }
 
   @Post('upload/:uploadId')
@@ -116,7 +116,7 @@ export class MediaController {
       createdBy: userId,
     });
 
-    return { data: media.toPlain() };
+    return media.toPlain() ;
   }
 
   @Get('tenants/me')
@@ -128,10 +128,10 @@ export class MediaController {
     const tenant = await tenantRepo.findOne({ where: { id: tenantId } });
 
     if (!tenant) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Tenant no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Tenant no encontrado' } };
     }
 
-    return { data: {
+    return {
       id: tenant.id,
       legalName: tenant.legalName,
       tradeName: tenant.tradeName,
@@ -141,6 +141,6 @@ export class MediaController {
       currencyCode: tenant.currencyCode,
       timezone: tenant.timezone,
       createdAt: tenant.createdAt,
-    }};
+    };
   }
 }

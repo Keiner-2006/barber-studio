@@ -34,7 +34,7 @@ export class ReportsController {
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
     );
-    return { data: result };
+    return result;
   }
 
   @Get('cash')
@@ -53,7 +53,7 @@ export class ReportsController {
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
     );
-    return { data: result };
+    return result;
   }
 
   @Get('inventory')
@@ -62,7 +62,7 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Reporte de inventario' })
   async getInventory(@RequestContext('tenantId') tenantId: string) {
     const result = await this.reportsService.getInventory(tenantId);
-    return { data: result };
+    return result;
   }
 
   @Get('occupancy')
@@ -81,7 +81,7 @@ export class ReportsController {
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
     );
-    return { data: result };
+    return result;
   }
 
   @Get('services')
@@ -100,6 +100,6 @@ export class ReportsController {
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
     );
-    return { data: result };
+    return result;
   }
 }

@@ -5,15 +5,22 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RequestContextService } from '../../shared/tenancy/request-context.service';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+
+interface GuardContext {
+  userRole: string;
+  tenantId?: string;
+  userId?: string;
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    private readonly requestContext: RequestContextService,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
+
+  activated: boolean;
+  userRole: string;
+  tenantId?: string;
+  userId?: string;
 
   canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
@@ -25,11 +32,12 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const ctx = this.requestContext.getContext();
-    const userRole = ctx.userRole;
+    const request = context.switchToHttp().getRequest();
+    const ctx = (request as any).context as GuardContext | undefined;
+    const userRole = ctx?.userRole;
 
     const hasPermission = requiredPermissions.every((permission) =>
-      this.checkPermission(permission, userRole)
+      this.checkPermission(permission, userRole ?? '')
     );
 
     if (!hasPermission) {

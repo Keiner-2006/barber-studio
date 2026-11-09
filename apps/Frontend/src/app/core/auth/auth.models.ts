@@ -12,9 +12,12 @@ export interface Session {
   expiresAt: string
 }
 
+export type LoginExpectedRole = 'company_member' | 'platform_admin'
+
 export interface LoginRequest {
   email: string
   password: string
+  expectedRole: LoginExpectedRole
   tenantId?: string
 }
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { Router, RouterLink } from '@angular/router'
 import { AuthService } from '../../core/auth/auth.service'
+import { LoginExpectedRole } from '../../core/auth/auth.models'
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,10 @@ import { AuthService } from '../../core/auth/auth.service'
           <div class="form-content">
             <h2 class="login-title">Inicia sesión</h2>
             <p class="login-description">Usa tu correo y contraseña. Te mostraremos el espacio al que tienes acceso.</p>
+            <div class="role-tabs" role="group" aria-label="Tipo de acceso">
+              <button type="button" [class.active]="expectedRole === 'company_member'" (click)="expectedRole = 'company_member'">Negocio</button>
+              <button type="button" [class.active]="expectedRole === 'platform_admin'" (click)="expectedRole = 'platform_admin'">Plataforma</button>
+            </div>
             <form (ngSubmit)="onLogin()">
               <label for="email">Correo electrónico</label>
               <div class="input-wrap"><span>✉</span><input id="email" type="email" [(ngModel)]="email" name="email" placeholder="ejemplo@correo.com" required /></div>
@@ -55,6 +60,7 @@ import { AuthService } from '../../core/auth/auth.service'
 export class LoginComponent {
   email = ''
   password = ''
+  expectedRole: LoginExpectedRole = 'company_member'
   loading = false
   error = ''
   showPassword = false
@@ -75,7 +81,7 @@ export class LoginComponent {
     if (!this.email || !this.password) return
     this.loading = true
     this.error = ''
-    this.authService.login(this.email, this.password).subscribe({
+    this.authService.login(this.email, this.password, undefined, this.expectedRole).subscribe({
       next: (response) => {
         const role = response?.user?.role
         if (role === 'customer') {
@@ -84,11 +90,14 @@ export class LoginComponent {
           this.router.navigate(['/agenda'])
         } else if (role === 'platform_admin' || role === 'platform_support') {
           this.router.navigate(['/platform-admin'])
-        } else {
+        } else if (role) {
           this.router.navigate(['/dashboard'])
+        } else {
+          this.loading = false
+          this.error = 'No se pudo determinar el rol de esta cuenta.'
         }
       },
-      error: (err) => { this.loading = false; this.error = err.error?.error?.message || err.error?.message || 'Credenciales incorrectas' },
+      error: (err) => { this.loading = false; this.error = err.error?.message || err.error?.error?.message || 'No se pudo iniciar sesión. Revisa tus credenciales e inténtalo de nuevo.' },
     })
   }
 }

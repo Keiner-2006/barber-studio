@@ -354,7 +354,7 @@ export class OnboardingStepActivationComponent {
     const email = this.store.account().email
     const password = this.store.account().password
     const tenantId = this.store.tenantId()
-    this.authService.login(email, password, tenantId).subscribe({
+    this.authService.login(email, password, tenantId, 'company_member').subscribe({
       next: () => {
         this.isSubmitting = false
         this.isComplete = true

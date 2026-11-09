@@ -34,7 +34,7 @@ export class CatalogController {
   @ApiResponse({ status: 200, description: 'Lista de categorías' })
   async listCategories(@RequestContext('tenantId') tenantId: string) {
     const categories = await this.getServiceCategoriesUseCase.execute(tenantId);
-    return { data: categories.map((c) => c.toPlain()) };
+    return categories.map((c) => c.toPlain()) ;
   }
 
   @Get('categories/:id')
@@ -47,9 +47,9 @@ export class CatalogController {
   ) {
     const category = await this.categoryRepo.findById(tenantId, id);
     if (!category) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Categoría no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Categoría no encontrada' } };
     }
-    return { data: category.toPlain() };
+    return category.toPlain() ;
   }
 
   @Get('services')
@@ -62,7 +62,7 @@ export class CatalogController {
     @Query('categoryId') categoryId?: string,
   ) {
     const services = await this.getServicesUseCase.execute(tenantId, categoryId);
-    return { data: services.map((s) => s.toPlain()) };
+    return services.map((s) => s.toPlain()) ;
   }
 
   @Get('services/:id')
@@ -75,8 +75,8 @@ export class CatalogController {
   ) {
     const service = await this.serviceRepo.findById(tenantId, id);
     if (!service) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Servicio no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Servicio no encontrado' } };
     }
-    return { data: service.toPlain() };
+    return service.toPlain() ;
   }
 }

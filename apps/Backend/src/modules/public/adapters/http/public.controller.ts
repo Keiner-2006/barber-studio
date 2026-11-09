@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../../../common/guards/auth.guard';
@@ -30,19 +31,17 @@ export class PublicController {
     const tenant = await tenantRepo.findOne({ where: { slug } });
 
     if (!tenant) {
-      return { data: null, error: 'negocio_no_encontrado' };
+      throw new NotFoundException('Negocio no encontrado');
     }
 
     return {
-      data: {
-        id: tenant.id,
-        tradeName: tenant.tradeName,
-        legalName: tenant.legalName,
-        slug: tenant.slug,
-        businessType: tenant.businessType,
-        countryCode: tenant.countryCode,
-        whatsapp: tenant.whatsapp ?? null,
-      },
+      id: tenant.id,
+      tradeName: tenant.tradeName,
+      legalName: tenant.legalName,
+      slug: tenant.slug,
+      businessType: tenant.businessType,
+      countryCode: tenant.countryCode,
+      whatsapp: tenant.whatsapp ?? null,
     };
   }
 }

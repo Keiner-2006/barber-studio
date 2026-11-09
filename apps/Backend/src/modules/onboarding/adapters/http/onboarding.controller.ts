@@ -71,11 +71,11 @@ export class OnboardingController {
   @ApiQuery({ name: 'slug', required: true, type: String })
   async checkSlugAvailability(@Query('slug') slug: string) {
     if (!slug) {
-      return { data: { slug: '', available: false, error: 'slug es requerido' } };
+      return { slug: '', available: false, error: 'slug es requerido' } ;
     }
     const tenantRepo = this.dataSource.getRepository(PlatformTenantEntity);
     const tenant = await tenantRepo.findOne({ where: { slug } });
-    return { data: { slug, available: !tenant } };
+    return { slug, available: !tenant } ;
   }
 
   @Get('tenants/:jobId')
@@ -88,7 +88,7 @@ export class OnboardingController {
     const job = await jobRepo.findOne({ where: { id: jobId } });
 
     if (!job) {
-      return { data: { jobId, status: 'not_found' } };
+      return { jobId, status: 'not_found' } ;
     }
 
     const tenantRepo = this.dataSource.getRepository(PlatformTenantEntity);

@@ -14,9 +14,6 @@ export class AddWhatsappToTenants1794100000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE public.platform_tenants DROP COLUMN IF EXISTS settings`,
-    );
-    await queryRunner.query(
       `ALTER TABLE public.platform_tenants DROP COLUMN IF EXISTS whatsapp`,
     );
   }
