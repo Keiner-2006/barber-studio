@@ -57,10 +57,10 @@ export class CustomersController {
   ) {
     if (search) {
       const customers = await this.searchCustomersUseCase.execute(tenantId, search);
-      return { data: customers.map((c) => c.toPlain()) };
+      return customers.map((c) => c.toPlain()) ;
     }
     const customers = await this.getCustomersUseCase.execute(tenantId);
-    return { data: customers.map((c) => c.toPlain()) };
+    return customers.map((c) => c.toPlain()) ;
   }
 
   @Post()
@@ -84,7 +84,7 @@ export class CustomersController {
     }
 
     const customer = await this.createCustomerUseCase.execute(tenantId, parsed.data);
-    return { data: customer.toPlain() };
+    return customer.toPlain() ;
   }
 
   @Get(':id')
@@ -96,8 +96,8 @@ export class CustomersController {
   ) {
     const customer = await this.getCustomerByIdUseCase.execute(tenantId, id);
     if (!customer) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } };
     }
-    return { data: customer.toPlain() };
+    return customer.toPlain() ;
   }
 }

@@ -38,11 +38,11 @@ export class TypeOrmBranchRepository implements IBranchRepository {
   }
 
   async create(tenantId: string, data: CreateBranchData): Promise<Branch> {
-    const statusEnum = data.status ? BranchStatusEnum[data.status.toUpperCase() as keyof typeof BranchStatusEnum] : BranchStatusEnum.ACTIVE;
+const statusEnum = data.status ? BranchStatusEnum[data.status.toUpperCase() as keyof typeof BranchStatusEnum] : BranchStatusEnum.ACTIVE;
     const entity = this.repository.create({
       ...data,
       tenantId,
-      status: statusEnum,
+      status: statusEnum as unknown as string,
     } as any);
     const saved = await this.repository.save(entity);
     return this.toDomain(saved as unknown as BranchEntity);
@@ -51,7 +51,7 @@ export class TypeOrmBranchRepository implements IBranchRepository {
   async update(tenantId: string, id: string, data: UpdateBranchData): Promise<Branch | null> {
     const updateData: any = { ...data };
     if (data.status) {
-      updateData.status = BranchStatusEnum[data.status.toUpperCase() as keyof typeof BranchStatusEnum];
+      updateData.status = BranchStatusEnum[data.status.toUpperCase() as keyof typeof BranchStatusEnum] as unknown as string;
     }
     await this.repository.update({ id, tenantId }, updateData);
     return this.findById(tenantId, id);

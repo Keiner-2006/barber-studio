@@ -4,7 +4,7 @@ import { Router } from '@angular/router'
 import { Observable, tap, catchError, of, switchMap, map, throwError } from 'rxjs'
 import { environment } from '../../../environments/environment'
 import { TenantService } from '../tenancy/tenant.service'
-import { User, Session, LoginRequest, LoginResponse, RegisterRequest, SessionResponse } from './auth.models'
+import { User, Session, LoginRequest, LoginExpectedRole, LoginResponse, RegisterRequest, SessionResponse } from './auth.models'
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +40,7 @@ export class AuthService {
     }
     if (this.currentSession()) {
       this.tenantService.load().subscribe({
+        next: () => this.syncRoleFromTenant(),
         error: () => {
           const user = this.currentUser()
           if (user?.role === 'platform_admin' || user?.role === 'platform_support') return
@@ -49,20 +50,38 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, tenantId?: string): Observable<LoginResponse> {
-    const body: LoginRequest = { email, password, ...(tenantId ? { tenantId } : {}) }
+  login(
+    email: string,
+    password: string,
+    tenantId?: string,
+    expectedRole: LoginExpectedRole = 'company_member'
+  ): Observable<LoginResponse> {
+    const loginTenantId =
+      expectedRole === 'platform_admin' ? undefined : tenantId ?? this.tenantService.tenantId() ?? undefined
+    const body: LoginRequest = {
+      email,
+      password,
+      expectedRole,
+      ...(loginTenantId ? { tenantId: loginTenantId } : {}),
+    }
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, body).pipe(
       tap((response) => {
         this.currentUser.set(response.user)
         this.currentSession.set(response.session)
         this.saveToStorage(response)
-        if (tenantId && typeof localStorage !== 'undefined') {
-          localStorage.setItem('navaja_tenant_id', tenantId)
+        if (loginTenantId && typeof localStorage !== 'undefined') {
+          localStorage.setItem('navaja_tenant_id', loginTenantId)
         }
       }),
       switchMap((response) =>
         this.tenantService.load().pipe(
-          map(() => response),
+          map(() => {
+            this.syncRoleFromTenant()
+            const user = this.currentUser() ?? response.user
+            const authenticatedResponse = { ...response, user }
+            this.saveToStorage(authenticatedResponse)
+            return authenticatedResponse
+          }),
           catchError(() => {
             this.clearSession()
             return throwError(() => new Error('No se pudo cargar la información del estudio'))
@@ -87,7 +106,7 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/session`, {}).pipe(
+    return this.http.post<void>(`${this.apiUrl}/logout`, {}).pipe(
       tap(() => {
         this.clearSession()
         this.tenantService.clear()
@@ -119,6 +138,18 @@ export class AuthService {
 
   getToken(): string | null {
     return this.currentSession()?.token ?? null
+  }
+
+  private syncRoleFromTenant(): void {
+    const role = this.tenantService.role()
+    const user = this.currentUser()
+    if (!role || !user || user.role === role) return
+
+    const updatedUser = { ...user, role }
+    this.currentUser.set(updatedUser)
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('navaja_user', JSON.stringify(updatedUser))
+    }
   }
 
   private saveToStorage(response: LoginResponse): void {

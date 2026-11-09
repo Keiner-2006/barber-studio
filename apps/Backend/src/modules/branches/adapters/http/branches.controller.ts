@@ -44,7 +44,7 @@ export class BranchesController {
   @ApiResponse({ status: 200, description: 'Lista de sucursales' })
   async list(@RequestContext('tenantId') tenantId: string) {
     const branches = await this.getBranchesUseCase.execute(tenantId);
-    return { data: branches.map((b) => b.toPlain()) };
+    return branches.map((b) => b.toPlain());
   }
 
   @Post()
@@ -69,24 +69,24 @@ export class BranchesController {
     }
 
     const branch = await this.createBranchUseCase.execute(tenantId, parsed.data);
-    return { data: branch.toPlain() };
+    return branch.toPlain();
   }
 
-  @Get(':id')
+@Get(':id')
   @Permissions('branches:read')
   @ApiOperation({ summary: 'Obtener sucursal por ID' })
   async getById(
     @RequestContext('tenantId') tenantId: string,
     @Param('id') id: string,
   ) {
-    const branch = await this.getBranchesUseCase.execute(tenantId);
-    const found = branch.find((b) => b.id === id);
+    const branches = await this.getBranchesUseCase.execute(tenantId);
+    const found = branches.find((b) => b.id === id);
     if (!found) {
       return {
         error: { code: 'NOT_FOUND', message: 'Sucursal no encontrada' },
         status: HttpStatus.NOT_FOUND,
       };
     }
-    return { data: found.toPlain() };
+    return found.toPlain();
   }
 }

@@ -31,7 +31,7 @@ class BetterAuthPoolLifecycle implements OnModuleDestroy {
         return new Pool({
           connectionString: config.databaseUrl,
           ssl: config.databaseSsl ? { rejectUnauthorized: false } : false,
-          connectionTimeoutMillis: 5000,
+          connectionTimeoutMillis: 30000,
         });
       },
       inject: [ConfigService],

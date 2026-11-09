@@ -101,5 +101,10 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/platform-admin/platform-admin.routes').then((m) => m.routes),
   },
+  {
+    path: ':slug',
+    loadComponent: () =>
+      import('./features/public-business/public-business.component').then((m) => m.PublicBusinessComponent),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ]

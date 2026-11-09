@@ -45,7 +45,7 @@ export class InventoryController {
   @ApiResponse({ status: 200, description: 'Lista de productos' })
   async listProducts(@RequestContext('tenantId') tenantId: string) {
     const products = await this.getProductsUseCase.execute(tenantId);
-    return { data: products.map((p) => p.toPlain()) };
+    return products.map((p) => p.toPlain()) ;
   }
 
   @Get('products/:id')
@@ -58,9 +58,9 @@ export class InventoryController {
   ) {
     const product = await this.productRepo.findById(tenantId, id);
     if (!product) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Producto no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Producto no encontrado' } };
     }
-    return { data: product.toPlain() };
+    return product.toPlain() ;
   }
 
   @Post('adjustments')
@@ -79,7 +79,7 @@ export class InventoryController {
 
     const product = await this.productRepo.findById(tenantId, parsed.data.productId);
     if (!product) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Producto no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Producto no encontrado' } };
     }
 
     const quantity = parseFloat(parsed.data.quantity);

@@ -52,7 +52,7 @@ export class BranchEntity {
   @Column({ name: 'timezone', type: 'text' })
   timezone: string;
 
-  @Column({ name: 'status', type: 'enum', enum: BranchStatusEnum, default: BranchStatusEnum.ACTIVE })
+  @Column({ name: 'status', type: 'text', default: BranchStatusEnum.ACTIVE })
   status: BranchStatusEnum;
 
   @Column({ name: 'operating_hours', type: 'jsonb', nullable: true })

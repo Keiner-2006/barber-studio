@@ -9,6 +9,7 @@ import { AuthModule } from './shared/auth/auth.module';
 import { TenancyModule } from './shared/tenancy/tenancy.module';
 import { ErrorsModule } from './shared/errors/errors.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { TenantsModule } from './modules/tenants/tenants.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
@@ -43,6 +44,7 @@ import { SecurityHeadersMiddleware } from './common/middleware/security-headers.
     GuardsModule,
     ErrorsModule,
     BranchesModule,
+    TenantsModule,
     CatalogModule,
     CustomersModule,
     AppointmentsModule,

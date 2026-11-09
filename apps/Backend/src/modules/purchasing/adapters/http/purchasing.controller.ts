@@ -50,7 +50,7 @@ export class PurchasingController {
   @ApiResponse({ status: 200, description: 'Lista de proveedores' })
   async listSuppliers(@RequestContext('tenantId') tenantId: string) {
     const suppliers = await this.getSuppliersUseCase.execute(tenantId);
-    return { data: suppliers.map((s) => s.toPlain()) };
+    return suppliers.map((s) => s.toPlain()) ;
   }
 
   @Get('suppliers/:id')
@@ -63,9 +63,9 @@ export class PurchasingController {
   ) {
     const supplier = await this.supplierRepo.findById(tenantId, id);
     if (!supplier) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
     }
-    return { data: supplier.toPlain() };
+    return supplier.toPlain() ;
   }
 
   @Patch('suppliers/:id')
@@ -83,9 +83,9 @@ export class PurchasingController {
     }
     const supplier = await this.supplierRepo.update(tenantId, id, parsed.data);
     if (!supplier) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
     }
-    return { data: supplier.toPlain() };
+    return supplier.toPlain() ;
   }
 
   @Delete('suppliers/:id')
@@ -98,9 +98,9 @@ export class PurchasingController {
   ) {
     const supplier = await this.supplierRepo.deactivate(tenantId, id);
     if (!supplier) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
+      return { error: { code: 'NOT_FOUND', message: 'Proveedor no encontrado' } };
     }
-    return { data: supplier.toPlain() };
+    return supplier.toPlain() ;
   }
 
   @Get('purchase-orders/:id')
@@ -113,9 +113,9 @@ export class PurchasingController {
   ) {
     const order = await this.purchaseOrderRepo.findById(tenantId, id);
     if (!order) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Orden de compra no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Orden de compra no encontrada' } };
     }
-    return { data: order.toPlain() };
+    return order.toPlain() ;
   }
 
   @Get('purchase-orders/:id/items')
@@ -128,7 +128,7 @@ export class PurchasingController {
   ) {
     const order = await this.purchaseOrderRepo.findById(tenantId, id);
     if (!order) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Orden de compra no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Orden de compra no encontrada' } };
     }
     const items = await this.dataSource.query(
       `SELECT id, product_id AS "productId", quantity_ordered AS "quantityOrdered",
@@ -138,6 +138,6 @@ export class PurchasingController {
         ORDER BY created_at`,
       [tenantId, id],
     );
-    return { data: items };
+    return items ;
   }
 }

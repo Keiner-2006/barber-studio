@@ -6,7 +6,7 @@ services:
     sourceDir: .
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @navaja/backend build
     startCommand: pnpm --filter @navaja/backend start:prod
-    healthCheckPath: /api/v1/health/live
+    healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production

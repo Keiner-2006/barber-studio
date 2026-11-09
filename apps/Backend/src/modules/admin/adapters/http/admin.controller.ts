@@ -34,7 +34,7 @@ export class AdminController {
     const tenants = await tenantRepo.find({
       order: { createdAt: 'DESC' },
     });
-    return { data: tenants.map((t) => ({
+    return tenants.map((t) => ({
       id: t.id,
       legalName: t.legalName,
       tradeName: t.tradeName,
@@ -45,7 +45,7 @@ export class AdminController {
       phone: t.phone,
       whatsapp: t.whatsapp,
       createdAt: t.createdAt,
-    })) };
+    }));
   }
 
   @Post('tenants')
@@ -77,7 +77,7 @@ export class AdminController {
 
     const savedTenant = await tenantRepo.save(tenant);
 
-    return { data: { id: savedTenant.id, slug: savedTenant.slug, status: savedTenant.status, whatsapp: savedTenant.whatsapp } };
+    return { id: savedTenant.id, slug: savedTenant.slug, status: savedTenant.status, whatsapp: savedTenant.whatsapp } ;
   }
 
   @Get('audit-events')
@@ -106,7 +106,7 @@ export class AdminController {
       take: limit ? parseInt(limit, 10) : 100,
     });
 
-    return { data: events.map((e) => ({
+    return events.map((e) => ({
       id: e.id,
       actorId: e.actorId,
       tenantId: e.tenantId,
@@ -118,6 +118,6 @@ export class AdminController {
       ipAddress: e.ipAddress,
       userAgent: e.userAgent,
       createdAt: e.createdAt,
-    })) };
+    }));
   }
 }

@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import { ActivatedRoute, RouterLink } from '@angular/router'
 import { environment } from '../../../environments/environment'
+import { TenantService } from '../../core/tenancy/tenant.service'
 
 interface PublicBusiness {
+  id: string
   tradeName: string
   slug: string
   phone: string | null
@@ -45,6 +47,7 @@ interface PublicBusiness {
           } @else {
             <p class="description">Conoce y contacta a {{ business.tradeName }}.</p>
           }
+          <a class="contact-button" routerLink="/login">Iniciar sesión</a>
           @if (whatsappUrl) {
             <a class="contact-button" [href]="whatsappUrl" target="_blank" rel="noopener noreferrer">
               Contactar por WhatsApp
@@ -87,6 +90,7 @@ export class PublicBusinessComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
+    private tenantService: TenantService,
   ) {}
 
   get whatsappUrl(): string {
@@ -105,9 +109,11 @@ export class PublicBusinessComponent implements OnInit {
     this.http.get<{ data: PublicBusiness }>(`${environment.apiUrl}/public/businesses/${encodeURIComponent(slug)}`).subscribe({
       next: (response) => {
         this.business = response.data
+        this.tenantService.setTenantId(response.data.id)
         this.loading = false
       },
       error: (response: { error?: { error?: { message?: string }; message?: string } }) => {
+        this.tenantService.setTenantId(null)
         this.loading = false
         this.error = response.error?.error?.message || response.error?.message || 'El perfil no está disponible por el momento.'
       },

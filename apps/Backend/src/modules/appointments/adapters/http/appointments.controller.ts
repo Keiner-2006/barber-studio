@@ -73,7 +73,7 @@ export class AppointmentsController {
       startsAtFrom: startsAtFrom ? new Date(startsAtFrom) : undefined,
       startsAtTo: startsAtTo ? new Date(startsAtTo) : undefined,
     });
-    return { data: appointments.map((a) => a.toPlain()) };
+    return appointments.map((a) => a.toPlain()) ;
   }
 
   @Patch(':id')
@@ -92,7 +92,7 @@ export class AppointmentsController {
 
     const appointment = await this.appointmentRepo.findById(tenantId, id);
     if (!appointment) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
     }
 
     const updated = await this.appointmentRepo.update(tenantId, id, {
@@ -104,9 +104,9 @@ export class AppointmentsController {
     } as any);
 
     if (!updated) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
     }
-    return { data: updated.toPlain() };
+    return updated.toPlain() ;
   }
 
   @Post(':id/payments')
@@ -126,7 +126,7 @@ export class AppointmentsController {
 
     const appointment = await this.appointmentRepo.findById(tenantId, id);
     if (!appointment) {
-      return { data: null, error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
+      return { error: { code: 'NOT_FOUND', message: 'Cita no encontrada' } };
     }
 
     const payment = await this.appointmentPaymentRepo.create(tenantId, {
@@ -139,7 +139,7 @@ export class AppointmentsController {
       recordedBy: userId,
     });
 
-    return { data: payment.toPlain() };
+    return payment.toPlain() ;
   }
 
   @Get(':id/payments')
@@ -151,6 +151,6 @@ export class AppointmentsController {
     @Param('id') id: string,
   ) {
     const payments = await this.appointmentPaymentRepo.findByAppointmentId(tenantId, id);
-    return { data: payments.map((p) => p.toPlain()) };
+    return payments.map((p) => p.toPlain()) ;
   }
 }

@@ -43,7 +43,7 @@ export class StaffController {
         ORDER BY p.display_name`,
       [tenantId],
     );
-    return { data: rows };
+    return rows ;
   }
 
   @Post()
@@ -65,7 +65,7 @@ export class StaffController {
       [tenantId, user.id, parsed.data.displayName, parsed.data.bio ?? null, parsed.data.avatarUrl ?? null,
         parsed.data.commissionRate ?? '0', parsed.data.isBookable ?? true],
     );
-    return { data: profile };
+    return profile ;
   }
 
   @Patch()
@@ -104,7 +104,7 @@ export class StaffController {
       values,
     );
     if (!rows[0]) throw new NotFoundError('Personal no encontrado');
-    return { data: rows[0] };
+    return rows[0] ;
   }
 
   @Delete()
@@ -118,7 +118,7 @@ export class StaffController {
       [tenantId, id],
     );
     if (!rows[0]) throw new NotFoundError('Personal no encontrado');
-    return { data: rows[0] };
+    return rows[0] ;
   }
 
   @Get(':id/schedule')
@@ -140,7 +140,7 @@ export class StaffController {
          FROM staff_time_off WHERE tenant_id = $1 AND staff_id = $2 ORDER BY starts_at`,
       [tenantId, id],
     );
-    return { data: { profile, schedules, timeOff } };
+    return { profile, schedules, timeOff } ;
   }
 }
 
@@ -172,7 +172,7 @@ export class AvailabilityController {
         ORDER BY start_time`,
       [tenantId, staffId, start.getDay(), start],
     );
-    if (scheduleRows.length === 0) return { data: { slots: [], staffId, from: start.toISOString(), to: end.toISOString() } };
+    if (scheduleRows.length === 0) return { slots: [], staffId, from: start.toISOString(), to: end.toISOString() } ;
     const [timeOff, appointments] = await Promise.all([
       this.dataSource.query(
         `SELECT starts_at AS "startsAt", ends_at AS "endsAt" FROM staff_time_off
@@ -200,6 +200,6 @@ export class AvailabilityController {
       if (!overlaps) slots.push(current.toISOString());
       current.setTime(current.getTime() + 60 * 60_000);
     }
-    return { data: { slots, staffId, from: start.toISOString(), to: end.toISOString() } };
+    return { slots, staffId, from: start.toISOString(), to: end.toISOString() } ;
   }
 }

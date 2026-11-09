@@ -33,7 +33,7 @@ export class CashController {
          FROM cash_registers WHERE tenant_id = $1 ORDER BY created_at DESC`,
       [tenantId],
     );
-    return { data: rows };
+    return rows ;
   }
 
   private async getSessions(tenantId: string, registerId?: string, openOnly = false) {
@@ -82,8 +82,8 @@ export class CashController {
     @Query('openOnly') openOnly?: string,
     @Query('sessionId') sessionId?: string,
   ) {
-    if (sessionId) return { data: await this.getTransactions(tenantId, sessionId) };
-    return { data: await this.getSessions(tenantId, registerId, openOnly === 'true') };
+    if (sessionId) return await this.getTransactions(tenantId, sessionId) ;
+    return await this.getSessions(tenantId, registerId, openOnly === 'true') ;
   }
 
   @Get()
@@ -91,7 +91,7 @@ export class CashController {
   @ApiOperation({ summary: 'Listar movimientos de una sesión' })
   async listTransactions(@RequestContext('tenantId') tenantId: string, @Query('sessionId') sessionId?: string) {
     if (!sessionId) throw new ValidationError('sessionId es requerido');
-    return { data: await this.getTransactions(tenantId, sessionId) };
+    return await this.getTransactions(tenantId, sessionId) ;
   }
 
   @Post()
@@ -129,7 +129,7 @@ export class CashController {
                      counted_balance AS "countedBalance", difference, currency, is_open AS "isOpen"`,
           [tenantId, parsed.data.cashRegisterId, userId, parsed.data.initialBalance],
         );
-        return { data: session };
+        return session ;
       });
     }
 
@@ -159,7 +159,7 @@ export class CashController {
                       counted_balance AS "countedBalance", difference, currency, is_open AS "isOpen"`,
           [tenantId, session.id, expected.toFixed(2), parsed.data.countedBalance, difference.toFixed(2)],
         );
-        return { data: closed };
+        return closed ;
       });
     }
 
@@ -178,6 +178,6 @@ export class CashController {
       [tenantId, session.id, parsed.data.type, parsed.data.method, parsed.data.amount, session.currency,
         parsed.data.reference ?? null, parsed.data.notes ?? null, userId],
     );
-    return { data: transaction };
+    return transaction ;
   }
 }
