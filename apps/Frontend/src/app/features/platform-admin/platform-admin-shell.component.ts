@@ -60,9 +60,6 @@ interface NavItem {
         <header class="topbar">
           <button class="icon-btn hamburger" (click)="menuOpen.set(true)" aria-label="Abrir menú"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
           <span class="top-title">Consola de plataforma</span>
-          <span class="status" [class.off]="store.offline()">
-            <i aria-hidden="true"></i>{{ store.offline() ? 'API no disponible' : 'API conectada' }}
-          </span>
         </header>
         <main class="content"><router-outlet /></main>
       </div>
@@ -106,9 +103,6 @@ interface NavItem {
     .main { flex: 1; margin-left: 272px; min-width: 0; }
     .topbar { align-items: center; background: rgba(251,247,239,.85); backdrop-filter: blur(10px); border-bottom: 1px solid #e6dccc; display: flex; gap: 12px; height: 60px; padding: 0 clamp(16px, 3vw, 32px); position: sticky; top: 0; z-index: 20; }
     .top-title { color: #5e5149; font-size: 14px; font-weight: 600; }
-    .status { align-items: center; color: #146c43; display: inline-flex; font-size: 13px; font-weight: 700; gap: 6px; margin-left: auto; }
-    .status i { background: currentColor; border-radius: 50%; height: 8px; width: 8px; }
-    .status.off { color: #8c1d12; }
     .overlay { background: rgba(0,0,0,.45); inset: 0; position: fixed; z-index: 30; }
 
     @media (max-width: 1023px) {

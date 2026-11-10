@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { AgendaStore } from './agenda.store'
+import { AppointmentRow } from './agenda.models'
+import { PayAppointmentDialogComponent } from '../cash/pay-appointment-dialog.component'
 import { ROLE_LABELS } from '@navaja/shared'
 
 @Component({
   selector: 'app-agenda',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PayAppointmentDialogComponent],
   template: `
     <div class="page">
       <div class="page-header">
@@ -100,8 +102,8 @@ import { ROLE_LABELS } from '@navaja/shared'
                         <button
                           class="action-button"
                           (click)="store.completeAppointment(appt.id)"
-                          [disabled]="appt.status === 'completed' || appt.status === 'cancelled'">
-                          {{ appt.status === 'completed' ? 'Completada' : 'Completar' }}
+                          [disabled]="appt.rawStatus === 'completed' || appt.rawStatus === 'cancelled'">
+                          {{ appt.rawStatus === 'completed' ? 'Completada' : 'Completar' }}
                         </button>
                       } @else {
                         <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
@@ -112,6 +114,9 @@ import { ROLE_LABELS } from '@navaja/shared'
                           <option value="completed">Completar</option>
                           <option value="cancelled">Cancelar</option>
                         </select>
+                        @if (store.canCharge() && appt.rawStatus !== 'cancelled' && appt.rawStatus !== 'no_show') {
+                          <button class="action-button pay" (click)="paying = appt" [attr.aria-label]="'Cobrar cita de ' + appt.clientName">Cobrar</button>
+                        }
                       }
                     </td>
                   </tr>
@@ -120,6 +125,10 @@ import { ROLE_LABELS } from '@navaja/shared'
             </table>
           </div>
         }
+      }
+
+      @if (paying) {
+        <app-pay-appointment-dialog [appointmentId]="paying.id" [clientName]="paying.clientName" [service]="paying.service" (closed)="paying = null" />
       }
 
       @if (store.bookingOpen()) {
@@ -214,7 +223,9 @@ import { ROLE_LABELS } from '@navaja/shared'
       .status-completed { background: #dbeafe; color: #1e40af; }
       .status-cancelled { background: #fee2e2; color: #991b2b; }
       .actions-header { width: 120px; }
-      .actions-cell { width: 120px; }
+      .actions-cell { display: flex; gap: 6px; align-items: center; width: auto; }
+      .action-button.pay { background: #412311; border-color: #412311; color: #fff; font-weight: 700; }
+      .action-button.pay:hover { background: #5a3825; }
       .action-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; background: white; cursor: pointer; }
       .action-select:focus { outline: 2px solid #b87333; outline-offset: 1px; }
       .action-button { padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; background: white; color: #374151; cursor: pointer; white-space: nowrap; }
@@ -244,6 +255,8 @@ import { ROLE_LABELS } from '@navaja/shared'
   ],
 })
 export class AgendaComponent implements OnInit {
+  paying: AppointmentRow | null = null
+
   constructor(public store: AgendaStore) {}
 
   ngOnInit(): void {

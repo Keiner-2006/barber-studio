@@ -24,7 +24,7 @@ interface PublicBusiness {
   imports: [CommonModule, RouterLink],
   template: `
     <main class="public-page">
-      <a routerLink="/" class="platform-link">Navaja Studio</a>
+      <a routerLink="/" class="platform-link">BarberShop Management System</a>
       @if (loading) {
         <p class="status">Cargando el perfil del negocio...</p>
       } @else if (error) {

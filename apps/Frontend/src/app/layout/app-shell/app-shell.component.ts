@@ -25,8 +25,8 @@ import { ROLES, ROLE_LABELS, Role } from '@navaja/shared'
               </svg>
             </div>
             <div class="brand-text">
-              <p class="brand-name">Navaja</p>
-              <p class="brand-sub">Studio OS</p>
+              <p class="brand-name">BarberShop</p>
+              <p class="brand-sub">Management System</p>
             </div>
           </div>
           <button class="close-menu" (click)="menuOpen.set(false)" aria-label="Cerrar menú">

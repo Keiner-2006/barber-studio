@@ -55,6 +55,8 @@ export interface AppointmentRow {
   service: string
   barber: string
   status: string
+  /** Raw API status (status holds the translated label). */
+  rawStatus: string
   statusClass: string
 }
 

@@ -46,6 +46,8 @@ export class AgendaStore {
 
   readonly isBarber = computed(() => this.authService.user()?.role === 'barber')
   readonly isReception = computed(() => this.authService.user()?.role === 'reception')
+  /** Roles with cash:write can charge appointments. */
+  readonly canCharge = computed(() => ['owner', 'admin', 'reception'].includes(this.authService.user()?.role ?? ''))
   readonly canManageAppointments = computed(() => {
     const role = this.authService.user()?.role
     return role === 'owner' || role === 'admin' || role === 'app' || role === 'reception'
@@ -90,6 +92,7 @@ export class AgendaStore {
         service: appt.serviceNameSnapshot || 'Servicio',
         barber: this._staff()[appt.staffId]?.displayName || 'Barbero',
         status: this.getStatusLabel(appt.status),
+        rawStatus: appt.status,
         statusClass: this.getStatusClass(appt.status),
       }))
   )

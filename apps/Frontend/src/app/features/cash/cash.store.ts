@@ -1,143 +1,169 @@
 import { Injectable, signal, computed } from '@angular/core'
-import { CashRegister, CashSession, CashTransaction } from './cash.models'
+import { HttpErrorResponse } from '@angular/common/http'
+import { CashRegister, CashSession, CashTransaction, NewMovement } from './cash.models'
 import { CashApi } from './cash.api'
 import { TenantService } from '../../core/tenancy/tenant.service'
 
+export function apiError(err: unknown, fallback: string): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: { message?: string }; message?: string } | null
+    return body?.error?.message ?? body?.message ?? (err.status === 0 ? 'Sin conexión con el servidor' : fallback)
+  }
+  return fallback
+}
+
 @Injectable({ providedIn: 'root' })
 export class CashStore {
-  private _registers = signal<CashRegister[]>([])
-  private _sessions = signal<CashSession[]>([])
-  private _transactions = signal<CashTransaction[]>([])
-  private _loading = signal(true)
-  private _loadingTransactions = signal(false)
-
-  readonly loading = this._loading.asReadonly()
-  readonly loadingTransactions = this._loadingTransactions.asReadonly()
-  readonly registers = this._registers.asReadonly()
-  readonly sessions = this._sessions.asReadonly()
-  readonly transactions = this._transactions.asReadonly()
-
+  readonly registers = signal<CashRegister[]>([])
   readonly selectedRegisterId = signal<string>('')
-  readonly initialBalance = signal<string>('')
-  readonly countedBalance = signal<string>('')
-  readonly openSessionDialog = signal(false)
-  readonly closeSessionDialog = signal(false)
+  readonly sessions = signal<CashSession[]>([])
+  readonly transactions = signal<CashTransaction[]>([])
+  readonly loading = signal(true)
+  readonly loadingTransactions = signal(false)
+  readonly saving = signal(false)
+  readonly error = signal<string | null>(null)
+  readonly notice = signal<string | null>(null)
 
-  readonly openSession = computed(() => this._sessions().find((s) => s.isOpen) ?? null)
+  readonly selectedRegister = computed(() => this.registers().find((r) => r.id === this.selectedRegisterId()) ?? null)
+  readonly openSession = computed(() => this.sessions().find((s) => s.isOpen) ?? null)
+  readonly history = computed(() => this.sessions().filter((s) => !s.isOpen))
 
-  readonly expectedBalance = computed(() => {
-    const session = this.openSession()
-    if (!session) return '—'
-    const expected = parseFloat(session.expectedBalance || session.initialBalance || '0')
-    return `$${expected.toFixed(2)}`
-  })
-
-  constructor(
-    private api: CashApi,
-    private tenantService: TenantService
-  ) {}
+  constructor(private api: CashApi, private tenantService: TenantService) {}
 
   load(): void {
+    this.loading.set(true)
+    this.error.set(null)
     const branchId = this.tenantService.getBranchId()
     this.api.getRegisters().subscribe({
       next: (regs) => {
-        const filtered = branchId ? regs.filter((r) => r.branchId === branchId) : regs
-        this._registers.set(filtered)
-        if (filtered.length > 0) {
-          this.selectedRegisterId.set(filtered[0].id)
-        }
+        const list = branchId ? regs.filter((r) => r.branchId === branchId) : regs
+        this.registers.set(list.length ? list : regs)
+        const keep = this.registers().find((r) => r.id === this.selectedRegisterId())
+        this.selectedRegisterId.set(keep?.id ?? this.registers()[0]?.id ?? '')
         this.loadSessions()
       },
-      error: () => this._loading.set(false),
+      error: (err) => {
+        this.error.set(apiError(err, 'No se pudieron cargar las cajas'))
+        this.loading.set(false)
+      },
     })
   }
 
-  private loadSessions(): void {
+  selectRegister(id: string): void {
+    this.selectedRegisterId.set(id)
+    this.loadSessions()
+  }
+
+  loadSessions(): void {
     const registerId = this.selectedRegisterId()
+    this.transactions.set([])
     if (!registerId) {
-      this._loading.set(false)
+      this.sessions.set([])
+      this.loading.set(false)
       return
     }
-    this.api.getSessions(registerId, true).subscribe({
+    this.api.getSessions(registerId).subscribe({
       next: (sessions) => {
-        this._sessions.set(sessions ?? [])
-        const openSess = sessions.find((s) => s.isOpen)
-        if (openSess) {
-          this.loadTransactions(openSess.id)
-        }
-        this._loading.set(false)
+        this.sessions.set(sessions ?? [])
+        const open = this.openSession()
+        if (open) this.loadTransactions(open.id)
+        this.loading.set(false)
       },
-      error: () => this._loading.set(false),
+      error: (err) => {
+        this.error.set(apiError(err, 'No se pudieron cargar las sesiones de caja'))
+        this.loading.set(false)
+      },
     })
   }
 
-  private loadTransactions(sessionId: string): void {
-    this._loadingTransactions.set(true)
+  loadTransactions(sessionId: string): void {
+    this.loadingTransactions.set(true)
     this.api.getTransactions(sessionId).subscribe({
       next: (txs) => {
-        this._transactions.set((txs ?? []).map((tx) => ({ ...tx, concept: this.getConcept(tx), methodLabel: this.getMethodLabel(tx) })))
-        this._loadingTransactions.set(false)
+        this.transactions.set(txs ?? [])
+        this.loadingTransactions.set(false)
       },
-      error: () => this._loadingTransactions.set(false),
+      error: () => this.loadingTransactions.set(false),
     })
   }
 
-  openSessionAction(): void {
-    const registerId = this.selectedRegisterId()
-    if (!registerId) return
-    this.api.openSession({ cashRegisterId: registerId, initialBalance: this.initialBalance() }).subscribe({
-      next: (session) => {
-        this._sessions.update((s) => [session, ...s])
-        this._transactions.set([])
-        this.openSessionDialog.set(false)
-        this.initialBalance.set('')
-        this.loadTransactions(session.id)
-      },
+  open(initialBalance: string, done: () => void): void {
+    const register = this.selectedRegister()
+    if (!register) return
+    this.run(this.api.openSession(register.id, initialBalance || '0'), 'No se pudo abrir la caja', (session) => {
+      this.sessions.update((s) => [session, ...s])
+      this.transactions.set([])
+      this.notice.set(`Caja abierta con base de ${this.money(session.initialBalance, session.currency)}.`)
+      done()
     })
   }
 
-  closeSessionAction(): void {
+  close(countedBalance: string, notes: string, done: () => void): void {
     const session = this.openSession()
     if (!session) return
-    this.api.closeSession(session.id, this.countedBalance()).subscribe({
-      next: () => {
-        this._sessions.update((s) => s.filter((x) => x.id !== session.id))
-        this._transactions.set([])
-        this.closeSessionDialog.set(false)
-        this.countedBalance.set('')
+    this.run(this.api.closeSession(session.id, countedBalance, notes || undefined), 'No se pudo cerrar la caja', (closed) => {
+      this.sessions.update((list) => list.map((s) => (s.id === closed.id ? closed : s)))
+      this.transactions.set([])
+      const diff = Number(closed.difference ?? 0)
+      this.notice.set(
+        diff === 0
+          ? 'Caja cerrada. El conteo cuadra exactamente.'
+          : `Caja cerrada con ${diff > 0 ? 'sobrante' : 'faltante'} de ${this.money(String(Math.abs(diff)), closed.currency)}.`,
+      )
+      done()
+    })
+  }
+
+  addMovement(data: NewMovement, done: () => void): void {
+    const session = this.openSession()
+    if (!session) return
+    this.run(this.api.addMovement(session.id, data), 'No se pudo registrar el movimiento', () => {
+      this.notice.set('Movimiento registrado.')
+      this.refreshOpenSession()
+      done()
+    })
+  }
+
+  createRegister(name: string, done: () => void): void {
+    const branchId = this.tenantService.getBranchId() ?? this.registers()[0]?.branchId
+    if (!branchId) return
+    this.run(this.api.createRegister(branchId, name), 'No se pudo crear la caja', (reg) => {
+      this.registers.update((r) => [...r, reg])
+      this.selectRegister(reg.id)
+      done()
+    })
+  }
+
+  /** Re-reads the open session totals and its movements (after a movement or an appointment charge). */
+  refreshOpenSession(): void {
+    const registerId = this.selectedRegisterId()
+    if (!registerId) return
+    this.api.getSessions(registerId).subscribe({
+      next: (sessions) => {
+        this.sessions.set(sessions ?? [])
+        const open = this.openSession()
+        if (open) this.loadTransactions(open.id)
       },
     })
   }
 
-  private getConcept(tx: CashTransaction): string {
-    if (tx.reference) return tx.reference
-    if (tx.notes) return tx.notes
-    const typeLabels: Record<string, string> = {
-      sale: 'Venta',
-      appointment: 'Reserva',
-      expense: 'Gasto',
-      refund: 'Devolución',
-      adjustment: 'Ajuste',
-    }
-    return typeLabels[tx.type] || tx.type
+  money(amount: string | number | null | undefined, currency = 'COP'): string {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(amount ?? 0))
   }
 
-  private getMethodLabel(tx: CashTransaction): string {
-    const methodLabels: Record<string, string> = {
-      cash: 'Efectivo',
-      card_manual: 'Tarjeta (manual)',
-      transfer_manual: 'Transferencia',
-      other: 'Otro',
-    }
-    return methodLabels[tx.method] || tx.method
-  }
-
-  formatMoney(amount: string, currency: string): string {
-    const num = parseFloat(amount || '0')
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(num)
-  }
-
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  private run<T>(obs: import('rxjs').Observable<T>, fallback: string, onOk: (v: T) => void): void {
+    this.saving.set(true)
+    this.error.set(null)
+    this.notice.set(null)
+    obs.subscribe({
+      next: (v) => {
+        this.saving.set(false)
+        onOk(v)
+      },
+      error: (err) => {
+        this.saving.set(false)
+        this.error.set(apiError(err, fallback))
+      },
+    })
   }
 }

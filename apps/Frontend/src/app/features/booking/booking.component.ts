@@ -19,7 +19,7 @@ import { ROLE_LABELS } from '@navaja/shared'
             <path d="M12 28L20 12L28 28" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h1>Navaja Studio</h1>
+        <h1>BarberShop Management System</h1>
         <p>Reserva tu cita en línea</p>
       </div>
 

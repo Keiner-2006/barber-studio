@@ -54,3 +54,5 @@ stitch_barbershop_landing_and_login/
 .claude/
 graphify-out/
 apps/graphify-out/
+.agents/
+skills-lock.json
