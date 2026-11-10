@@ -7,6 +7,7 @@ import { PlatformMembershipEntity, PlatformMembershipRoleEnum } from '../../../a
 import { TenantProvisioningJobEntity, ProvisioningJobStatusEnum } from '../../../auth/drivers/persistence/tenant-provisioning-job.entity';
 import { TenantBrandingEntity } from '../../../auth/drivers/persistence/tenant-branding.entity';
 import { CreateOnboardingDto } from '../dtos/create-onboarding.dto';
+import { seedTenantWorkspace } from './tenant-workspace.seed';
 
 interface ProvisionResult {
   jobId: string;
@@ -81,10 +82,12 @@ export class OnboardingProvisioningService {
           countryCode: dto.business.countryCode || 'CO',
           timezone: 'America/Bogota',
           currencyCode: 'COP',
-          status: TenantStatusEnum.PROVISIONING,
+          // Activated on sign-up (product decision): the owner can use the panel right away; admins can suspend.
+          status: TenantStatusEnum.ACTIVE,
           whatsapp: dto.location.whatsapp || null,
           settings: {
             consentAccepted: dto.consentAccepted,
+            location: dto.location,
             schedule: dto.schedule || null,
             branding: dto.branding || null,
             account: {
@@ -128,6 +131,18 @@ export class OnboardingProvisioningService {
           status: 'active',
         });
         await membershipRepoTx.save(membership);
+
+        await seedTenantWorkspace(manager, {
+          tenantId: savedTenant.id,
+          slug: savedTenant.slug,
+          tradeName: savedTenant.tradeName,
+          countryCode: savedTenant.countryCode,
+          timezone: savedTenant.timezone,
+          currencyCode: savedTenant.currencyCode,
+          location: dto.location,
+          schedules: dto.schedule?.schedules,
+          services: dto.schedule?.services,
+        });
 
         if (dto.branding) {
           const socialLinks: Record<string, string> = {};
