@@ -47,7 +47,7 @@ export class CashTransactionEntity {
   @Column({ name: 'amount', type: 'numeric', precision: 12, scale: 2 })
   amount: number;
 
-  @Column({ name: 'currency', type: 'text', default: 'MXN' })
+  @Column({ name: 'currency', type: 'text', default: 'COP' })
   currency: string;
 
   @Column({ name: 'reference', type: 'text', nullable: true })

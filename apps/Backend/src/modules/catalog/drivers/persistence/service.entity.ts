@@ -47,7 +47,7 @@ export class ServiceEntity {
   @Column({ name: 'price_base', type: 'numeric', precision: 12, scale: 2 })
   priceBase: number;
 
-  @Column({ name: 'currency', type: 'text', default: 'MXN' })
+  @Column({ name: 'currency', type: 'text', default: 'COP' })
   currency: string;
 
   @Column({ name: 'payment_policy', type: 'text', default: 'none' })

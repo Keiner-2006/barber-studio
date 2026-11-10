@@ -74,6 +74,11 @@ export async function seedTenantWorkspace(manager: EntityManager, input: Workspa
     ],
   );
 
+  await manager.query(
+    `insert into cash_registers (tenant_id, branch_id, name, status, initial_balance) values ($1, $2, 'Caja principal', 'active', 0)`,
+    [input.tenantId, branch.id],
+  );
+
   const rows = toServiceRows(input.services);
   if (rows.length) {
     const [category] = await manager.query(

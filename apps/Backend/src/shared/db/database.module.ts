@@ -1,4 +1,4 @@
-import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Module, Global, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import databaseConfig from '../../config/database.config';
@@ -107,6 +107,12 @@ function createDataSourceOptions(config: ConfigType<typeof databaseConfig>, type
         if (!config) throw new Error('Database configuration is missing');
         const dataSource = new DataSource(createDataSourceOptions(config, 'platform'));
         await dataSource.initialize();
+        // Apply pending migrations on boot (deploys had no migration step). Only this data source runs them:
+        // both point at the same database and share typeorm_migrations. Each migration runs in its own transaction.
+        if (process.env.DB_RUN_MIGRATIONS !== 'false') {
+          const applied = await dataSource.runMigrations({ transaction: 'each' });
+          if (applied.length) new Logger('DatabaseModule').log(`Applied migrations: ${applied.map((m) => m.name).join(', ')}`);
+        }
         return dataSource;
       },
       inject: [ConfigService],

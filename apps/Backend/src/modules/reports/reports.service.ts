@@ -27,7 +27,7 @@ export class ReportsService {
               COALESCE(SUM(CASE WHEN p.status = 'recorded' THEN p.amount ELSE 0 END), 0)::text AS "totalSales",
               COUNT(a.id)::int AS "totalOrders",
               COALESCE(AVG(p.amount), 0)::text AS "averageTicket",
-              COALESCE(MAX(p.currency), 'MXN') AS currency
+              COALESCE(MAX(p.currency), 'COP') AS currency
          FROM appointments a
          INNER JOIN appointment_payments p ON p.appointment_id = a.id AND p.tenant_id = a.tenant_id
         WHERE ${filters.conditions}
@@ -54,7 +54,7 @@ export class ReportsService {
               COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0)::text AS expenses,
               COALESCE(SUM(CASE WHEN t.type = 'refund' THEN t.amount ELSE 0 END), 0)::text AS refunds,
               COALESCE(SUM(CASE WHEN t.type IN ('sale', 'appointment') THEN t.amount WHEN t.type IN ('expense', 'refund') THEN -t.amount ELSE 0 END), 0)::text AS net,
-              COALESCE(MAX(s.currency), 'MXN') AS currency
+              COALESCE(MAX(s.currency), 'COP') AS currency
          FROM cash_sessions s
          INNER JOIN cash_registers r ON r.id = s.cash_register_id AND r.tenant_id = s.tenant_id
          LEFT JOIN cash_transactions t ON t.session_id = s.id AND t.tenant_id = s.tenant_id
@@ -71,7 +71,7 @@ export class ReportsService {
               COALESCE(SUM(bi.quantity), 0)::numeric AS "currentStock",
               p.min_quantity AS "minStock", p.unit_cost AS "unitCost",
               COALESCE(SUM(bi.quantity * p.unit_cost), 0)::text AS "totalValue",
-              'MXN'::text AS currency
+              'COP'::text AS currency
          FROM products p
          LEFT JOIN branch_inventory bi ON bi.product_id = p.id AND bi.tenant_id = p.tenant_id
         WHERE p.tenant_id = $1 AND p.active = true
@@ -101,7 +101,7 @@ export class ReportsService {
     return this.dataSource.query(
       `SELECT s.id, a.service_name_snapshot AS name,
               COALESCE(SUM(CASE WHEN p.status = 'recorded' THEN p.amount ELSE 0 END), 0)::text AS "totalSales",
-              COUNT(a.id)::int AS quantity, COALESCE(MAX(p.currency), 'MXN') AS currency
+              COUNT(a.id)::int AS quantity, COALESCE(MAX(p.currency), 'COP') AS currency
          FROM appointments a
          INNER JOIN appointment_payments p ON p.appointment_id = a.id AND p.tenant_id = a.tenant_id
          INNER JOIN services s ON s.id = a.service_id AND s.tenant_id = a.tenant_id
