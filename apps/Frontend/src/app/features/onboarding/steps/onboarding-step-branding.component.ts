@@ -103,7 +103,7 @@ const COLOR_PRESETS = [
     .step-form { display: flex; flex-direction: column; gap: 24px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
-    .optional { color: #50443e; font-size: 10px; font-weight: 400; }
+    .optional { color: #50443e; font-size: 12px; font-weight: 400; }
     .upload-zone { border: 2px dashed rgba(160,141,126,0.4); border-radius: 12px; padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all .2s; text-align: center; background: #f5f0e8; }
     .upload-zone:hover { border-color: rgba(148,73,40,0.6); }
     .upload-zone.drag-active { border-color: #944928; background: #fdf9f0; }
@@ -113,7 +113,7 @@ const COLOR_PRESETS = [
     .upload-error { color: #dc2626; font-size: 12px; font-weight: 500; }
     .logo-preview { width: 120px; height: 120px; object-fit: contain; border-radius: 8px; background: white; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .upload-badges { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
-    .badge { font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: .05em; padding: 3px 8px; border-radius: 4px; background: white; color: #50443e; }
+    .badge { font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: .05em; padding: 3px 8px; border-radius: 4px; background: white; color: #50443e; }
     .badge-success { background: rgba(77,124,93,0.15); color: #4D7C5D; }
     .color-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .preset-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; }

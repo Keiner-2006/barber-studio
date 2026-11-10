@@ -10,6 +10,7 @@ import {
 import { ReportsApi } from './reports.api'
 import { ChartBar, ChartSeries } from '../../shared/components/bar-chart/bar-chart.component'
 import { HBar } from '../../shared/components/horizontal-bar-chart/horizontal-bar-chart.component'
+import { formatChartValue } from '../../shared/components/chart-format'
 
 @Injectable({ providedIn: 'root' })
 export class ReportsStore {
@@ -77,83 +78,129 @@ export class ReportsStore {
     }
   }
 
-  readonly salesChart = computed((): ChartSeries[] => {
-    const bars: ChartBar[] = this._sales().map((r) => ({
+  readonly salesChart = computed((): ChartSeries[] => [{
+    name: 'Ventas',
+    color: SERIES.sales,
+    bars: this._sales().map((r): ChartBar => ({
       label: this.formatDate(r.date),
-      value: parseFloat(r.totalSales) || 0,
-      displayValue: `$${parseFloat(r.totalSales).toLocaleString('es-MX')}`,
-      isToday: r.date === new Date().toISOString().split('T')[0],
-    }))
-    return [{
-      name: 'Ventas',
-      bars,
-      color: '#b87333',
-    }] as ChartSeries[]
-  })
+      value: num(r.totalSales),
+      displayValue: money(num(r.totalSales)),
+      isToday: r.date === localToday(),
+    })),
+  }])
 
-  readonly occupancyChart = computed((): ChartSeries[] => {
-    const bars: ChartBar[] = this._occupancy().map((r) => ({
-      label: this.formatDate(r.date),
-      value: r.occupiedSlots,
-      displayValue: `${r.occupiedSlots} / ${r.totalSlots}`,
-      isToday: r.date === new Date().toISOString().split('T')[0],
-    }))
-    return [{
-      name: 'Ocupación',
-      bars,
-      color: '#22c55e',
-    }] as ChartSeries[]
-  })
+  readonly occupancyChart = computed((): ChartSeries[] => [{
+    name: 'Ocupación',
+    color: SERIES.sales,
+    bars: this._occupancy().map((r): ChartBar => {
+      const rate = r.totalSlots > 0 ? (r.occupiedSlots / r.totalSlots) * 100 : 0
+      return {
+        label: this.formatDate(r.date),
+        value: Math.round(rate * 10) / 10,
+        displayValue: `${Math.round(rate)}% · ${r.occupiedSlots}/${r.totalSlots} turnos`,
+        isToday: r.date === localToday(),
+      }
+    }),
+  }])
 
-  readonly servicesChart = computed((): HBar[] => {
-    return this._services().map((r) => ({
+  readonly servicesChart = computed((): HBar[] =>
+    this._services().map((r) => ({
       label: r.name,
-      value: parseFloat(r.totalSales) || 0,
-      displayValue: `$${parseFloat(r.totalSales).toLocaleString('es-MX')}`,
-      secondary: `${r.quantity} vendidos`,
-      color: '#b87333',
-    })) as HBar[]
-  })
+      value: num(r.totalSales),
+      displayValue: money(num(r.totalSales)),
+      secondary: `${r.quantity} ${r.quantity === 1 ? 'vendido' : 'vendidos'}`,
+      color: SERIES.sales,
+    })),
+  )
 
-  readonly inventoryChart = computed((): HBar[] => {
-    return this._inventory().map((r) => ({
+  readonly inventoryChart = computed((): HBar[] =>
+    this._inventory().map((r) => ({
       label: r.name,
-      value: parseFloat(r.totalValue) || 0,
-      displayValue: `$${parseFloat(r.totalValue).toLocaleString('es-MX')}`,
-      secondary: `Stock: ${r.currentStock}`,
-      color: '#3b82f6',
-    })) as HBar[]
-  })
+      value: num(r.totalValue),
+      displayValue: money(num(r.totalValue)),
+      secondary: `Stock: ${r.currentStock} · mínimo ${r.minStock}`,
+      warning: r.currentStock <= r.minStock ? 'Stock bajo' : undefined,
+      color: SERIES.expenses,
+    })),
+  )
 
   readonly cashChart = computed((): ChartSeries[] => {
-    const salesBars = this._cash().map((r) => ({
-      label: this.formatDate(r.date),
-      value: parseFloat(r.sales) || 0,
-      displayValue: `$${parseFloat(r.sales).toLocaleString('es-MX')}`,
-      color: '#22c55e',
-    }))
-    const expenseBars = this._cash().map((r) => ({
-      label: this.formatDate(r.date),
-      value: parseFloat(r.expenses) || 0,
-      displayValue: `$${parseFloat(r.expenses).toLocaleString('es-MX')}`,
-      color: '#ef4444',
-    }))
-    const netBars = this._cash().map((r) => ({
-      label: this.formatDate(r.date),
-      value: parseFloat(r.net) || 0,
-      displayValue: `$${parseFloat(r.net).toLocaleString('es-MX')}`,
-      color: '#b87333',
-    }))
+    const rows = this._cash()
+    const series = (name: string, color: string, pick: (r: CashReport) => string): ChartSeries => ({
+      name,
+      color,
+      bars: rows.map((r) => ({ label: this.formatDate(r.date), value: num(pick(r)), displayValue: money(num(pick(r))), isToday: r.date === localToday() })),
+    })
     return [
-      { name: 'Ventas', bars: salesBars, color: '#22c55e' },
-      { name: 'Gastos', bars: expenseBars, color: '#ef4444' },
-      { name: 'Neto', bars: netBars, color: '#b87333' },
-    ] as ChartSeries[]
+      series('Ventas', SERIES.sales, (r) => r.sales),
+      series('Gastos', SERIES.expenses, (r) => r.expenses),
+      series('Neto', SERIES.net, (r) => r.net),
+    ]
+  })
+
+  /** Headline numbers shown above the active chart. */
+  readonly summary = computed((): { label: string; value: string }[] => {
+    switch (this._activeReport()) {
+      case 'sales': {
+        const rows = this._sales()
+        const total = rows.reduce((s, r) => s + num(r.totalSales), 0)
+        const orders = rows.reduce((s, r) => s + (r.totalOrders || 0), 0)
+        return [
+          { label: 'Ventas totales', value: money(total) },
+          { label: 'Órdenes', value: orders.toLocaleString('es-CO') },
+          { label: 'Ticket promedio', value: money(orders ? total / orders : 0) },
+        ]
+      }
+      case 'occupancy': {
+        const rows = this._occupancy()
+        const occ = rows.reduce((s, r) => s + r.occupiedSlots, 0)
+        const all = rows.reduce((s, r) => s + r.totalSlots, 0)
+        return [
+          { label: 'Ocupación promedio', value: `${all ? Math.round((occ / all) * 100) : 0}%` },
+          { label: 'Turnos ocupados', value: occ.toLocaleString('es-CO') },
+          { label: 'Turnos disponibles', value: all.toLocaleString('es-CO') },
+        ]
+      }
+      case 'services': {
+        const rows = this._services()
+        return [
+          { label: 'Ingresos por servicios', value: money(rows.reduce((s, r) => s + num(r.totalSales), 0)) },
+          { label: 'Servicios vendidos', value: rows.reduce((s, r) => s + r.quantity, 0).toLocaleString('es-CO') },
+          { label: 'Servicios distintos', value: String(rows.length) },
+        ]
+      }
+      case 'inventory': {
+        const rows = this._inventory()
+        return [
+          { label: 'Valor del inventario', value: money(rows.reduce((s, r) => s + num(r.totalValue), 0)) },
+          { label: 'Productos', value: String(rows.length) },
+          { label: 'Con stock bajo', value: String(this._lowStockItems()) },
+        ]
+      }
+      case 'cash': {
+        const rows = this._cash()
+        return [
+          { label: 'Ventas', value: money(rows.reduce((s, r) => s + num(r.sales), 0)) },
+          { label: 'Gastos', value: money(rows.reduce((s, r) => s + num(r.expenses), 0)) },
+          { label: 'Neto', value: money(rows.reduce((s, r) => s + num(r.net), 0)) },
+        ]
+      }
+    }
   })
 
   private formatDate(dateStr: string): string {
     if (!dateStr) return ''
-    const d = new Date(dateStr + 'T00:00:00')
-    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+    const d = new Date(dateStr.slice(0, 10) + 'T00:00:00')
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
   }
+}
+
+// Categorical slots validated with the dataviz palette checker (light surface, all pairs).
+const SERIES = { sales: '#b85a2b', expenses: '#2a78d6', net: '#00875a' }
+
+const num = (v: string | number | null | undefined): number => Number(v) || 0
+const money = (v: number): string => formatChartValue(v, 'money')
+const localToday = (): string => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }

@@ -55,8 +55,8 @@ import { StaffMember, CreateStaffInput, UpdateStaffInput } from './staff.models'
                     </span>
                   </td>
                   <td>
-                    <button class="btn-icon" (click)="openEditModal(member)" title="Editar">✏️</button>
-                    <button class="btn-icon danger" (click)="confirmDelete(member)" title="Eliminar">🗑️</button>
+                    <button class="btn-icon" (click)="openEditModal(member)" title="Editar" [attr.aria-label]="'Editar ' + member.displayName"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>
+                    <button class="btn-icon danger" (click)="confirmDelete(member)" title="Eliminar" [attr.aria-label]="'Eliminar ' + member.displayName"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>
                   </td>
                 </tr>
               }

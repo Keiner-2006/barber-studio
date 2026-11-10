@@ -46,7 +46,7 @@ interface DetailTab {
               <div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-pa-surface-container-lowest shadow-sm">
                 <span class="w-2 h-2 rounded-full" [class]="statusDotClass(tenant.status)"></span>
                 <span class="font-label-sm text-label-sm font-semibold text-pa-primary">{{ statusLabel(tenant.status) }}</span>
-                <span class="text-pa-outline-variant text-[10px]">•</span>
+                <span class="text-pa-outline-variant text-[12px]">•</span>
                 <span class="font-label-sm text-label-sm text-pa-on-surface-variant">{{ countryName(tenant.countryCode) }}</span>
               </div>
             </div>

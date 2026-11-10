@@ -29,7 +29,7 @@ export interface CreateCustomerForm {
         <button class="primary-button" (click)="openCreateDialog()">+ Nuevo cliente</button>
       </div>
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon material-symbols-outlined" aria-hidden="true">search</span>
         <input placeholder="Buscar por nombre, teléfono o correo" [(ngModel)]="searchTerm" (input)="onSearch()" />
       </div>
       @if (store.loading()) {
@@ -114,14 +114,14 @@ export interface CreateCustomerForm {
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
     .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .primary-button:hover { transform: translateY(-1px); }
     .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .secondary-button { padding: 12px 20px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .search-bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px; }
-    .search-icon { font-size: 14px; }
+    .search-icon { font-size: 20px; color: #57534e; }
     input { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; }
     textarea { flex: 1; border: none; outline: none; font-size: 14px; background: transparent; min-height: 60px; resize: vertical; font-family: inherit; }
     .loading { padding: 48px; text-align: center; color: #6b7280; }

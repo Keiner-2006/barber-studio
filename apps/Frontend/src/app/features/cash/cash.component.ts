@@ -105,7 +105,7 @@ import { CashStore } from './cash.store'
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
     .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .secondary-button { padding: 8px 14px; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }

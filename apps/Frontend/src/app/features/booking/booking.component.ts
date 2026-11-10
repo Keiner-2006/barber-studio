@@ -251,7 +251,7 @@ import { ROLE_LABELS } from '@navaja/shared'
       .field-error { color: #dc2626; font-size: 12px; margin-top: 4px; display: block; }
       .error-message { color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 12px; }
       .login-link { text-align: center; margin-top: 16px; font-size: 14px; color: #6b7280; }
-      .login-link .link { color: #b87333; text-decoration: none; font-weight: 500; }
+      .login-link .link { color: #8c4029; text-decoration: none; font-weight: 500; }
       .login-link .link:hover { text-decoration: underline; }
       .button { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; cursor: pointer; }
       .button-dark { background: #2d2d2d; color: white; }

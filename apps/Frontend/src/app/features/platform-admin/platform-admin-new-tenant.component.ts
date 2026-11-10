@@ -120,9 +120,9 @@ import { PlatformOwner } from './clients/clients.api';
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #1b1c1a; margin: 0; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
-    .back-link { font-size: 14px; color: #b87333; text-decoration: none; display: flex; align-items: center; }
+    .back-link { font-size: 14px; color: #8c4029; text-decoration: none; display: flex; align-items: center; }
     .back-link:hover { text-decoration: underline; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
     @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
@@ -134,7 +134,7 @@ import { PlatformOwner } from './clients/clients.api';
     .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
     .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: #b87333; box-shadow: 0 0 0 3px rgba(184,115,51,0.1); }
-    .form-group small { display: block; font-size: 12px; color: #9ca3af; margin-top: 4px; }
+    .form-group small { display: block; font-size: 12px; color: #6f6760; margin-top: 4px; }
     .color-input { display: flex; align-items: center; gap: 12px; }
     .color-input input[type="color"] { width: 40px; height: 40px; border: none; cursor: pointer; }
     .info-box { padding: 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; }

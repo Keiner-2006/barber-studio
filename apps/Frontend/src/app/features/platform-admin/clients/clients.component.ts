@@ -76,7 +76,7 @@ import { ClientsStore } from './clients.store';
     .page-header { margin-bottom: 32px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #1b1c1a; margin: 0; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
     .grid { display: grid; gap: 20px; }
     .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
@@ -87,7 +87,7 @@ import { ClientsStore } from './clients.store';
     .info-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
     .info-row .label { color: #6b7280; font-size: 12px; text-transform: uppercase; }
     .card-footer { padding: 16px 20px; border-top: 1px solid #e5e7eb; }
-    .link { font-size: 13px; color: #b87333; text-decoration: none; font-weight: 500; }
+    .link { font-size: 13px; color: #8c4029; text-decoration: none; font-weight: 500; }
     .link:hover { text-decoration: underline; }
     .avatar { width: 44px; height: 44px; border-radius: 50%; background: #b87333; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
     .loading { padding: 40px; text-align: center; color: #6b7280; }

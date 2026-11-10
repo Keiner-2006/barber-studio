@@ -82,8 +82,8 @@ import { OnboardingStore } from '../onboarding.store'
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
-    .required { color: #944928; font-size: 10px; font-weight: 600; }
-    .optional { color: #50443e; font-size: 10px; font-weight: 400; }
+    .required { color: #944928; font-size: 12px; font-weight: 600; }
+    .optional { color: #50443e; font-size: 12px; font-weight: 400; }
     .input-wrap { display: flex; align-items: center; position: relative; }
     .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
     .input-wrap input, .input-wrap select { width: 100%; padding: 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: white; }

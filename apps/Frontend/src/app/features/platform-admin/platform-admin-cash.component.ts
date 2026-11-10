@@ -75,7 +75,7 @@ import { PlatformAdminStore } from './platform-admin.store'
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; margin: 0; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }

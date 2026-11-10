@@ -27,7 +27,7 @@ interface NavItem {
               <p class="brand-sub">Management System</p>
             </div>
           </div>
-          <button class="close-menu" (click)="menuOpen.set(false)">✕</button>
+          <button class="close-menu" (click)="menuOpen.set(false)" aria-label="Cerrar menú"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
 
         <nav class="sidebar-nav">
@@ -79,7 +79,7 @@ interface NavItem {
 
       <div class="main">
         <header class="topbar">
-          <button class="hamburger" (click)="menuOpen.set(true)">☰</button>
+          <button class="hamburger" (click)="menuOpen.set(true)" aria-label="Abrir menú"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
           <div class="topbar-right">
             <div class="admin-info">
               <span class="admin-role">Administrador de Plataforma</span>
@@ -157,7 +157,7 @@ interface NavItem {
       color: #2d2d2d;
     }
     .brand-sub {
-      font-size: 10px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.22em;
       color: #6b7280;
@@ -186,7 +186,7 @@ interface NavItem {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: #9ca3af;
+      color: #6f6760;
       padding: 0 12px 8px;
     }
     .nav-group { display: flex; flex-direction: column; gap: 4px; }
@@ -209,7 +209,7 @@ interface NavItem {
     }
     .nav-item.active {
       background: rgba(184, 115, 51, 0.1);
-      color: #b87333;
+      color: #8c4029;
       font-weight: 600;
     }
     .nav-icon {
@@ -252,7 +252,7 @@ interface NavItem {
       height: 36px;
       border-radius: 50%;
       background: rgba(184, 115, 51, 0.15);
-      color: #b87333;
+      color: #8c4029;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -344,7 +344,7 @@ interface NavItem {
     }
     .user-email {
       font-size: 11px;
-      color: #9ca3af;
+      color: #6f6760;
     }
     .user-actions-avatar {
       width: 32px;

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common'
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
 import { AuthService } from '../../core/auth/auth.service'
 import { TenantService } from '../../core/tenancy/tenant.service'
-import { ROLES } from '@navaja/shared'
+import { ROLES, ROLE_LABELS, Role } from '@navaja/shared'
 
 @Component({
   selector: 'app-shell',
@@ -29,15 +29,15 @@ import { ROLES } from '@navaja/shared'
               <p class="brand-sub">Studio OS</p>
             </div>
           </div>
-          <button class="close-menu" (click)="menuOpen.set(false)">
-            ✕
+          <button class="close-menu" (click)="menuOpen.set(false)" aria-label="Cerrar menú">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>
 
         <div class="branch-selector">
           <div class="branch-header">
             <span class="branch-label">SUCURSAL ACTIVA</span>
-            <button class="branch-toggle" (click)="branchOpen.set(!branchOpen())">▾</button>
+            <button class="branch-toggle" (click)="branchOpen.set(!branchOpen())" [attr.aria-expanded]="branchOpen()" aria-label="Cambiar sucursal"><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></button>
           </div>
           <div class="branch-current">
             <span class="branch-dot"></span>
@@ -66,7 +66,7 @@ import { ROLES } from '@navaja/shared'
               class="nav-item"
               [routerLink]="item.route"
               routerLinkActive="active">
-              <span class="nav-icon">{{ item.icon }}</span>
+              <span class="nav-icon material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
               <span class="nav-label">{{ item.label }}</span>
             </a>
           }
@@ -74,7 +74,7 @@ import { ROLES } from '@navaja/shared'
           @if (showSettings) {
           <p class="nav-section" style="margin-top: 24px;">Configuración</p>
           <a class="nav-item" routerLink="/settings" routerLinkActive="active">
-            <span class="nav-icon">⚙️</span>
+            <span class="nav-icon material-symbols-outlined" aria-hidden="true">settings</span>
             <span class="nav-label">Ajustes</span>
           </a>
         }
@@ -85,7 +85,7 @@ import { ROLES } from '@navaja/shared'
             <div class="user-avatar">{{ userInitials }}</div>
             <div class="user-details">
               <p class="user-name">{{ authService.user()?.name || 'Usuario' }}</p>
-              <p class="user-role">{{ authService.user()?.role || 'admin' }}</p>
+              <p class="user-role">{{ roleLabel }}</p>
             </div>
           </div>
         </div>
@@ -99,10 +99,10 @@ import { ROLES } from '@navaja/shared'
       <!-- Main content -->
       <div class="main">
         <header class="topbar">
-          <button class="hamburger" (click)="menuOpen.set(true)">☰</button>
+          <button class="hamburger" (click)="menuOpen.set(true)" aria-label="Abrir menú"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
           <div class="topbar-right">
-            <button class="topbar-icon">🔔</button>
-            <button class="topbar-icon" (click)="onLogout()">🚪</button>
+            <button class="topbar-icon" aria-label="Notificaciones" title="Notificaciones"><span class="material-symbols-outlined" aria-hidden="true">notifications</span></button>
+            <button class="topbar-icon" (click)="onLogout()" aria-label="Cerrar sesión" title="Cerrar sesión"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button>
           </div>
         </header>
         <main class="content">
@@ -174,10 +174,10 @@ import { ROLES } from '@navaja/shared'
     }
 
     .brand-sub {
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.22em;
-      color: #6b7280;
+      color: #57534e;
       margin-top: 2px;
     }
 
@@ -186,7 +186,7 @@ import { ROLES } from '@navaja/shared'
       background: none;
       border: none;
       font-size: 18px;
-      color: #6b7280;
+      color: #57534e;
       cursor: pointer;
     }
 
@@ -211,17 +211,17 @@ import { ROLES } from '@navaja/shared'
     }
 
     .branch-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #6b7280;
+      color: #57534e;
     }
 
     .branch-toggle {
       background: none;
       border: none;
-      color: #6b7280;
+      color: #57534e;
       cursor: pointer;
       font-size: 12px;
     }
@@ -259,7 +259,7 @@ import { ROLES } from '@navaja/shared'
       border: none;
       padding: 6px 0;
       font-size: 12px;
-      color: #6b7280;
+      color: #57534e;
       cursor: pointer;
     }
 
@@ -284,11 +284,11 @@ import { ROLES } from '@navaja/shared'
     }
 
     .nav-section {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #6b7280;
+      color: #57534e;
       padding: 0 12px;
       margin-bottom: 8px;
     }
@@ -313,11 +313,11 @@ import { ROLES } from '@navaja/shared'
 
     .nav-item.active {
       background: rgba(184, 115, 51, 0.08);
-      color: #b87333;
+      color: #8c4029;
     }
 
     .nav-icon {
-      font-size: 16px;
+      font-size: 20px;
       width: 20px;
       text-align: center;
     }
@@ -329,7 +329,7 @@ import { ROLES } from '@navaja/shared'
     .nav-badge {
       background: #fee2e2;
       color: #dc2626;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       padding: 2px 8px;
       border-radius: 10px;
@@ -352,7 +352,7 @@ import { ROLES } from '@navaja/shared'
       height: 36px;
       border-radius: 50%;
       background: rgba(184, 115, 51, 0.15);
-      color: #b87333;
+      color: #8c4029;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -368,7 +368,7 @@ import { ROLES } from '@navaja/shared'
 
     .user-role {
       font-size: 11px;
-      color: #6b7280;
+      color: #57534e;
     }
 
     /* Overlay */
@@ -438,7 +438,7 @@ import { ROLES } from '@navaja/shared'
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 20px; color: #57534e;
     }
 
     .content {
@@ -452,16 +452,21 @@ export class AppShellComponent {
   branchOpen = signal(false)
 
   private navItems = [
-    { label: 'Resumen', icon: '📊', route: '/dashboard' },
-    { label: 'Agenda', icon: '📅', route: '/agenda' },
-    { label: 'Personal', icon: '👤', route: '/staff' },
-    { label: 'Cliente', icon: '👥', route: '/customers' },
-    { label: 'Servicios', icon: '✂️', route: '/catalog' },
-    { label: 'Inventario', icon: '📦', route: '/inventory' },
-    { label: 'Compras', icon: '🛒', route: '/purchasing' },
-    { label: 'Caja y pagos', icon: '💳', route: '/cash' },
-    { label: 'Reportes', icon: '📈', route: '/reports' },
+    { label: 'Resumen', icon: 'dashboard', route: '/dashboard' },
+    { label: 'Agenda', icon: 'calendar_month', route: '/agenda' },
+    { label: 'Personal', icon: 'badge', route: '/staff' },
+    { label: 'Clientes', icon: 'group', route: '/customers' },
+    { label: 'Servicios', icon: 'content_cut', route: '/catalog' },
+    { label: 'Inventario', icon: 'inventory_2', route: '/inventory' },
+    { label: 'Compras', icon: 'shopping_cart', route: '/purchasing' },
+    { label: 'Caja y pagos', icon: 'point_of_sale', route: '/cash' },
+    { label: 'Reportes', icon: 'monitoring', route: '/reports' },
   ]
+
+  get roleLabel(): string {
+    const role = this.authService.user()?.role
+    return (role && ROLE_LABELS[role as Role]) || role || ''
+  }
 
   private settingsRoles = [ROLES.OWNER, ROLES.ADMIN]
 

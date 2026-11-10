@@ -37,7 +37,7 @@ import {
         <div class="error-banner">
           <span class="material-symbols-outlined">error</span>
           {{ message }}
-          <button class="dismiss-btn" (click)="store.clearError()">✕</button>
+          <button class="dismiss-btn" (click)="store.clearError()" aria-label="Cerrar aviso"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
       }
 
@@ -224,7 +224,7 @@ import {
     .dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
     .greeting-label { font-size: 13px; color: #574238; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
     .greeting { font-family: 'DM Serif Display', serif; font-size: 36px; color: #1b1c1a; margin: 0; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #574238; margin-top: 8px; }
     .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
     .primary-button:hover { background: #a06028; }
@@ -235,7 +235,7 @@ import {
     .kpi-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
     .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .kpi-label { font-size: 13px; color: #574238; font-weight: 500; }
-    .kpi-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 8px; color: #b87333; }
+    .kpi-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 8px; color: #8c4029; }
     .kpi-icon .material-symbols-outlined { font-size: 18px; }
     .kpi-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: #1b1c1a; }
     .kpi-trend { font-size: 12px; margin-top: 4px; font-weight: 500; }
@@ -249,7 +249,7 @@ import {
     .card-header h3 { font-family: 'DM Serif Display', serif; font-size: 16px; color: #1b1c1a; margin: 0 0 4px; }
     .card-header p { font-size: 12px; color: #574238; margin: 0; }
     .card-body { padding: 20px; }
-    .link-button { font-size: 13px; color: #b87333; text-decoration: none; font-weight: 500; }
+    .link-button { font-size: 13px; color: #8c4029; text-decoration: none; font-weight: 500; }
     .link-button:hover { text-decoration: underline; }
     .status-bars { display: flex; flex-direction: column; gap: 16px; }
     .status-bar-row { display: flex; flex-direction: column; gap: 6px; }
@@ -264,7 +264,7 @@ import {
     .empty-state p { font-size: 14px; margin: 0; }
     .provisioning-list { display: flex; flex-direction: column; gap: 12px; }
     .provisioning-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fafaf8; border-radius: 8px; }
-    .provisioning-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #b87333; }
+    .provisioning-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #8c4029; }
     .provisioning-info { flex: 1; display: flex; flex-direction: column; }
     .provisioning-name { font-size: 13px; font-weight: 500; color: #1b1c1a; }
     .provisioning-meta { font-size: 11px; color: #574238; }

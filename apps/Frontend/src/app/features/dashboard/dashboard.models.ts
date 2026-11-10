@@ -1,23 +1,15 @@
-import { Appointment } from '../agenda/agenda.models'
-import { Customer } from '../customers/customers.models'
-import { StaffMember } from '../agenda/staff.models'
+export type KpiTone = 'copper' | 'green' | 'blue' | 'neutral'
 
 export interface Kpi {
   label: string
   value: string
-  trend: string
   detail: string
+  /** Material Symbols ligature name. */
   icon: string
-  color: string
-  bg: string
+  tone: KpiTone
 }
 
-export interface WeekDay {
-  label: string
-  value: string
-  height: number
-  isToday: boolean
-}
+export type StatusTone = 'pending' | 'confirmed' | 'waiting' | 'active' | 'done' | 'cancelled'
 
 export interface AppointmentRow {
   id: string
@@ -26,23 +18,6 @@ export interface AppointmentRow {
   service: string
   barber: string
   status: string
+  statusTone: StatusTone
   initials: string
-  avatarColor: string
-  statusClass: string
-  statusColor: string
-}
-
-export interface TodayMetric {
-  label: string
-  value: string
-  icon: string
-  color: string
-}
-
-export interface DashboardState {
-  appointments: Appointment[]
-  customers: Record<string, Customer>
-  staff: Record<string, StaffMember>
-  isLoading: boolean
-  userName: string
 }

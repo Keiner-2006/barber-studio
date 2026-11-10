@@ -135,7 +135,7 @@ import { environment } from '../../../../environments/environment'
     .plan-badge { padding: 6px 12px; border-radius: 6px; background: #f5f0e8; color: #944928; font-size: 12px; font-weight: 600; }
     .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .summary-item { display: flex; flex-direction: column; gap: 4px; padding: 10px; background: white; border-radius: 6px; }
-    .summary-item .label { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #50443e; }
+    .summary-item .label { font-size: 12px; text-transform: uppercase; font-weight: 700; color: #50443e; }
     .summary-item .value { font-weight: 700; color: #412311; font-size: 13px; font-family: 'Fira Code', monospace; }
     .summary-item .public-url { color: #944928; overflow-wrap: anywhere; text-decoration: underline; }
     .info-banner { display: flex; gap: 12px; padding: 16px; background: #f5f0e8; border-radius: 8px; margin-bottom: 20px; align-items: flex-start; }

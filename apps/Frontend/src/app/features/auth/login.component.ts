@@ -10,51 +10,178 @@ import { LoginExpectedRole } from '../../core/auth/auth.models'
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <main class="login-page">
-      <div class="login-frame">
-        <section class="editorial-panel">
-          <div class="panel-photo"></div>
-          <div class="panel-content">
-            <div class="studio-location"><i></i> {{ panelEyebrow() }}</div>
-            <div class="panel-message"><span class="pill">✂ {{ panelPill() }}</span><h1>{{ panelHeadline() }}</h1><p>{{ panelBody() }}</p></div>
-            <div class="panel-status"><span><b>✓</b><span><strong>{{ panelStatusTitle() }}</strong><small>{{ panelStatusDetail() }}</small></span></span><em>SEGÚN TU ROL</em></div>
-          </div>
-        </section>
-        <section class="form-panel">
-          <div class="form-brand"><a routerLink="/" class="brand-name"><span>✂</span><span><strong>{{ brandName() }}</strong><small>{{ brandSubtitle() }}</small></span></a><span class="location-chip"><i></i> {{ locationLabel() }}</span></div>
-          <div class="form-content">
-            <h2 class="login-title">Inicia sesión</h2>
-            <p class="login-description">Usa tu correo y contraseña. Te mostraremos el espacio al que tienes acceso.</p>
-            <div class="role-tabs" role="group" aria-label="Tipo de acceso">
-              <button type="button" [class.active]="expectedRole === 'company_member'" (click)="expectedRole = 'company_member'">Negocio</button>
-              <button type="button" [class.active]="expectedRole === 'platform_admin'" (click)="expectedRole = 'platform_admin'">Plataforma</button>
+    <main class="login">
+      <section class="showcase" aria-hidden="true">
+        <div class="glow"></div>
+        <div class="grid"></div>
+        <a routerLink="/" class="brand" tabindex="-1">
+          <span class="brand-mark"><span class="material-symbols-outlined">content_cut</span></span>
+          <span class="brand-text">BarberShop<small>Management System</small></span>
+        </a>
+
+        <div class="showcase-copy">
+          <span class="chip"><span class="material-symbols-outlined">{{ copy.icon }}</span>{{ copy.chip }}</span>
+          <h1>{{ copy.title }} <em>{{ copy.accent }}</em></h1>
+          <p>{{ copy.body }}</p>
+        </div>
+
+        <div class="cards">
+          @for (item of copy.items; track item.label) {
+            <div class="mini-card">
+              <span class="material-symbols-outlined">{{ item.icon }}</span>
+              <div><strong>{{ item.label }}</strong><small>{{ item.detail }}</small></div>
             </div>
-            <form (ngSubmit)="onLogin()">
-              <label for="email">Correo electrónico</label>
-              <div class="input-wrap"><span>✉</span><input id="email" type="email" [(ngModel)]="email" name="email" placeholder="ejemplo@correo.com" required /></div>
-              <div class="password-label"><label for="password">Contraseña</label></div>
-              <div class="input-wrap"><span>⌑</span><input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" placeholder="Ingresa tu clave de acceso" required /><button type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ showPassword ? '◉' : '◌' }}</button></div>
-              @if (error) { <div class="error-message">{{ error }}</div> }
-              <button class="submit-button" type="submit" [disabled]="loading">{{ loading ? 'Ingresando...' : '↪  Iniciar Sesión' }}</button>
-            </form>
-            <div class="new-customer"><span class="diamond">◆</span><div><strong>¿Quieres administrar tu barbería como se debe?</strong><p>Registra tu negocio y tu equipo en minutos: agenda, caja, clientes e inventario, todo en un solo lugar.</p></div><a class="register-link" routerLink="/onboarding" type="button">Registrarme</a></div>
+          }
+        </div>
+      </section>
+
+      <section class="form-side">
+        <a routerLink="/" class="back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Volver al inicio</a>
+
+        <div class="form-card">
+          <a routerLink="/" class="brand brand-mobile">
+            <span class="brand-mark" aria-hidden="true"><span class="material-symbols-outlined">content_cut</span></span>
+            <span class="brand-text">BarberShop<small>Management System</small></span>
+          </a>
+
+          <h2>Bienvenido de nuevo</h2>
+          <p class="subtitle">Ingresa con tu correo y contraseña.</p>
+
+          <div class="segmented" role="radiogroup" aria-label="Tipo de acceso">
+            <span class="thumb" [class.right]="expectedRole === 'platform_admin'" aria-hidden="true"></span>
+            <button type="button" role="radio" [attr.aria-checked]="expectedRole === 'company_member'" [class.active]="expectedRole === 'company_member'" (click)="setRole('company_member')">
+              <span class="material-symbols-outlined" aria-hidden="true">storefront</span> Mi negocio
+            </button>
+            <button type="button" role="radio" [attr.aria-checked]="expectedRole === 'platform_admin'" [class.active]="expectedRole === 'platform_admin'" (click)="setRole('platform_admin')">
+              <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span> Plataforma
+            </button>
           </div>
-          <div class="form-footer"><span>Acceso para propietarios y equipos</span><span>BarberShop Management System</span></div>
-        </section>
-      </div>
+
+          <form (ngSubmit)="onLogin()" novalidate>
+            <label for="email">Correo electrónico</label>
+            <div class="field">
+              <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+              <input id="email" type="email" [(ngModel)]="email" name="email" placeholder="tu-correo@ejemplo.com" autocomplete="email" required />
+            </div>
+
+            <label for="password">Contraseña</label>
+            <div class="field">
+              <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+              <input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" placeholder="Tu contraseña" autocomplete="current-password" required />
+              <button type="button" class="eye" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="showPassword">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+
+            @if (error) {
+              <div class="error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{{ error }}</div>
+            }
+
+            <button class="submit" type="submit" [disabled]="loading || !email || !password">
+              @if (loading) { <span class="spinner" aria-hidden="true"></span> Ingresando… }
+              @else { Iniciar sesión <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span> }
+            </button>
+          </form>
+
+          @if (expectedRole === 'company_member') {
+            <div class="register">
+              <div><strong>¿Aún no tienes cuenta?</strong><p>Registra tu barbería y tu equipo en minutos.</p></div>
+              <a routerLink="/onboarding">Registrarme</a>
+            </div>
+          }
+        </div>
+
+        <p class="footnote"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Conexión cifrada · Cada negocio ve solo sus datos</p>
+      </section>
     </main>
   `,
   styles: [`
-    :host { display: block; }.login-page { --ink: #412311; --deep: #5a3825; --brown: #944928; --cream: #fdf9f0; --paper: #f7f3ea; --line: #e6e2d9; background: var(--cream); color: #1c1c16; font: 14px/1.5 'Plus Jakarta Sans', sans-serif; min-height: 100vh; padding: clamp(16px, 4vw, 48px); }.login-frame { display: grid; grid-template-columns: .9fr 1.25fr; margin: auto; max-width: 1220px; min-height: min(820px, calc(100vh - 96px)); overflow: hidden; }.editorial-panel { background: var(--ink); color: white; min-height: 640px; overflow: hidden; position: relative; }.panel-photo { background: linear-gradient(#41231177, #412311ee), url('https://lh3.googleusercontent.com/aida-public/AB6AXuAP_LQoKkJ61NOcSttL30yE_nctSqmv6rC06dWfSU5MmJ1bhCRTvNu9gkxhAUAXKIZuKEXWauaZyZ8kaEm4Q7mhvdgJ0xcTQz7rDaBKwY57bm0o07DFmAmMiiQg0t7XLp11iK3_QgWPvaXe62TwCVly_MBZS9fI7ZelKg3If6-T3qk5yBq_EtwUGbzws9v3h4ItEchj-O6j4MPi92jLa7uHJoI3mtAKGAsJeVP8q7UX9gsVBbcJw73JZg') center/cover; inset: 0; opacity: .32; position: absolute; }.panel-content { display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 640px; padding: clamp(28px, 4vw, 54px); position: relative; }.studio-location { color: #eebca2; font-size: 10px; font-weight: 700; letter-spacing: .13em; }.studio-location i, .location-chip i { background: #fe9e76; border-radius: 50%; display: inline-block; height: 8px; margin-right: 7px; width: 8px; }.panel-message { margin: auto 0; max-width: 380px; }.pill { background: #fdf9f01c; border: 1px solid #fdf9f022; border-radius: 999px; color: #ffb598; display: inline-block; font-size: 11px; padding: 8px 12px; }.panel-message h1 { color: #ffdbca; font: 700 clamp(32px, 4vw, 48px)/1.1 'Vollkorn', serif; margin: 20px 0 16px; }.panel-message p { color: #ece8df; line-height: 1.7; }.panel-status { align-items: center; background: #5a382588; border-radius: 8px; display: flex; justify-content: space-between; padding: 14px; }.panel-status > span { align-items: center; display: flex; gap: 10px; }.panel-status b { align-items: center; background: #014a2f; border-radius: 50%; display: flex; height: 30px; justify-content: center; width: 30px; }.panel-status strong, .panel-status small { display: block; }.panel-status strong { font-size: 12px; }.panel-status small { color: #ece8df; font-size: 11px; margin-top: 3px; }.panel-status em { background: var(--brown); border-radius: 999px; font-size: 9px; font-style: normal; font-weight: 700; padding: 5px 8px; }.form-panel { background: white; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(24px, 4vw, 58px); }.form-brand { align-items: start; display: flex; justify-content: space-between; }.brand-name { align-items: center; color: var(--ink); display: flex; gap: 10px; text-decoration: none; }.brand-name > span:first-child { align-items: center; background: var(--deep); border-radius: 8px; color: #ffdbca; display: flex; font-size: 21px; height: 40px; justify-content: center; width: 40px; }.brand-name strong, .brand-name small { display: block; }.brand-name strong { font: 600 23px 'Vollkorn', serif; }.brand-name small { color: #83746d; font-size: 9px; font-weight: 700; letter-spacing: .1em; margin-top: 2px; }.location-chip { background: var(--paper); border-radius: 999px; color: #50443e; font-size: 11px; padding: 7px 10px; }.location-chip i { background: #014a2f; height: 7px; width: 7px; }.form-content { margin: auto; max-width: 510px; padding: 44px 0; width: 100%; }.role-tabs { background: #ece8df; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; }.role-tabs button { background: transparent; border: 0; border-radius: 7px; color: #50443e; cursor: pointer; font: 600 12px 'Plus Jakarta Sans', sans-serif; padding: 11px 5px; }.role-tabs button.active { background: var(--deep); box-shadow: 0 2px 8px #4a2e1b1f; color: white; }.role-notice { align-items: start; background: var(--paper); border-radius: 8px; color: var(--brown); display: flex; gap: 10px; margin: 18px 0; padding: 12px; }.role-notice p { color: #50443e; font-size: 12px; margin: 0; }.form-content form > label, .password-label label { color: #1c1c16; display: block; font-size: 12px; font-weight: 700; margin: 0 0 6px; }.input-wrap { align-items: center; background: var(--paper); border-radius: 8px; display: flex; margin-bottom: 17px; }.input-wrap > span { color: #83746d; padding-left: 13px; }.input-wrap input { background: transparent; border: 0; color: #1c1c16; font: 14px 'Plus Jakarta Sans', sans-serif; outline: 0; padding: 13px 10px; width: 100%; }.input-wrap input:focus { box-shadow: inset 0 0 0 2px #5a382544; }.input-wrap button { background: transparent; border: 0; color: #83746d; cursor: pointer; padding: 10px 13px; }.password-label { align-items: center; display: flex; justify-content: space-between; }.password-label a { color: var(--brown); font-size: 11px; }.remember { align-items: center; color: #50443e; display: flex; font-size: 12px; gap: 8px; margin: 6px 0 17px; }.remember input { accent-color: var(--deep); }.error-message { background: #fff0ee; border-radius: 7px; color: #93000a; font-size: 12px; margin-bottom: 14px; padding: 10px; }.submit-button { background: var(--deep); border: 0; border-radius: 8px; color: white; cursor: pointer; font: 700 14px 'Plus Jakarta Sans', sans-serif; padding: 14px; width: 100%; }.submit-button:hover:not(:disabled) { background: var(--ink); }.submit-button:disabled { cursor: wait; opacity: .65; }.divider { align-items: center; display: flex; margin: 24px 0 14px; text-align: center; }.divider:before, .divider:after { background: var(--line); content: ''; flex: 1; height: 1px; }.divider span { color: #83746d; font-size: 10px; letter-spacing: .1em; padding: 0 12px; text-transform: uppercase; }.sso-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }.sso-grid button, .new-customer button { background: var(--paper); border: 0; border-radius: 8px; color: #1c1c16; cursor: pointer; font: 600 12px 'Plus Jakarta Sans', sans-serif; padding: 12px; }.new-customer { align-items: center; background: #ece8df; border-radius: 10px; display: flex; gap: 10px; margin-top: 20px; padding: 13px; }.diamond { color: var(--brown); font-size: 19px; }.new-customer strong { font-size: 12px; }.new-customer p { color: #50443e; font-size: 11px; margin: 3px 0 0; }.new-customer button { margin-left: auto; white-space: nowrap; }.form-footer { color: #50443e; display: flex; font-size: 10px; justify-content: space-between; }.form-footer a { color: inherit; }.form-footer span:last-child { color: #83746d; }
-    @media (max-width: 800px) { .login-frame { display: block; min-height: auto; }.editorial-panel { display: none; }.form-panel { min-height: calc(100vh - 32px); }.form-footer { gap: 12px; flex-direction: column; text-align: center; } }
-    @media (max-width: 480px) { .login-page { padding: 0; }.form-panel { padding: 22px 18px; }.location-chip { display: none; }.form-content { padding: 34px 0; }.new-customer { align-items: start; flex-wrap: wrap; }.new-customer button { margin-left: auto; }.role-tabs button { font-size: 11px; } }
-    .register-link { padding: 10px 20px; background: #412311; color: white; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: .2s; display: inline-flex; align-items: center; }
-    .register-link:hover { background: #5a3825; }
-    .sso-grid { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
-    .sso-btn-google { display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1px solid #dadce0; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; color: #3c4043; transition: .2s; }
-    .sso-btn-google:hover { background: #f1f3f4; border-color: #babcbc; }
-    .sso-btn-apple { display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border: 1px solid #dadce0; border-radius: 8px; background: #1c1c16; color: white; cursor: pointer; font-size: 14px; font-weight: 500; transition: .2s; }
-    .sso-btn-apple:hover { background: #333; }
+    :host { display: block; }
+    .login {
+      --espresso: #17100c; --ink: #2a1b12; --copper: #c4703f; --copper-2: #e09a68; --copper-soft: #ffdbca;
+      --cream: #fbf7ef; --paper: #f3ede1; --line: #e6dccc; --text: #1c1c16; --muted: #5e5149;
+      background: var(--cream); color: var(--text); display: grid; font: 16px/1.5 'Plus Jakarta Sans', sans-serif; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100vh;
+    }
+    .material-symbols-outlined { font-size: 20px; line-height: 1; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--copper-2); outline-offset: 3px; }
+
+    /* Showcase */
+    .showcase { background: var(--espresso); color: #f6eee4; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: clamp(28px, 4vw, 56px); position: relative; }
+    .glow { background: radial-gradient(520px 380px at 80% 20%, rgba(196,112,63,.42), transparent 70%), radial-gradient(460px 340px at 0% 100%, rgba(148,73,40,.35), transparent 70%); inset: 0; position: absolute; }
+    .grid { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 48px 48px; inset: 0; mask-image: radial-gradient(ellipse at 50% 40%, #000 15%, transparent 72%); -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 15%, transparent 72%); position: absolute; }
+    .showcase > *:not(.glow):not(.grid) { position: relative; }
+    .brand { align-items: center; color: inherit; display: inline-flex; gap: 10px; text-decoration: none; }
+    .brand-mark { align-items: center; background: linear-gradient(135deg, var(--copper-2), var(--copper)); border-radius: 10px; color: var(--espresso); display: flex; height: 38px; justify-content: center; width: 38px; }
+    .brand-text { display: flex; flex-direction: column; font: 700 20px/1 'Vollkorn', serif; }
+    .brand-text small { font: 600 10px/1.4 'Plus Jakarta Sans', sans-serif; letter-spacing: .14em; opacity: .7; text-transform: uppercase; }
+    .showcase-copy { max-width: 30em; padding-block: 48px; }
+    .chip { align-items: center; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: var(--copper-soft); display: inline-flex; font-size: 13px; font-weight: 600; gap: 8px; padding: 7px 14px; }
+    .chip .material-symbols-outlined { font-size: 18px; }
+    .showcase h1 { font: 700 clamp(36px, 4.2vw, 58px)/1.05 'Vollkorn', serif; letter-spacing: -.02em; margin: 22px 0 16px; }
+    .showcase h1 em { background: linear-gradient(120deg, var(--copper-soft), var(--copper-2) 50%, var(--copper)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
+    .showcase-copy p { color: #d9cdc1; font-size: 17px; margin: 0; }
+    .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .mini-card { align-items: center; animation: rise .7s cubic-bezier(.2,.7,.2,1) both; background: rgba(255,255,255,.06); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; display: flex; gap: 12px; padding: 14px; }
+    .mini-card:nth-child(2) { animation-delay: .08s; }
+    .mini-card:nth-child(3) { animation-delay: .16s; }
+    .mini-card .material-symbols-outlined { align-items: center; background: rgba(224,154,104,.16); border-radius: 10px; color: var(--copper-2); display: flex; flex: none; height: 38px; justify-content: center; width: 38px; }
+    .mini-card strong { display: block; font-size: 14px; }
+    .mini-card small { color: #b9ab9e; display: block; font-size: 13px; }
+
+    /* Form side */
+    .form-side { align-items: center; display: flex; flex-direction: column; justify-content: center; padding: clamp(20px, 4vw, 56px) clamp(16px, 4vw, 56px); position: relative; }
+    .back { align-items: center; border-radius: 10px; color: var(--muted); display: inline-flex; font-size: 14px; font-weight: 600; gap: 6px; left: clamp(16px, 4vw, 56px); padding: 8px 10px 8px 4px; position: absolute; text-decoration: none; top: clamp(16px, 3vw, 32px); }
+    .back:hover { color: var(--copper); }
+    .form-card { max-width: 440px; width: 100%; }
+    .brand-mobile { color: var(--ink); display: none; margin-bottom: 28px; }
+    .form-card h2 { color: var(--ink); font: 700 clamp(32px, 3.4vw, 40px)/1.1 'Vollkorn', serif; margin: 0 0 6px; }
+    .subtitle { color: var(--muted); margin: 0 0 28px; }
+
+    .segmented { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 26px; padding: 4px; position: relative; }
+    .thumb { background: #fff; border-radius: 10px; box-shadow: 0 4px 14px rgba(42,27,18,.1); inset: 4px auto 4px 4px; position: absolute; transition: transform .25s cubic-bezier(.2,.7,.2,1); width: calc(50% - 4px); }
+    .thumb.right { transform: translateX(100%); }
+    .segmented button { align-items: center; background: none; border: 0; border-radius: 10px; color: var(--muted); cursor: pointer; display: flex; font: 600 15px 'Plus Jakarta Sans', sans-serif; gap: 8px; justify-content: center; min-height: 44px; position: relative; transition: color .2s; }
+    .segmented button.active { color: var(--ink); }
+    .segmented button.active .material-symbols-outlined { color: var(--copper); }
+
+    label { color: var(--ink); display: block; font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+    .field { align-items: center; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; display: flex; margin-bottom: 18px; transition: border-color .2s, box-shadow .2s; }
+    .field:focus-within { border-color: var(--copper); box-shadow: 0 0 0 4px rgba(196,112,63,.15); }
+    .field > .material-symbols-outlined { color: #8a7a6f; padding-left: 14px; }
+    .field input { background: transparent; border: 0; color: var(--text); font: 16px 'Plus Jakarta Sans', sans-serif; min-height: 50px; min-width: 0; outline: 0; padding: 0 12px; width: 100%; }
+    .field input::placeholder { color: #9c8d82; }
+    .eye { align-items: center; background: none; border: 0; border-radius: 10px; color: #8a7a6f; cursor: pointer; display: flex; height: 44px; justify-content: center; margin-right: 4px; width: 44px; }
+    .eye:hover { color: var(--ink); }
+
+    .error { align-items: center; background: #fdecea; border: 1px solid #f5c6c0; border-radius: 12px; color: #8c1d12; display: flex; font-size: 14px; gap: 8px; margin-bottom: 16px; padding: 12px 14px; }
+    .submit { align-items: center; background: linear-gradient(135deg, var(--copper-2), var(--copper)); border: 0; border-radius: 14px; box-shadow: 0 10px 26px rgba(196,112,63,.32); color: var(--espresso); cursor: pointer; display: flex; font: 700 16px 'Plus Jakarta Sans', sans-serif; gap: 8px; justify-content: center; min-height: 52px; transition: transform .2s, box-shadow .2s, opacity .2s; width: 100%; }
+    .submit:hover:not(:disabled) { box-shadow: 0 14px 32px rgba(196,112,63,.42); transform: translateY(-1px); }
+    .submit:disabled { box-shadow: none; cursor: not-allowed; opacity: .55; }
+    .spinner { animation: spin .8s linear infinite; border: 2px solid rgba(23,16,12,.25); border-radius: 50%; border-top-color: var(--espresso); height: 18px; width: 18px; }
+
+    .register { align-items: center; border: 1px dashed #d8c4ae; border-radius: 16px; display: flex; gap: 14px; justify-content: space-between; margin-top: 24px; padding: 16px 18px; }
+    .register strong { color: var(--ink); font-size: 15px; }
+    .register p { color: var(--muted); font-size: 14px; margin: 2px 0 0; }
+    .register a { border: 1.5px solid var(--ink); border-radius: 12px; color: var(--ink); flex: none; font-size: 14px; font-weight: 700; padding: 10px 16px; text-decoration: none; transition: background .2s, color .2s; }
+    .register a:hover { background: var(--ink); color: #fff; }
+    .footnote { align-items: center; color: #8a7a6f; display: flex; font-size: 13px; gap: 6px; margin: 32px 0 0; }
+    .footnote .material-symbols-outlined { font-size: 16px; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .mini-card, .spinner { animation: none; } .thumb, .submit { transition: none; } }
+
+    @media (max-width: 900px) {
+      .login { grid-template-columns: 1fr; }
+      .showcase { display: none; }
+      .brand-mobile { display: inline-flex; }
+      .form-side { min-height: 100vh; padding-top: 72px; }
+    }
+    @media (max-width: 420px) {
+      .register { align-items: stretch; flex-direction: column; }
+      .register a { text-align: center; }
+      .segmented button { font-size: 14px; }
+    }
   `],
 })
 export class LoginComponent {
@@ -65,17 +192,43 @@ export class LoginComponent {
   error = ''
   showPassword = false
 
-  readonly brandName = (): string => 'BarberShop Management System'
-  readonly brandSubtitle = (): string => 'MANAGEMENT SYSTEM'
-  readonly locationLabel = (): string => 'Acceso seguro'
-  readonly panelEyebrow = (): string => 'BARBERSHOP MANAGEMENT SYSTEM · PLATAFORMA SAAS'
-  readonly panelPill = (): string => 'Herramientas para tu negocio'
-  readonly panelHeadline = (): string => 'Administra tu negocio desde un solo lugar.'
-  readonly panelBody = (): string => 'Accede a la agenda, clientes, servicios e información de tu negocio con una sola cuenta.'
-  readonly panelStatusTitle = (): string => 'Tu espacio de trabajo'
-  readonly panelStatusDetail = (): string => 'Acceso según tus permisos'
+  private readonly copyByRole = {
+    company_member: {
+      icon: 'storefront',
+      chip: 'Acceso para tu negocio',
+      title: 'Tu barbería, lista para',
+      accent: 'abrir.',
+      body: 'Agenda, clientes, caja e inventario con una sola cuenta. Cada miembro ve lo que le corresponde según su rol.',
+      items: [
+        { icon: 'calendar_month', label: 'Agenda', detail: 'Citas por barbero' },
+        { icon: 'point_of_sale', label: 'Caja', detail: 'Apertura y cierre' },
+        { icon: 'group', label: 'Clientes', detail: 'Historial completo' },
+      ],
+    },
+    platform_admin: {
+      icon: 'admin_panel_settings',
+      chip: 'Consola de la plataforma',
+      title: 'Todos los negocios,',
+      accent: 'una vista.',
+      body: 'Revisa los negocios registrados, búscalos y da de alta nuevos estudios desde la consola SaaS.',
+      items: [
+        { icon: 'domain', label: 'Negocios', detail: 'Listado y estado' },
+        { icon: 'add_business', label: 'Altas', detail: 'Nuevos estudios' },
+        { icon: 'search', label: 'Búsqueda', detail: 'Por nombre o slug' },
+      ],
+    },
+  } as const
+
+  get copy() {
+    return this.copyByRole[this.expectedRole === 'platform_admin' ? 'platform_admin' : 'company_member']
+  }
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  setRole(role: LoginExpectedRole): void {
+    this.expectedRole = role
+    this.error = ''
+  }
 
   onLogin(): void {
     if (!this.email || !this.password) return

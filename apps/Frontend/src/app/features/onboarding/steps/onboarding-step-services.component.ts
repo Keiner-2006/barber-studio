@@ -113,7 +113,7 @@ import { OnboardingStore } from '../onboarding.store'
     .service-actions { display: flex; align-items: center; gap: 16px; }
     .price { font-weight: 700; color: #944928; font-family: 'Fira Code', monospace; font-size: 14px; white-space: nowrap; }
     .price-hint { color: #50443e; font-size: 11px; }
-    .price-field { color: #944928; display: flex; flex-direction: column; font-size: 10px; font-weight: 700; gap: 4px; }
+    .price-field { color: #944928; display: flex; flex-direction: column; font-size: 12px; font-weight: 700; gap: 4px; }
     .price-field input { border: 1px solid #e6e2d9; border-radius: 6px; color: #412311; font: 600 13px 'Fira Code', monospace; padding: 6px 8px; width: 130px; }
     .checkbox-label input { width: 18px; height: 18px; accent-color: #944928; cursor: pointer; }
     @media (max-width: 768px) { .service-row { flex-direction: column; align-items: flex-start; } }

@@ -7,7 +7,26 @@ import { StaffMember } from '../agenda/staff.models'
 import { AuthService } from '../../core/auth/auth.service'
 import { TenantService } from '../../core/tenancy/tenant.service'
 import { Customer } from '../customers/customers.models'
-import { Kpi, WeekDay, AppointmentRow, TodayMetric } from './dashboard.models'
+import { ChartSeries } from '../../shared/components/bar-chart/bar-chart.component'
+import { formatChartValue } from '../../shared/components/chart-format'
+import { Kpi, AppointmentRow, StatusTone } from './dashboard.models'
+
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
+  pending: { label: 'Pendiente', tone: 'pending' },
+  confirmed: { label: 'Confirmada', tone: 'confirmed' },
+  checked_in: { label: 'En espera', tone: 'waiting' },
+  in_service: { label: 'En servicio', tone: 'active' },
+  completed: { label: 'Completada', tone: 'done' },
+  cancelled: { label: 'Cancelada', tone: 'cancelled' },
+  no_show: { label: 'No asistió', tone: 'cancelled' },
+}
+
+/** yyyy-mm-dd in the browser's timezone (toISOString would shift evening appointments to tomorrow). */
+const localDay = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+const price = (a: Appointment): number => Number(a.priceSnapshot) || 0
+const money = (v: number): string => formatChartValue(v, 'money')
 
 @Injectable({ providedIn: 'root' })
 export class DashboardStore {
@@ -15,127 +34,75 @@ export class DashboardStore {
   private customers = signal<Record<string, Customer>>({})
   private staff = signal<Record<string, StaffMember>>({})
   private _isLoading = signal(true)
-  private _userName = signal('Usuario')
+  private _userName = signal('')
   private pendingLoads = 0
 
   readonly isLoading = this._isLoading.asReadonly()
   readonly userName = this._userName.asReadonly()
-  readonly todayLabel = new Date().toLocaleDateString('es-CO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  readonly todayLabel = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  readonly greeting = (() => {
+    const h = new Date().getHours()
+    return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+  })()
+
+  readonly todaysAppointments = computed(() => {
+    const today = localDay(new Date())
+    return this.appointments().filter((a) => localDay(new Date(a.startsAt)) === today)
   })
-
-  readonly todayIso = computed(() => new Date().toISOString().split('T')[0])
-
-  readonly todaysAppointments = computed(() =>
-    this.appointments().filter((a) => a.startsAt.startsWith(this.todayIso())),
-  )
 
   readonly kpis = computed((): Kpi[] => {
     const todays = this.todaysAppointments()
     const completed = todays.filter((a) => a.status === 'completed')
-    const pending = todays.filter((a) => a.status === 'pending')
-    const confirmed = todays.filter((a) => a.status === 'confirmed')
-    const revenue = completed.reduce((sum, a) => sum + parseFloat(a.priceSnapshot || '0'), 0)
-    const count = completed.length
-    const avgTicket = count > 0 ? revenue / count : 0
-    const customerCount = Object.keys(this.customers()).length
-
+    const active = todays.filter((a) => a.status !== 'cancelled' && a.status !== 'no_show')
+    const pending = todays.filter((a) => a.status === 'pending').length
+    const confirmed = todays.filter((a) => a.status === 'confirmed').length
+    const revenue = completed.reduce((s, a) => s + price(a), 0)
+    const rate = active.length ? Math.round((completed.length / active.length) * 100) : 0
     return [
-      {
-        label: 'Clientes atendidos hoy',
-        value: String(count),
-        trend: count > 0 ? '+ hoy' : 'Sin citas',
-        detail: `${pending.length} pendientes · ${confirmed.length} confirmadas`,
-        icon: '👤',
-        color: 'text-amber-800',
-        bg: 'bg-amber-500/10',
-      },
-      {
-        label: 'Ingresos hoy',
-        value: `$${revenue.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`,
-        trend: `${count} servicios`,
-        detail: 'Citas completadas',
-        icon: '💰',
-        color: 'text-emerald-700',
-        bg: 'bg-emerald-500/10',
-      },
-      {
-        label: 'Ticket promedio',
-        value: `$${Math.round(avgTicket).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`,
-        trend: count > 0 ? 'por visita' : '—',
-        detail: 'Promedio por servicio',
-        icon: '🧾',
-        color: 'text-primary-700',
-        bg: 'bg-primary-100',
-      },
-      {
-        label: 'Citas hoy',
-        value: String(todays.length),
-        trend: `${completed.length} completadas`,
-        detail: `${pending.length} pendientes · ${confirmed.length} confirmadas`,
-        icon: '📅',
-        color: 'text-primary-700',
-        bg: 'bg-primary-100',
-      },
-    ]
-  })
-
-  readonly todayMetrics = computed((): TodayMetric[] => {
-    const todays = this.todaysAppointments()
-    const completed = todays.filter((a) => a.status === 'completed')
-    const revenue = completed.reduce((sum, a) => sum + parseFloat(a.priceSnapshot || '0'), 0)
-    const count = completed.length
-    return [
-      { label: 'Clientes atendidos', value: String(count), icon: '👤', color: 'text-amber-800' },
-      { label: 'Ingresos generados', value: `$${revenue.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '💰', color: 'text-emerald-700' },
-      { label: 'Ticket promedio', value: `$${Math.round(count > 0 ? revenue / count : 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`, icon: '🧾', color: 'text-primary-700' },
-      { label: 'Tasa de completación', value: `${todays.length > 0 ? Math.round((count / todays.length) * 100) : 0}%`, icon: '📊', color: 'text-teal-700' },
+      { label: 'Citas hoy', value: String(active.length), detail: `${pending} pendientes · ${confirmed} confirmadas`, icon: 'event_available', tone: 'copper' },
+      { label: 'Ingresos hoy', value: money(revenue), detail: `${completed.length} ${completed.length === 1 ? 'servicio completado' : 'servicios completados'}`, icon: 'payments', tone: 'green' },
+      { label: 'Ticket promedio', value: money(completed.length ? revenue / completed.length : 0), detail: 'Por servicio completado', icon: 'receipt_long', tone: 'blue' },
+      { label: 'Completadas', value: `${rate}%`, detail: `${completed.length} de ${active.length} citas activas`, icon: 'task_alt', tone: 'neutral' },
     ]
   })
 
   readonly appointmentRows = computed((): AppointmentRow[] =>
-    this.todaysAppointments()
+    [...this.todaysAppointments()]
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
       .map((appt) => this.toRow(appt)),
   )
 
-  readonly weekData = computed((): WeekDay[] => {
-    const appts = this.appointments()
-    const today = new Date()
-    const days: WeekDay[] = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const dayStr = d.toISOString().split('T')[0]
-      const name = d.toLocaleDateString('es-CO', { weekday: 'short' })
-      const label = name.charAt(0).toUpperCase() + name.slice(1, 3)
-      const dayAppts = appts.filter((a) => a.startsAt.startsWith(dayStr))
-      const revenue = dayAppts.reduce((sum, a) => sum + parseFloat(a.priceSnapshot || '0'), 0)
-      days.push({
-        label,
-        value: `$${Math.round(revenue)}`,
-        height: Math.min((revenue / 500) * 100, 100) || 0,
-        isToday: i === 0,
-      })
+  /** Revenue from completed appointments for each of the last 7 days (today last). */
+  readonly weekChart = computed((): ChartSeries[] => {
+    const byDay = new Map<string, number>()
+    for (const a of this.appointments()) {
+      if (a.status !== 'completed') continue
+      const key = localDay(new Date(a.startsAt))
+      byDay.set(key, (byDay.get(key) ?? 0) + price(a))
     }
-    return days
+    const bars = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      const value = byDay.get(localDay(d)) ?? 0
+      const name = d.toLocaleDateString('es-CO', { weekday: 'short' }).replace('.', '')
+      return { label: i === 6 ? 'Hoy' : name.charAt(0).toUpperCase() + name.slice(1), value, displayValue: money(value), isToday: i === 6 }
+    })
+    return [{ name: 'Ingresos', color: '#b85a2b', bars }]
   })
 
+  readonly weekTotal = computed(() => money(this.weekChart()[0].bars.reduce((s, b) => s + b.value, 0)))
+
   readonly topCustomers = computed(() => {
-    const todays = this.todaysAppointments()
-    const completed = todays.filter((a) => a.status === 'completed')
     const custMap = this.customers()
-    return completed
+    return this.todaysAppointments()
+      .filter((a) => a.status === 'completed')
       .map((a) => {
         const c = custMap[a.customerId]
         return {
           name: c ? `${c.firstName} ${c.lastName}`.trim() : 'Cliente',
           service: a.serviceNameSnapshot || 'Servicio',
-          price: parseFloat(a.priceSnapshot || '0'),
-          time: new Date(a.startsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+          price: price(a),
         }
       })
       .slice(0, 5)
@@ -147,21 +114,26 @@ export class DashboardStore {
     private staffApi: StaffApi,
     private authService: AuthService,
     private tenantService: TenantService,
-  ) {
-    const user = this.authService.user()
-    if (user?.name) this._userName.set(user.name)
-  }
+  ) {}
 
   load(): void {
-    const branchId = this.tenantService.getBranchId()
-    const today = new Date()
+    this._userName.set(this.authService.user()?.name?.split(' ')[0] ?? '')
+    this._isLoading.set(true)
     this.pendingLoads = 3
 
-    this.agendaApi.getDailyAppointments(branchId, today).subscribe({
-      next: (appts) => this.appointments.set(appts ?? []),
-      error: () => {},
-      complete: () => this.markLoaded(),
-    })
+    const from = new Date()
+    from.setDate(from.getDate() - 6)
+    from.setHours(0, 0, 0, 0)
+    const to = new Date()
+    to.setHours(23, 59, 59, 999)
+
+    this.agendaApi
+      .getAppointments({ branchId: this.tenantService.getBranchId() ?? undefined, from: from.toISOString(), to: to.toISOString() })
+      .subscribe({
+        next: (appts) => this.appointments.set(appts ?? []),
+        error: () => this.markLoaded(),
+        complete: () => this.markLoaded(),
+      })
 
     this.customersApi.search({ limit: 50 }).subscribe({
       next: (resp) => {
@@ -169,7 +141,7 @@ export class DashboardStore {
         ;(resp.data ?? []).forEach((c) => (map[c.id] = c))
         this.customers.set(map)
       },
-      error: () => {},
+      error: () => this.markLoaded(),
       complete: () => this.markLoaded(),
     })
 
@@ -179,57 +151,33 @@ export class DashboardStore {
         list.forEach((s) => (map[s.id] = s))
         this.staff.set(map)
       },
-      error: () => {},
+      error: () => this.markLoaded(),
       complete: () => this.markLoaded(),
     })
   }
 
+  formatPrice(v: number): string {
+    return money(v)
+  }
+
   private markLoaded(): void {
     this.pendingLoads--
-    if (this.pendingLoads <= 0) {
-      this._isLoading.set(false)
-    }
+    if (this.pendingLoads <= 0) this._isLoading.set(false)
   }
 
   private toRow(appt: Appointment): AppointmentRow {
     const customer = this.customers()[appt.customerId]
-    const staffMember = this.staff()[appt.staffId]
-    const customerName = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Cliente'
-    const barberName = staffMember?.displayName || 'Barbero'
-    const statusMap: Record<string, { label: string; cls: string; color: string }> = {
-      pending: { label: 'Pendiente', cls: 'bg-amber-50 text-amber-700 border-amber-200', color: 'text-amber-600' },
-      confirmed: { label: 'Confirmada', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', color: 'text-emerald-600' },
-      checked_in: { label: 'En espera', cls: 'bg-slate-50 text-slate-700 border-slate-200', color: 'text-slate-600' },
-      in_service: { label: 'En servicio', cls: 'bg-primary-50 text-primary-700 border-primary-200', color: 'text-primary-600' },
-      completed: { label: 'Completada', cls: 'bg-blue-50 text-blue-700 border-blue-200', color: 'text-blue-600' },
-      cancelled: { label: 'Cancelada', cls: 'bg-red-50 text-red-700 border-red-200', color: 'text-red-600' },
-      no_show: { label: 'No asistió', cls: 'bg-red-50 text-red-700 border-red-200', color: 'text-red-600' },
-    }
-    const s = statusMap[appt.status]
+    const name = customer ? `${customer.firstName} ${customer.lastName}`.trim() : 'Cliente'
+    const s = STATUS[appt.status]
     return {
       id: appt.id,
       time: new Date(appt.startsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-      name: customerName,
+      name,
       service: appt.serviceNameSnapshot || 'Servicio',
-      barber: barberName,
-      status: s ? s.label : appt.status,
-      initials: this.getInitials(customerName),
-      avatarColor: 'bg-amber-100 text-amber-800',
-      statusClass: s ? s.cls : '',
-      statusColor: s ? s.color : 'text-slate-500',
+      barber: this.staff()[appt.staffId]?.displayName || 'Barbero',
+      status: s?.label ?? appt.status,
+      statusTone: s?.tone ?? 'waiting',
+      initials: name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
     }
-  }
-
-  private getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  formatPrice(price: number): string {
-    return `$${price.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`
   }
 }

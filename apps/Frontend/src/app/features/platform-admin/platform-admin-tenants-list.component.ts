@@ -237,7 +237,7 @@ import {
             [class.text-pa-on-surface-variant]="store.statusFilter() !== null"
           >
             <span>Todos</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px]" [class.bg-pa-surface-container-lowest]="store.statusFilter() === null" [class.bg-pa-surface-container-high]="store.statusFilter() !== null">
+            <span class="px-1.5 py-0.2 rounded-full text-[12px]" [class.bg-pa-surface-container-lowest]="store.statusFilter() === null" [class.bg-pa-surface-container-high]="store.statusFilter() !== null">
               {{ countOf(null) }}
             </span>
           </button>
@@ -256,7 +256,7 @@ import {
               <span class="w-2 h-2 rounded-full" [class]="statusDotClass(status)"></span>
               <span>{{ statusLabels[status] }}</span>
               <span
-                class="px-1.5 py-0.2 rounded-full text-[10px]"
+                class="px-1.5 py-0.2 rounded-full text-[12px]"
                 [class.bg-pa-surface-container-lowest]="store.statusFilter() === status"
                 [class.bg-pa-surface-container-high]="store.statusFilter() !== status"
               >{{ countOf(status) }}</span>
@@ -392,7 +392,7 @@ import {
                             {{ tenant.tradeName }}
                           </span>
                           <div class="flex items-center gap-1.5 text-pa-on-surface-variant font-label-sm text-label-sm">
-                            <span class="bg-pa-surface-container px-1 py-0.2 rounded text-pa-primary font-mono text-[10px]">{{ tenant.slug }}</span>
+                            <span class="bg-pa-surface-container px-1 py-0.2 rounded text-pa-primary font-mono text-[12px]">{{ tenant.slug }}</span>
                           </div>
                         </div>
                       </div>

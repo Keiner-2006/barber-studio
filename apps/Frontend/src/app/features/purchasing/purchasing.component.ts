@@ -127,14 +127,14 @@ import { OrderItemInput, CreatePurchaseOrder } from './purchasing.models'
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
     h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #2d2d2d; }
-    .accent { color: #b87333; }
+    .accent { color: #8c4029; }
     .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
     .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
     .secondary-button { padding: 12px 20px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; }
     .tab { padding: 10px 20px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 14px; color: #6b7280; }
-    .tab.active { color: #b87333; border-bottom-color: #b87333; font-weight: 500; }
+    .tab.active { color: #8c4029; border-bottom-color: #b87333; font-weight: 500; }
     .data-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
     .data-table th { background: #f9fafb; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
     .data-table td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
@@ -157,7 +157,7 @@ import { OrderItemInput, CreatePurchaseOrder } from './purchasing.models'
     .item-input { flex: 1; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
     .item-input.small { max-width: 100px; }
     .remove-btn { width: 24px; height: 24px; background: #fee2e2; color: #991b2b; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    .link-button { background: none; border: none; color: #b87333; font-size: 12px; font-weight: 500; cursor: pointer; }
+    .link-button { background: none; border: none; color: #8c4029; font-size: 12px; font-weight: 500; cursor: pointer; }
   `]
 })
 export class PurchasingComponent implements OnInit {
