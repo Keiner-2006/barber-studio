@@ -4,39 +4,42 @@ import { ApiClient } from '../../core/http/api-client';
 import { ApiResponse } from '@navaja/shared';
 import {
   AdminTenantsPayload,
-  PlatformTenant,
-  TenantStatus,
-  TENANT_STATUS_LABELS,
+  BUSINESS_TYPE_LABELS,
   CreateTenantInput,
+  PlatformOwner,
+  PlatformTenant,
+  TENANT_STATUS_LABELS,
+  TenantDetail,
+  TenantStatus,
 } from './platform-admin.models';
-
-export type { CreateTenantInput };
-
-export interface TenantsQuery {
-  limit: number;
-  /** Optional server-side status filter. The console filters client-side by default. */
-  status?: TenantStatus | null;
-}
 
 @Injectable({ providedIn: 'root' })
 export class PlatformAdminApi {
   private api = inject(ApiClient);
 
-  /**
-   * GET /admin/tenants
-   * The server always returns `total` + `countsByStatus`; the tenant rows are
-   * only included when `list=true`.
-   */
-  getTenants(filters: TenantsQuery): Observable<ApiResponse<AdminTenantsPayload>> {
-    return this.api.get<ApiResponse<AdminTenantsPayload>>('/admin/tenants', {
-      list: 'true',
-      limit: filters.limit,
-      ...(filters.status ? { status: filters.status } : {}),
-    });
+  /** GET /admin/tenants — `total` + `countsByStatus` always; rows only with `list=true`. */
+  getTenants(limit: number): Observable<ApiResponse<AdminTenantsPayload>> {
+    return this.api.get<ApiResponse<AdminTenantsPayload>>('/admin/tenants', { list: 'true', limit });
   }
 
-  createTenant(input: CreateTenantInput): Observable<ApiResponse<{ jobId: string; tenantId: string; status: string }>> {
-    return this.api.post<ApiResponse<{ jobId: string; tenantId: string; status: string }>>('/admin/tenants', input);
+  getTenant(id: string): Observable<ApiResponse<TenantDetail>> {
+    return this.api.get<ApiResponse<TenantDetail>>(`/admin/tenants/${id}`);
+  }
+
+  setTenantStatus(
+    id: string,
+    status: Extract<TenantStatus, 'active' | 'suspended'>,
+    reason: string,
+  ): Observable<ApiResponse<{ id: string; status: TenantStatus }>> {
+    return this.api.patch<ApiResponse<{ id: string; status: TenantStatus }>>(`/admin/tenants/${id}/status`, { status, reason });
+  }
+
+  createTenant(input: CreateTenantInput): Observable<ApiResponse<{ id: string; slug: string; status: TenantStatus }>> {
+    return this.api.post<ApiResponse<{ id: string; slug: string; status: TenantStatus }>>('/admin/tenants', input);
+  }
+
+  getOwners(): Observable<ApiResponse<PlatformOwner[]>> {
+    return this.api.get<ApiResponse<PlatformOwner[]>>('/admin/users', { role: 'owner' });
   }
 }
 
@@ -46,33 +49,25 @@ function escapeCsvValue(value: unknown): string {
 }
 
 export function tenantsToCsv(tenants: PlatformTenant[]): string {
-  const header = [
-    'id',
-    'slug',
-    'tradeName',
-    'legalName',
-    'businessType',
-    'status',
-    'countryCode',
-    'phone',
-    'createdAt',
-  ];
-
-  const rows = tenants.map((tenant) =>
+  const header = ['id', 'nombre', 'razon_social', 'slug', 'tipo', 'estado', 'pais', 'ciudad', 'telefono', 'whatsapp', 'propietario', 'email_propietario', 'creado'];
+  const rows = tenants.map((t) =>
     [
-      tenant.id,
-      tenant.slug,
-      tenant.tradeName,
-      tenant.legalName,
-      tenant.businessType,
-      TENANT_STATUS_LABELS[tenant.status] ?? tenant.status,
-      tenant.countryCode,
-      tenant.phone,
-      tenant.createdAt,
+      t.id,
+      t.tradeName,
+      t.legalName,
+      t.slug,
+      BUSINESS_TYPE_LABELS[t.businessType] ?? t.businessType,
+      TENANT_STATUS_LABELS[t.status] ?? t.status,
+      t.countryCode,
+      t.city,
+      t.phone,
+      t.whatsapp,
+      t.owner?.name,
+      t.owner?.email,
+      t.createdAt,
     ]
       .map(escapeCsvValue)
-      .join(',')
+      .join(','),
   );
-
   return [header.join(','), ...rows].join('\n');
 }

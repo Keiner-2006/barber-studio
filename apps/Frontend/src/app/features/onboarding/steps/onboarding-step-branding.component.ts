@@ -2,6 +2,7 @@ import { Component } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { OnboardingStore } from '../onboarding.store'
+import { ONB_STYLES } from '../onboarding.ui'
 import { OnboardingApi } from '../onboarding.api'
 
 const COLOR_PRESETS = [
@@ -18,47 +19,49 @@ const COLOR_PRESETS = [
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-symbols-outlined text-sm">palette</span>
-          Paso 5 de {{ store.totalSteps }} · Estética y Medios Digitales
+          <span class="material-symbols-outlined" aria-hidden="true">palette</span>
+          Paso 5 de {{ store.totalSteps }} · Marca
         </span>
-        <h2>Identidad Visual y Presencia Online</h2>
-        <p>Personaliza el logotipo y acento cromático que verán tus clientes al agendar desde dispositivos móviles.</p>
+        <h2>Dale tu estilo a la página</h2>
+        <p>Tu logo y tu color aparecerán en la página pública donde tus clientes reservan. Todo es opcional.</p>
       </div>
 
       <div class="step-form">
         <div class="form-group">
-          <label>
-            Isotipo / Emblema de la Barbería
-            <span class="optional">PNG o SVG transparente máx 5MB</span>
-          </label>
-          <div class="upload-zone" (click)="fileInput.click()" (dragover)="dragging=true" (dragleave)="dragging=false" [class.drag-active]="dragging">
+          <span class="field-label">
+            Logo
+            <span class="optional">PNG, SVG o JPG · máx. 5 MB</span>
+          </span>
+          <div class="upload-zone" role="button" tabindex="0" aria-label="Subir logo" (click)="fileInput.click()" (keydown.enter)="fileInput.click()" (keydown.space)="fileInput.click(); $event.preventDefault()" (dragover)="dragging=true" (dragleave)="dragging=false" [class.drag-active]="dragging">
             <input type="file" #fileInput accept="image/png,image/svg+xml,image/jpeg" (change)="onFileSelected($event)" hidden />
             @if (logoUrl) {
-              <img [src]="logoUrl" class="logo-preview" />
+              <img [src]="logoUrl" class="logo-preview" alt="Logo subido" />
             } @else {
               <div class="upload-icon">
-                <span class="material-symbols-outlined text-2xl">cloud_upload</span>
+                <span class="material-symbols-outlined" aria-hidden="true">{{ uploading ? 'progress_activity' : 'cloud_upload' }}</span>
               </div>
-              <span class="upload-title">{{ dragging ? 'Suelta el archivo aquí' : 'Arrastra tu archivo de logo aquí o haz clic para explorar' }}</span>
-              <span class="upload-hint">Subida directa a Cloudinary — optimización automática</span>
+              <span class="upload-title">{{ uploading ? 'Subiendo…' : dragging ? 'Suelta el archivo aquí' : 'Arrastra tu logo o haz clic para elegirlo' }}</span>
+              <span class="upload-hint">Lo optimizamos automáticamente.</span>
             }
             <div class="upload-badges">
               <span class="badge">512x512px recomendado</span>
-              <span class="badge badge-success">Auto-opt Cloudinary</span>
             </div>
           </div>
           @if (uploadError) {
-            <span class="upload-error">{{ uploadError }}</span>
+            <span class="upload-error" role="alert">{{ uploadError }}</span>
           }
         </div>
 
         <div class="form-group">
-          <label>Atmósfera Cromática del Portal</label>
-          <div class="color-presets">
+          <span class="field-label" id="color-label">Color de tu marca</span>
+          <div class="color-presets" role="radiogroup" aria-labelledby="color-label">
             @for (preset of colorPresets; track preset.name) {
-              <div
+              <button
+                type="button"
+                role="radio"
                 class="preset-card"
                 [class.selected]="store.branding().colorPreset === preset.name"
+                [attr.aria-checked]="store.branding().colorPreset === preset.name"
                 (click)="selectPreset(preset)"
               >
                 <span class="color-dot" [style.background]="preset.color"></span>
@@ -67,16 +70,16 @@ const COLOR_PRESETS = [
                   <span class="preset-sublabel">{{ preset.sublabel }}</span>
                 </div>
                 @if (store.branding().colorPreset === preset.name) {
-                  <span class="check"><span class="material-symbols-outlined text-sm">check</span></span>
+                  <span class="check"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span></span>
                 }
-              </div>
+              </button>
             }
           </div>
         </div>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="instagram">Instagram Oficial</label>
+            <label for="instagram">Instagram</label>
             <div class="input-wrap">
               <span class="material-symbols-outlined">photo_camera</span>
               <input id="instagram" [(ngModel)]="store.branding().instagram" name="instagram" placeholder="@tu_negocio" />
@@ -84,7 +87,7 @@ const COLOR_PRESETS = [
           </div>
 
           <div class="form-group">
-            <label for="tiktok">TikTok Barber Showcase</label>
+            <label for="tiktok">TikTok</label>
             <div class="input-wrap">
               <span class="material-symbols-outlined">videocam</span>
               <input id="tiktok" [(ngModel)]="store.branding().tiktok" name="tiktok" placeholder="@tu_negocio" />
@@ -94,41 +97,27 @@ const COLOR_PRESETS = [
       </div>
     </section>
   `,
-  styles: [`
-    .step-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 3px 20px #4a2e1b0d; }
-    .step-header { margin-bottom: 28px; }
-    .step-badge { display: inline-flex; align-items: center; gap: 6px; color: #944928; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-    .step-header h2 { color: #412311; font: 700 28px/1.1 'Vollkorn', serif; margin: 8px 0; }
-    .step-header p { color: #50443e; font-size: 14px; margin: 0; }
-    .step-form { display: flex; flex-direction: column; gap: 24px; }
-    .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
-    .optional { color: #50443e; font-size: 12px; font-weight: 400; }
-    .upload-zone { border: 2px dashed rgba(160,141,126,0.4); border-radius: 12px; padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all .2s; text-align: center; background: #f5f0e8; }
-    .upload-zone:hover { border-color: rgba(148,73,40,0.6); }
-    .upload-zone.drag-active { border-color: #944928; background: #fdf9f0; }
-    .upload-icon { width: 56px; height: 56px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; color: #944928; }
-    .upload-title { font-weight: 600; color: #412311; font-size: 14px; }
-    .upload-hint { font-size: 12px; color: #50443e; }
-    .upload-error { color: #dc2626; font-size: 12px; font-weight: 500; }
-    .logo-preview { width: 120px; height: 120px; object-fit: contain; border-radius: 8px; background: white; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .upload-badges { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
-    .badge { font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: .05em; padding: 3px 8px; border-radius: 4px; background: white; color: #50443e; }
-    .badge-success { background: rgba(77,124,93,0.15); color: #4D7C5D; }
-    .color-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .preset-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
-    .preset-card:hover { background: #e6e2d9; }
-    .preset-card.selected { border-color: #944928; background: #fdf9f0; }
-    .color-dot { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    .preset-info { display: flex; flex-direction: column; flex: 1; }
-    .preset-name { font-weight: 600; color: #412311; font-size: 13px; }
-    .preset-sublabel { font-size: 11px; color: #50443e; }
-    .check { color: #944928; }
-    .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
-    .input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-    .input-wrap input:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
-    @media (max-width: 768px) { .color-presets { grid-template-columns: 1fr; } }
+  styles: [ONB_STYLES, `
+    .upload-zone { align-items: center; background: var(--paper); border: 2px dashed #d8c4ae; border-radius: 18px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 28px; text-align: center; transition: border-color .2s, background .2s; }
+    .upload-zone:hover, .upload-zone:focus-visible { border-color: #c4703f; }
+    .upload-zone.drag-active { background: var(--copper-soft); border-color: #c4703f; }
+    .upload-icon { align-items: center; background: #fff; border-radius: 50%; color: var(--copper); display: flex; height: 56px; justify-content: center; width: 56px; }
+    .upload-title { color: var(--ink); font-size: 15px; font-weight: 700; }
+    .upload-hint { color: var(--muted); font-size: 13px; }
+    .upload-error { color: var(--red); font-size: 14px; font-weight: 600; }
+    .logo-preview { background: #fff; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,.1); height: 120px; object-fit: contain; padding: 8px; width: 120px; }
+    .upload-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+    .badge { background: #fff; border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 700; padding: 4px 10px; }
+    .color-presets { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+    .preset-card { align-items: center; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; color: inherit; cursor: pointer; display: flex; font: inherit; gap: 12px; padding: 14px; text-align: left; transition: border-color .2s, box-shadow .2s; width: 100%; }
+    .preset-card:hover { border-color: #d8c4ae; }
+    .preset-card.selected { background: var(--copper-soft); border-color: #c4703f; box-shadow: 0 0 0 3px rgba(196,112,63,.15); }
+    .color-dot { border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); flex: none; height: 36px; width: 36px; }
+    .preset-info { display: flex; flex: 1; flex-direction: column; }
+    .preset-name { color: var(--ink); font-size: 15px; font-weight: 700; }
+    .preset-sublabel { color: var(--muted); font-size: 13px; }
+    .check { color: var(--copper); }
+    @media (max-width: 720px) { .color-presets { grid-template-columns: 1fr; } }
   `],
 })
 export class OnboardingStepBrandingComponent {

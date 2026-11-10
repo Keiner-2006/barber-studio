@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { RouterLink, Router } from '@angular/router'
 import { OnboardingStore } from '../onboarding.store'
+import { ONB_STYLES } from '../onboarding.ui'
 import { OnboardingApi } from '../onboarding.api'
 import { OnboardingSubmitData } from '../onboarding.models'
 import { AuthService } from '../../../core/auth/auth.service'
@@ -17,24 +18,23 @@ import { environment } from '../../../../environments/environment'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-symbols-outlined text-sm">rocket_launch</span>
-          Paso {{ store.currentStep() }} de {{ store.totalSteps }} · Último Paso
+          <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
+          Paso {{ store.currentStep() }} de {{ store.totalSteps }} · Último paso
         </span>
-        <h2>Resumen y Activación</h2>
-        <p>Revisa los datos de tu negocio antes de crear tu cuenta y comenzar a usar el sistema.</p>
+        <h2>Todo listo para abrir</h2>
+        <p>Revisa los datos. Al crear tu negocio queda activo de inmediato, con tu sede y tus servicios.</p>
       </div>
 
       <div *ngIf="!isSubmitting && !isComplete" class="summary-section">
         <div class="summary-card">
           <div class="summary-header">
             <div class="summary-brand">
-              <div class="brand-avatar">{{ brandInitials }}</div>
+              <div class="brand-avatar" [style.background]="store.branding().primaryColor || null">@if (store.branding().logoUrl) { <img [src]="store.branding().logoUrl" alt="" /> } @else { {{ brandInitials }} }</div>
               <div>
                 <h3>{{ store.business().tradeName || 'Tu Negocio' }}</h3>
-                <span class="legal">{{ store.business().legalName || 'Razón social opcional' }}</span>
+                <span class="legal">{{ store.business().legalName }}</span>
               </div>
             </div>
-            <span class="plan-badge">Plan Atelier Pro</span>
           </div>
           <div class="summary-grid">
             <div class="summary-item">
@@ -51,8 +51,8 @@ import { environment } from '../../../../environments/environment'
               <span class="value">{{ activeServicesCount }} Servicios</span>
             </div>
             <div class="summary-item">
-              <span class="label">Canal de Citas</span>
-              <span class="value">WhatsApp + Web</span>
+              <span class="label">Ciudad</span>
+              <span class="value">{{ store.location().city || '—' }}</span>
             </div>
             <div class="summary-item">
               <span class="label">WhatsApp público</span>
@@ -65,14 +65,13 @@ import { environment } from '../../../../environments/environment'
         <div class="info-banner">
           <span class="material-symbols-outlined text-lg">verified</span>
           <div>
-            <span class="title">Datos de la cuenta</span>
+            <span class="title">Cuenta del propietario</span>
             <span class="text">{{ store.account().name }} {{ store.account().lastName }}</span>
             <span class="text">{{ store.account().email }}</span>
             <span *ngIf="store.account().documentType && store.account().documentNumber" class="text">{{ store.account().documentType }} {{ store.account().documentNumber }}</span>
             <span *ngIf="store.account().phone" class="text">{{ store.account().phone }}</span>
             <span *ngIf="publicWhatsApp" class="text">WhatsApp público del negocio: {{ publicWhatsApp }}</span>
             <span *ngIf="store.account().city" class="text">{{ store.account().city }}</span>
-            <span class="text">Acceso Completo al Sistema</span>
           </div>
         </div>
       </div>
@@ -106,70 +105,61 @@ import { environment } from '../../../../environments/environment'
 
       <div *ngIf="!isSubmitting && !isComplete" class="action-bar">
         <button class="btn btn-primary" (click)="provision()" [disabled]="submitting" type="button">
-          <span class="material-symbols-outlined">rocket</span>
+          <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
           Crear mi negocio
         </button>
-        <span class="terms">Se crearán tu negocio y el perfil público configurado.</span>
+        <span class="terms">Podrás cambiar todos estos datos después desde tu panel.</span>
       </div>
 
       <div *ngIf="isComplete" class="success-section">
-        <div class="success-icon">✓</div>
-        <h3>¡Todo Listo!</h3>
-        <p>Tu barbería está lista para comenzar.</p>
-        <a class="btn btn-secondary" routerLink="/dashboard">Ir al Dashboard</a>
+        <div class="success-icon"><span class="material-symbols-outlined" aria-hidden="true">check</span></div>
+        <h3>¡Tu barbería está lista!</h3>
+        <p>Ya puedes empezar a recibir reservas.</p>
+        <a class="btn btn-primary" routerLink="/dashboard">Ir a mi panel</a>
       </div>
     </section>
   `,
-  styles: [`
-    .step-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 3px 20px #4a2e1b0d; }
-    .step-header { margin-bottom: 28px; }
-    .step-badge { display: inline-flex; align-items: center; gap: 6px; color: #4D7C5D; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-    .step-header h2 { color: #412311; font: 700 28px/1.1 'Vollkorn', serif; margin: 8px 0; }
-    .step-header p { color: #50443e; font-size: 14px; margin: 0; }
-    .summary-card { background: #f5f0e8; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-    .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(160,141,126,0.2); }
-    .summary-brand { display: flex; align-items: center; gap: 12px; }
-    .brand-avatar { width: 48px; height: 48px; border-radius: 8px; background: rgba(148,73,40,0.2); color: #944928; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
-    .summary-brand h3 { color: #412311; font: 700 18px 'Vollkorn', serif; margin: 0; }
-    .legal { font-size: 12px; color: #4D7C5D; font-family: 'Fira Code', monospace; }
-    .plan-badge { padding: 6px 12px; border-radius: 6px; background: #f5f0e8; color: #944928; font-size: 12px; font-weight: 600; }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .summary-item { display: flex; flex-direction: column; gap: 4px; padding: 10px; background: white; border-radius: 6px; }
-    .summary-item .label { font-size: 12px; text-transform: uppercase; font-weight: 700; color: #50443e; }
-    .summary-item .value { font-weight: 700; color: #412311; font-size: 13px; font-family: 'Fira Code', monospace; }
-    .summary-item .public-url { color: #944928; overflow-wrap: anywhere; text-decoration: underline; }
-    .info-banner { display: flex; gap: 12px; padding: 16px; background: #f5f0e8; border-radius: 8px; margin-bottom: 20px; align-items: flex-start; }
-    .info-banner > .material-symbols-outlined { color: #944928; font-size: 24px; margin-top: 2px; }
-    .info-banner .title { font-weight: 600; color: #412311; font-size: 13px; display: block; }
-    .info-banner .text { font-size: 11px; color: #50443e; display: block; }
-    .provisioning-section { margin-bottom: 20px; }
-    .provisioning-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  styles: [ONB_STYLES, `
+    .summary-card { background: var(--paper); border-radius: 20px; margin-bottom: 18px; padding: 20px; }
+    .summary-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; gap: 12px; justify-content: space-between; margin-bottom: 16px; padding-bottom: 16px; }
+    .summary-brand { align-items: center; display: flex; gap: 12px; min-width: 0; }
+    .brand-avatar { align-items: center; background: var(--copper-soft); border-radius: 14px; color: #74361f; display: flex; flex: none; font-size: 18px; font-weight: 800; height: 52px; justify-content: center; overflow: hidden; width: 52px; }
+    .brand-avatar img { height: 100%; object-fit: cover; width: 100%; }
+    .summary-brand h3 { color: var(--ink); font: 700 22px 'Vollkorn', serif; margin: 0; }
+    .legal { color: var(--muted); font-size: 14px; }
+    .summary-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+    .summary-item { background: #fff; border-radius: 14px; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; }
+    .summary-item .label { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .summary-item .value { color: var(--ink); font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+    .summary-item .public-url { color: var(--copper); }
+    .info-banner { align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: 16px; display: flex; gap: 12px; margin-bottom: 18px; padding: 16px; }
+    .info-banner > .material-symbols-outlined { color: var(--copper); font-size: 24px; }
+    .info-banner .title { color: var(--ink); display: block; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .info-banner .text { color: var(--muted); display: block; font-size: 14px; }
+    .provisioning-section { margin-bottom: 18px; }
+    .provisioning-header { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 12px; }
+    .provisioning-header > span:nth-child(2) { color: var(--ink); flex: 1; font-size: 16px; font-weight: 700; }
+    .provisioning-header .percent { color: var(--copper); font-variant-numeric: tabular-nums; font-weight: 800; }
     .status-dots { display: flex; gap: 8px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; background: #944928; position: relative; }
-    .dot-ping::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #944928; animation: ping 1.5s ease-in-out infinite; }
-    @keyframes ping { 0%, 100% { transform: scale(1); opacity: 0.75; } 50% { transform: scale(1.5); opacity: 0; } }
-    .provisioning-header span:not(.dot):not(.dot-ping) { font-weight: 600; color: #412311; font-size: 14px; }
-    .provisioning-header .percent { font-family: 'Fira Code', monospace; color: #944928; font-weight: 700; }
-    .progress-bar { background: #e6e2d9; border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 12px; }
-    .fill { background: #944928; height: 100%; transition: width .3s ease; }
-    .terminal-log { background: #17120f; border-radius: 8px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 11px; color: #d2c4bd; max-height: 200px; overflow-y: auto; }
+    .dot { background: #c4703f; border-radius: 50%; height: 12px; position: relative; width: 12px; }
+    .dot-ping::after { animation: ping 1.5s ease-in-out infinite; background: #c4703f; border-radius: 50%; content: ''; inset: 0; position: absolute; }
+    @keyframes ping { 50% { opacity: 0; transform: scale(1.8); } }
+    .progress-bar { background: #ece4d7; border-radius: 999px; height: 10px; margin-bottom: 12px; overflow: hidden; }
+    .fill { background: linear-gradient(90deg, #e09a68, #b85a2b); height: 100%; transition: width .3s ease; }
+    .terminal-log { background: var(--paper); border-radius: 14px; color: var(--muted); font-size: 14px; max-height: 200px; overflow-y: auto; padding: 12px 14px; }
     .log-line { padding: 2px 0; }
-    .log-line .prompt { color: #944928; margin-right: 8px; }
-    .action-bar { margin-top: 20px; text-align: center; }
-    .btn { padding: 14px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 0; cursor: pointer; transition: .2s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary { background: #d98e3a; color: #181310; }
-    .btn-primary:hover:not(:disabled) { background: #e6a456; }
-    .btn-secondary { background: white; color: #412311; border: 1px solid #e6e2d9; }
-    .terms { font-size: 11px; color: #50443e; text-align: center; margin-top: 8px; display: block; }
-    .activation-error { background: #fff0ee; border-radius: 8px; color: #93000a; font-size: 13px; margin-top: 16px; padding: 14px; }
+    .log-line .prompt { color: var(--copper); margin-right: 8px; }
+    .action-bar { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .action-bar .btn { width: 100%; }
+    .terms { color: var(--muted); font-size: 14px; text-align: center; }
+    .activation-error { background: #fdecea; border: 1px solid #f2bdb8; border-radius: 14px; color: var(--red); font-size: 15px; margin-top: 16px; padding: 14px; }
     .activation-error a { color: inherit; font-weight: 700; margin-left: 6px; }
-    .success-section { text-align: center; padding: 40px 20px; }
-    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; color: #166534; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px; }
-    .success-section h3 { color: #412311; font: 700 24px 'Vollkorn', serif; margin: 0 0 8px; }
-    .success-section p { color: #50443e; margin: 0 0 20px; }
-    @media (max-width: 768px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 480px) { .summary-grid { grid-template-columns: 1fr; } }
+    .success-section { padding: 32px 12px; text-align: center; }
+    .success-icon { align-items: center; background: #e5f4ec; border-radius: 50%; color: var(--green); display: flex; height: 72px; justify-content: center; margin: 0 auto 16px; width: 72px; }
+    .success-icon .material-symbols-outlined { font-size: 36px; }
+    .success-section h3 { color: var(--ink); font: 700 28px 'Vollkorn', serif; margin: 0 0 8px; }
+    .success-section p { color: var(--muted); margin: 0 0 20px; }
+    @media (prefers-reduced-motion: reduce) { .dot-ping::after { animation: none; } .fill { transition: none; } }
   `],
 })
 export class OnboardingStepActivationComponent {
@@ -177,7 +167,7 @@ export class OnboardingStepActivationComponent {
   isComplete = false
   submitting = false
   submittingPercent = 15
-  submittingMessage = 'Creando tu cuenta...'
+  submittingMessage = 'Creando tu negocio…'
   terminalLogs: string[] = []
   activationError = ''
 
@@ -224,7 +214,7 @@ export class OnboardingStepActivationComponent {
     this.submitting = true
     this.isSubmitting = true
     this.submittingPercent = 15
-    this.submittingMessage = 'Creando tu cuenta...'
+    this.submittingMessage = 'Creando tu negocio…'
     this.terminalLogs = []
 
     const data: OnboardingSubmitData = {
@@ -322,7 +312,7 @@ export class OnboardingStepActivationComponent {
               this.store.setTenantId(tenantId)
               localStorage.setItem('navaja_tenant_id', tenantId)
             }
-            this.terminalLogs = [...this.terminalLogs, '✓ Aprovisionamiento completado']
+            this.terminalLogs = [...this.terminalLogs, 'Negocio creado']
             this.loginAfterOnboarding()
           } else if (status === 'failed' || status === 'compensated') {
             this.isSubmitting = false

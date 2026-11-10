@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
 import { OnboardingStore } from '../onboarding.store'
+import { ONB_STYLES } from '../onboarding.ui'
 import { OwnerDocumentType } from '../onboarding.models'
 
 @Component({
@@ -13,19 +14,21 @@ import { OwnerDocumentType } from '../onboarding.models'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-symbols-outlined text-sm">person</span>
-          Paso 1 de {{ store.totalSteps }} · Cuenta del Propietario
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+          Paso 1 de {{ store.totalSteps }} · Cuenta del propietario
         </span>
-        <h2>Crea tu cuenta de administrador</h2>
-        <p>Ingresa tus datos para acceder a la plataforma y administrar tu barbería.</p>
+        <h2>Crea tu cuenta de propietario</h2>
+        <p>Con esta cuenta entrarás a tu panel para gestionar agenda, clientes, caja e inventario.</p>
       </div>
 
       <form (ngSubmit)="onContinue()" class="step-form" novalidate>
+        <p class="section-title">Datos personales</p>
+        <div class="form-row">
         <div class="form-group">
           <label for="name">Nombre *</label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">person</span>
-            <input id="name" [(ngModel)]="account().name" name="name" placeholder="Tu nombre completo" required />
+            <input id="name" [(ngModel)]="account().name" name="name" placeholder="Tu nombre" required autocomplete="given-name" />
           </div>
         </div>
 
@@ -33,15 +36,18 @@ import { OwnerDocumentType } from '../onboarding.models'
           <label for="lastName">Apellido *</label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">person</span>
-            <input id="lastName" [(ngModel)]="account().lastName" name="lastName" placeholder="Tu apellido" required />
+            <input id="lastName" [(ngModel)]="account().lastName" name="lastName" placeholder="Tu apellido" required autocomplete="family-name" />
           </div>
         </div>
+        </div>
+
+        <p class="section-title">Acceso</p>
 
         <div class="form-group">
           <label for="email">Correo electrónico *</label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">mail</span>
-            <input id="email" type="email" [(ngModel)]="account().email" name="email" placeholder="tu@mail.com" required [readonly]="!!store.userId()" />
+            <input id="email" type="email" [(ngModel)]="account().email" name="email" placeholder="tu@correo.com" required autocomplete="email" [readonly]="!!store.userId()" />
           </div>
         </div>
 
@@ -49,16 +55,17 @@ import { OwnerDocumentType } from '../onboarding.models'
           <label for="password">Contraseña *</label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">lock</span>
-            <input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="account().password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" [readonly]="!!store.userId()" />
-            <button type="button" class="toggle-pwd" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-              {{ showPassword ? '◉' : '◌' }}
+            <input id="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="account().password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password" [readonly]="!!store.userId()" />
+            <button type="button" class="toggle-pwd" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="showPassword">
+              <span class="material-symbols-outlined" aria-hidden="true">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
             </button>
           </div>
         </div>
 
+        <p class="section-title">Identificación y contacto</p>
         <div class="form-row">
           <div class="form-group">
-            <label for="documentType">Tipo de Documento *</label>
+            <label for="documentType">Tipo de documento *</label>
             <div class="input-wrap">
               <select id="documentType" [(ngModel)]="account().documentType" name="documentType" required>
                 <option value="CC">CC</option>
@@ -70,20 +77,21 @@ import { OwnerDocumentType } from '../onboarding.models'
           </div>
 
           <div class="form-group">
-            <label for="documentNumber">Número de Documento *</label>
+            <label for="documentNumber">Número de documento *</label>
             <div class="input-wrap">
               <input id="documentNumber" [(ngModel)]="account().documentNumber" name="documentNumber" placeholder="ej. 1001234567" required minlength="5" maxlength="15" />
             </div>
           </div>
         </div>
 
+        <div class="form-row">
         <div class="form-group">
           <label for="phone">Celular *</label>
           <div class="input-wrap">
             <span class="material-symbols-outlined">phone</span>
             <input id="phone" type="tel" [(ngModel)]="account().phone" name="phone" placeholder="+57 300 123 4567" required />
           </div>
-          <span class="hint">Incluye el código internacional; se permiten espacios y guiones.</span>
+          <span class="hint">Con código de país, ej. +57 300 123 4567.</span>
         </div>
 
         <div class="form-group">
@@ -92,12 +100,13 @@ import { OwnerDocumentType } from '../onboarding.models'
             <span class="material-symbols-outlined">smartphone</span>
             <input id="whatsapp" type="tel" [(ngModel)]="account().whatsapp" name="whatsapp" placeholder="+57 300 123 4567" />
           </div>
-          <span class="hint">WhatsApp personal del propietario (opcional), distinto al público del negocio. Incluye el código internacional.</span>
+          <span class="hint">Personal y opcional; el del negocio se pide más adelante.</span>
+        </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="birthDate">Fecha de Nacimiento</label>
+            <label for="birthDate">Fecha de nacimiento</label>
             <div class="input-wrap">
               <input id="birthDate" type="date" [(ngModel)]="account().birthDate" name="birthDate" />
             </div>
@@ -119,15 +128,16 @@ import { OwnerDocumentType } from '../onboarding.models'
         </div>
 
         @if (store.registrationError()) {
-          <div class="error-message" role="alert">{{ store.registrationError() }}</div>
+          <div class="error-message" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{{ store.registrationError() }}</div>
         }
 
         @if (validationError) {
-          <div class="error-message" role="alert">{{ validationError }}</div>
+          <div class="error-message" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{{ validationError }}</div>
         }
 
         <button class="btn btn-primary" type="submit" [disabled]="store.submitting()">
-          {{ store.submitting() ? 'Creando cuenta...' : 'Crear cuenta y continuar →' }}
+          {{ store.submitting() ? 'Creando cuenta…' : 'Crear cuenta y continuar' }}
+          @if (!store.submitting()) { <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span> }
         </button>
 
         <p class="login-link">
@@ -136,36 +146,15 @@ import { OwnerDocumentType } from '../onboarding.models'
       </form>
     </section>
   `,
-  styles: [`
-    .step-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 3px 20px #4a2e1b0d; max-width: 480px; margin: 0 auto; }
-    .step-header { margin-bottom: 28px; text-align: center; }
-    .step-badge { display: inline-flex; align-items: center; gap: 6px; color: #944928; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-    .step-header h2 { color: #412311; font: 700 28px/1.1 'Vollkorn', serif; margin: 8px 0; }
-    .step-header p { color: #50443e; font-size: 14px; margin: 0; }
-    .step-form { display: flex; flex-direction: column; gap: 20px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { color: #412311; font-size: 13px; font-weight: 700; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
-    .remember { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; font-weight: 400; color: #50443e; cursor: pointer; }
-    .remember input { margin-top: 2px; accent-color: #944928; }
-    .remember a { color: #944928; }
-    .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
-    .input-wrap input, .input-wrap select { width: 100%; padding: 12px 38px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-    .input-wrap input:focus, .input-wrap select:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
-    .toggle-pwd { position: absolute; right: 12px; background: none; border: none; color: #50443e; cursor: pointer; font-size: 16px; }
-    .btn { padding: 14px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; border: 0; cursor: pointer; transition: .2s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary { background: #412311; color: white; }
-    .btn-primary:hover:not(:disabled) { background: #5a3825; }
-    .error-message { background: #fff0ee; border-radius: 7px; color: #93000a; font-size: 12px; padding: 10px; }
-    .login-link { text-align: center; font-size: 13px; color: #50443e; margin: 0; }
-    .login-link a { color: #944928; font-weight: 600; text-decoration: none; }
-    .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; font-size: 12px; color: #50443e; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e6e2d9; }
-    .sso-btn-google { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 24px; border: 1px solid #dadce0; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; color: #3c4043; transition: .2s; width: 100%; }
-    .sso-btn-google:hover { background: #f1f3f4; border-color: #babcbc; }
+  styles: [ONB_STYLES, `
+    .toggle-pwd { align-items: center; background: none; border: 0; border-radius: 10px; color: #8a7a6f; cursor: pointer; display: flex; height: 44px; justify-content: center; margin-right: 4px; width: 44px; }
+    .toggle-pwd:hover { color: var(--ink); }
+    .remember { align-items: flex-start; color: var(--muted); cursor: pointer; display: flex; font-size: 14px; font-weight: 500; gap: 10px; }
+    .remember input { flex: none; margin-top: 1px; }
+    .section-title { color: var(--copper); font-size: 13px; font-weight: 700; letter-spacing: .12em; margin: 6px 0 -6px; text-transform: uppercase; }
+    .btn-primary { width: 100%; }
+    .login-link { color: var(--muted); font-size: 15px; margin: 0; text-align: center; }
+    .login-link a { color: var(--copper); font-weight: 700; }
   `],
 })
 export class OnboardingStepAccountComponent {

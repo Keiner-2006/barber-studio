@@ -1,219 +1,183 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
-import { PlatformAdminApi, CreateTenantInput } from './platform-admin.api';
-import { ClientsStore } from './clients/clients.store';
-import { PlatformOwner } from './clients/clients.api';
+import { Component, inject, signal } from '@angular/core'
+import { FormsModule, NgForm } from '@angular/forms'
+import { Router, RouterLink } from '@angular/router'
+import { PlatformAdminApi } from './platform-admin.api'
+import { PlatformAdminStore } from './platform-admin.store'
+import { PA_STYLES } from './platform-admin.ui'
+import { BUSINESS_TYPE_LABELS, BusinessType, COUNTRY_NAMES, CreateTenantInput } from './platform-admin.models'
+import { apiErrorMessage } from './platform-admin.view-helpers'
+
+const slugify = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
 
 @Component({
   selector: 'app-platform-admin-new-tenant',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   template: `
-    <div class="page">
-      <div class="page-header">
+    <div class="pa narrow">
+      <a class="back" routerLink="/platform-admin/negocios"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Negocios registrados</a>
+      <header class="head">
         <div>
-          <p class="label">Nuevo Negocio</p>
-          <h1>Agregar Negocio<span class="accent">.</span></h1>
-          <p class="subtitle">Registra un nuevo negocio y asígnalo a un dueño existente o crea uno nuevo.</p>
+          <p class="eyebrow">Alta manual</p>
+          <h1>Agregar negocio<em>.</em></h1>
+          <p class="sub">Crea una barbería para un propietario que ya tiene cuenta. Queda activa y con su primera sede.</p>
         </div>
-        <a routerLink="/platform-admin/negocios" class="back-link">← Volver al Directorio</a>
+      </header>
+
+      <div class="alert info">
+        <span class="material-symbols-outlined" aria-hidden="true">info</span>
+        <span class="grow">
+          ¿El propietario aún no tiene cuenta? Lo ideal es que se inscriba él mismo: así crea su contraseña y carga horarios, servicios y marca.
+          <br /><button type="button" class="linkish" (click)="copyLink()">{{ copied() ? '¡Enlace copiado!' : 'Copiar enlace de inscripción' }}</button>
+        </span>
       </div>
 
-      <div class="form-grid">
-        <div class="card">
-          <div class="card-header"><h3>Información del Negocio</h3></div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>Nombre Comercial *</label>
-              <input [(ngModel)]="form.tradeName" placeholder="Ej: Barbería El Aristocracia" />
+      <form #f="ngForm" (ngSubmit)="submit(f)" novalidate>
+        <section class="card">
+          <h2>Negocio</h2>
+          <div class="grid">
+            <div class="field span-2">
+              <label for="tradeName">Nombre comercial *</label>
+              <input id="tradeName" class="input" name="tradeName" [(ngModel)]="form.tradeName" (ngModelChange)="onName($event)" required minlength="2" maxlength="150" placeholder="Ej.: Barbería El Tano" />
             </div>
-            <div class="form-group">
-              <label>Razón Social *</label>
-              <input [(ngModel)]="form.legalName" placeholder="Razón legal del negocio" />
+            <div class="field span-2">
+              <label for="legalName">Razón social *</label>
+              <input id="legalName" class="input" name="legalName" [(ngModel)]="form.legalName" required minlength="2" maxlength="150" placeholder="Ej.: El Tano S.A.S." />
             </div>
-            <div class="form-group">
-              <label>Slug *</label>
-              <input [(ngModel)]="form.slug" placeholder="Ej: el-aristocracia" />
-              <small>URL única del negocio. Solo letras, números y guiones.</small>
+            <div class="field span-2">
+              <label for="slug">Dirección web (slug) *</label>
+              <div class="prefix"><span>/b/</span><input id="slug" class="input" name="slug" [(ngModel)]="form.slug" (ngModelChange)="slugTouched = true" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="100" /></div>
+              <p class="hint">Solo minúsculas, números y guiones. Será la página pública del negocio.</p>
             </div>
-            <div class="form-group">
-              <label>Tipo de Negocio</label>
-              <select [(ngModel)]="form.businessType">
-                <option value="barberia">Barbería</option>
-                <option value="peluqueria">Peluquería</option>
-                <option value="grooming">Grooming</option>
-                <option value="otro">Otro</option>
+            <div class="field">
+              <label for="businessType">Tipo *</label>
+              <select id="businessType" class="input" name="businessType" [(ngModel)]="form.businessType" required>
+                @for (t of businessTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
               </select>
             </div>
-            <div class="form-group">
-              <label>Código de País</label>
-              <select [(ngModel)]="form.countryCode">
-                <option value="CO">CO - Colombia</option>
-                <option value="MX">MX - México</option>
-                <option value="CL">CL - Chile</option>
-                <option value="AR">AR - Argentina</option>
-                <option value="PE">PE - Perú</option>
-                <option value="US">US - Estados Unidos</option>
-                <option value="ES">ES - España</option>
+            <div class="field">
+              <label for="country">País *</label>
+              <select id="country" class="input" name="countryCode" [(ngModel)]="form.countryCode" required>
+                @for (c of countries; track c.code) { <option [value]="c.code">{{ c.name }}</option> }
               </select>
-            </div>
-            <div class="form-group">
-              <label>Color de Marca</label>
-              <div class="color-input">
-                <input type="color" [(ngModel)]="form.primaryColor" />
-                <span>{{ form.primaryColor }}</span>
-              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <div class="card-header"><h3>Dueño / Cliente *</h3></div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>Seleccionar Dueño Existente</label>
-              <select [(ngModel)]="selectedOwnerId" (ngModelChange)="onOwnerChange($event)">
-                <option [ngValue]="null">-- Crear nuevo dueño --</option>
-                @for (owner of store.owners(); track owner.id) {
-                  <option [ngValue]="owner.id">{{ owner.name }} ({{ owner.email }}) - {{ owner.tradeName }}</option>
-                }
-              </select>
+        <section class="card">
+          <h2>Propietario y contacto</h2>
+          <div class="grid">
+            <div class="field span-2">
+              <label for="ownerEmail">Correo del propietario *</label>
+              <input id="ownerEmail" class="input" type="email" name="ownerEmail" [(ngModel)]="form.ownerEmail" required email autocomplete="off" placeholder="propietario@correo.com" />
+              <p class="hint">Debe ser el correo con el que el propietario ya inició sesión en la plataforma.</p>
             </div>
-            @if (!selectedOwnerId) {
-              <div class="form-group">
-                <label>Nombre del Dueño *</label>
-                <input [(ngModel)]="form.ownerName" placeholder="Nombre completo" />
-              </div>
-              <div class="form-group">
-                <label>Email del Dueño *</label>
-                <input type="email" [(ngModel)]="form.email" placeholder="email@ejemplo.com" />
-              </div>
-              <div class="form-group">
-                <label>Teléfono</label>
-                <input [(ngModel)]="form.phone" placeholder="+57 300 1234567" />
-              </div>
-            } @else {
-              <div class="info-box">
-                <p>Se asignará al negocio al dueño seleccionado.</p>
-                <strong>{{ getSelectedOwner()?.name }}</strong>
-                <span>{{ getSelectedOwner()?.email }}</span>
-              </div>
-            }
+            <div class="field">
+              <label for="whatsapp">WhatsApp del negocio</label>
+              <input id="whatsapp" class="input" type="tel" name="whatsapp" [(ngModel)]="form.whatsapp" maxlength="30" placeholder="+573001234567" />
+            </div>
+            <div class="field">
+              <label for="phone">Teléfono</label>
+              <input id="phone" class="input" type="tel" name="phone" [(ngModel)]="form.phone" maxlength="30" />
+            </div>
+            <div class="field">
+              <label for="city">Ciudad</label>
+              <input id="city" class="input" name="city" [(ngModel)]="form.city" maxlength="100" />
+            </div>
+            <div class="field">
+              <label for="address">Dirección</label>
+              <input id="address" class="input" name="address" [(ngModel)]="form.address" maxlength="200" />
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div class="form-actions">
-        <button class="button button-light" (click)="onCancel()">Cancelar</button>
-        <button class="button button-dark" (click)="onSubmit()" [disabled]="form.loading || !canSubmit()">
-          {{ form.loading ? 'Creando...' : 'Crear Negocio' }}
-        </button>
-      </div>
+        @if (error(); as e) {
+          <div class="alert error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><span class="grow">{{ e }}</span></div>
+        }
+        @if (f.submitted && f.invalid) {
+          <p class="err" role="alert">Revisa los campos marcados con * : nombre, razón social, slug válido y correo del propietario.</p>
+        }
+
+        <div class="submit-row">
+          <a class="btn" routerLink="/platform-admin/negocios">Cancelar</a>
+          <button class="btn btn-primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Creando…' : 'Crear negocio' }} <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </button>
+        </div>
+      </form>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-    .page { padding: 32px; max-width: 1200px; margin: 0 auto; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
-    .label { font-size: 13px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-    h1 { font-family: 'DM Serif Display', serif; font-size: 36px; color: #1b1c1a; margin: 0; }
-    .accent { color: #8c4029; }
-    .subtitle { font-size: 14px; color: #6b7280; margin-top: 8px; }
-    .back-link { font-size: 14px; color: #8c4029; text-decoration: none; display: flex; align-items: center; }
-    .back-link:hover { text-decoration: underline; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
-    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-    .card-header { padding: 20px; border-bottom: 1px solid #e5e7eb; background: #fafaf8; }
-    .card-header h3 { font-family: 'DM Serif Display', serif; font-size: 18px; color: #1b1c1a; margin: 0; }
-    .card-body { padding: 20px; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: #b87333; box-shadow: 0 0 0 3px rgba(184,115,51,0.1); }
-    .form-group small { display: block; font-size: 12px; color: #6f6760; margin-top: 4px; }
-    .color-input { display: flex; align-items: center; gap: 12px; }
-    .color-input input[type="color"] { width: 40px; height: 40px; border: none; cursor: pointer; }
-    .info-box { padding: 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; }
-    .info-box p { margin: 0 0 8px; font-size: 14px; color: #166534; }
-    .info-box strong { display: block; font-size: 16px; }
-    .info-box span { font-size: 13px; color: #6b7280; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; }
-    .button { padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; }
-    .button-dark { background: #1b1c1a; color: white; }
-    .button-dark:hover:not(:disabled) { background: #374151; }
-    .button-dark:disabled { opacity: 0.5; cursor: not-allowed; }
-    .button-light { background: #f3f4f6; color: #374151; }
-    .button-light:hover { background: #e5e7eb; }
-  `]
+  styles: [PA_STYLES, `
+    .narrow { max-width: 860px; }
+    .back { align-items: center; color: var(--muted); display: inline-flex; font-size: 14px; font-weight: 600; gap: 6px; margin-bottom: 12px; text-decoration: none; }
+    .back:hover { color: var(--copper); }
+    form { display: grid; gap: 16px; }
+    .card h2 { margin-bottom: 14px; }
+    .grid { display: grid; gap: 14px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .span-2 { grid-column: span 2; }
+    .prefix { align-items: center; display: flex; }
+    .prefix span { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px 0 0 12px; border-right: 0; color: var(--muted); font-weight: 600; min-height: 44px; padding: 11px 10px 0; }
+    .prefix .input { border-radius: 0 12px 12px 0; }
+    .linkish { background: none; border: 0; color: var(--copper); cursor: pointer; font: 700 14px 'Plus Jakarta Sans', sans-serif; margin-top: 6px; padding: 0; text-decoration: underline; }
+    .submit-row { display: flex; gap: 10px; justify-content: flex-end; }
+    input.ng-invalid.ng-touched, select.ng-invalid.ng-touched, form.ng-submitted .ng-invalid { border-color: #c0392b; }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .span-2 { grid-column: auto; } .submit-row .btn { flex: 1; } }
+  `],
 })
-export class PlatformAdminNewTenantComponent implements OnInit {
+export class PlatformAdminNewTenantComponent {
   private api = inject(PlatformAdminApi)
+  private store = inject(PlatformAdminStore)
   private router = inject(Router)
-  private route = inject(ActivatedRoute)
-  readonly store = inject(ClientsStore)
 
-  form = {
+  readonly saving = signal(false)
+  readonly error = signal<string | null>(null)
+  readonly copied = signal(false)
+  slugTouched = false
+
+  form: CreateTenantInput = {
     tradeName: '',
     legalName: '',
     slug: '',
-    businessType: 'barberia' as const,
+    businessType: 'barberia',
     countryCode: 'CO',
-    email: '',
-    ownerName: '',
+    ownerEmail: '',
     phone: '',
-    primaryColor: '#b87333',
-    loading: false,
-  }
-  selectedOwnerId: string | null = null
-
-  canSubmit(): boolean {
-    return this.form.tradeName.length > 0 &&
-      this.form.legalName.length > 0 &&
-      this.form.slug.length > 0 &&
-      (this.selectedOwnerId !== null || (this.form.ownerName.length > 0 && this.form.email.length > 0))
+    whatsapp: '',
+    city: '',
+    address: '',
   }
 
-  ngOnInit(): void {
-    this.store.load()
+  readonly businessTypes = (Object.keys(BUSINESS_TYPE_LABELS) as BusinessType[]).map((value) => ({ value, label: BUSINESS_TYPE_LABELS[value] }))
+  readonly countries = Object.entries(COUNTRY_NAMES).map(([code, name]) => ({ code, name }))
+
+  onName(name: string): void {
+    if (!this.slugTouched) this.form.slug = slugify(name)
   }
 
-  onOwnerChange(ownerId: string | null): void {
-    this.selectedOwnerId = ownerId
-  }
-
-  getSelectedOwner() {
-    return this.store.owners().find(o => o.id === this.selectedOwnerId)
-  }
-
-  onSubmit(): void {
-    if (!this.canSubmit()) return
-    this.form.loading = true
-    const input: CreateTenantInput = {
-      legalName: this.form.legalName,
-      tradeName: this.form.tradeName,
-      slug: this.form.slug,
-      businessType: this.form.businessType,
-      email: this.form.email,
-      ownerName: this.form.ownerName,
-      phone: this.form.phone || undefined,
-      countryCode: this.form.countryCode,
-      primaryColor: this.form.primaryColor,
-    }
-    this.api.createTenant(input).pipe(
-      catchError(() => { this.form.loading = false; return of(null); })
-    ).subscribe({
-      next: () => {
-        this.router.navigate(['/platform-admin/negocios'])
-      },
-      error: () => { this.form.loading = false; }
+  copyLink(): void {
+    navigator.clipboard?.writeText(`${location.origin}/onboarding`).then(() => {
+      this.copied.set(true)
+      setTimeout(() => this.copied.set(false), 2500)
     })
   }
 
-  onCancel(): void {
-    this.router.navigate(['/platform-admin/negocios'])
+  submit(f: NgForm): void {
+    if (f.invalid || this.saving()) return
+    this.saving.set(true)
+    this.error.set(null)
+    // Send only filled optional fields.
+    const body = Object.fromEntries(Object.entries(this.form).filter(([, v]) => v !== '')) as unknown as CreateTenantInput
+    this.api.createTenant(body).subscribe({
+      next: (res) => {
+        this.saving.set(false)
+        this.store.refresh()
+        this.router.navigate(['/platform-admin/negocios', res.data.id])
+      },
+      error: (err) => {
+        this.saving.set(false)
+        this.error.set(apiErrorMessage(err, 'No se pudo crear el negocio'))
+      },
+    })
   }
 }

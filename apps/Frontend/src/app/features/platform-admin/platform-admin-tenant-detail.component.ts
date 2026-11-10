@@ -1,577 +1,373 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
-import { CommonModule } from '@angular/common'
 import { ActivatedRoute, RouterLink } from '@angular/router'
-import { toSignal } from '@angular/core/rxjs-interop'
-import { map } from 'rxjs'
-import { PlatformAdminStore, tenantAgeInDays } from './platform-admin.store'
-import { PlatformTenant, TENANT_STATUS_LABELS, TenantStatus } from './platform-admin.models'
-import {
-  businessTypeLabel,
-  countryName,
-  initials,
-  relativeTime,
-  statusChipClass,
-  statusDotClass,
-} from './platform-admin.view-helpers'
+import { FormsModule } from '@angular/forms'
+import { PlatformAdminApi } from './platform-admin.api'
+import { PlatformAdminStore } from './platform-admin.store'
+import { PA_STYLES } from './platform-admin.ui'
+import { AUDIT_ACTION_LABELS, ROLE_NAMES, TenantDetail } from './platform-admin.models'
+import { apiErrorMessage, businessTypeLabel, countryName, formatMoney, initials, relativeTime, shortDate, statusLabel } from './platform-admin.view-helpers'
 
-interface DetailTab {
-  key: string;
-  label: string;
-  icon: string;
-  /** Tabs whose data the platform API does not expose yet. */
-  pending: boolean;
-}
+type Tab = 'resumen' | 'sedes' | 'equipo' | 'auditoria'
+
+const DAY_ORDER = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+const DAY_LABEL: Record<string, string> = { lunes: 'Lun', martes: 'Mar', miercoles: 'Mié', jueves: 'Jue', viernes: 'Vie', sabado: 'Sáb', domingo: 'Dom' }
 
 @Component({
   selector: 'app-platform-admin-tenant-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink, FormsModule],
   template: `
-    <div class="flex flex-col w-full pb-16 space-y-space-lg">
-      @if (currentTenant(); as tenant) {
-        <!-- Tenant 360 Header Area -->
-        <section class="flex flex-col gap-space-sm">
-          <div class="flex flex-wrap items-center justify-between gap-space-sm">
-            <div class="flex items-center gap-space-xs text-pa-on-surface-variant font-label-md text-label-md">
-              <a routerLink="/platform-admin" class="hover:text-pa-primary transition-colors cursor-pointer">Platform</a>
-              <span class="text-pa-outline-variant">/</span>
-              <a routerLink="/platform-admin/negocios" class="hover:text-pa-primary transition-colors cursor-pointer">Negocios</a>
-              <span class="text-pa-outline-variant">/</span>
-              <span class="text-pa-on-surface font-semibold">{{ tenant.tradeName }}</span>
-              <span class="bg-pa-surface-container-high text-pa-on-surface-variant font-mono px-2 py-0.5 rounded text-[11px] ml-space-xs">
-                {{ tenant.id }}
-              </span>
-            </div>
-            <div class="flex items-center gap-space-sm">
-              <div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-pa-surface-container-lowest shadow-sm">
-                <span class="w-2 h-2 rounded-full" [class]="statusDotClass(tenant.status)"></span>
-                <span class="font-label-sm text-label-sm font-semibold text-pa-primary">{{ statusLabel(tenant.status) }}</span>
-                <span class="text-pa-outline-variant text-[12px]">•</span>
-                <span class="font-label-sm text-label-sm text-pa-on-surface-variant">{{ countryName(tenant.countryCode) }}</span>
-              </div>
-            </div>
-          </div>
+    <div class="pa">
+      <a class="back" routerLink="/platform-admin/negocios"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Negocios registrados</a>
 
-          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm">
-            <div class="flex items-start gap-space-md">
-              <div
-                class="relative w-16 h-16 rounded-xl overflow-hidden shadow-sm shrink-0 bg-pa-surface-container-high flex items-center justify-center font-bold text-pa-primary text-headline-sm"
-              >
-                @if (tenant.branding?.logoUrl) {
-                  <img class="w-full h-full object-cover" [src]="tenant.branding?.logoUrl" [alt]="tenant.tradeName" />
-                } @else {
-                  {{ initials(tenant.tradeName) }}
-                }
-              </div>
-              <div class="flex flex-col">
-                <div class="flex flex-wrap items-center gap-space-sm">
-                  <h1 class="font-headline-lg text-headline-lg text-pa-on-surface tracking-tight">{{ tenant.tradeName }}</h1>
-                  <span class="font-label-sm text-label-sm bg-pa-surface-container px-2 py-0.5 rounded text-pa-on-surface-variant">{{ tenant.legalName }}</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-space-sm mt-1">
-                  <span class="inline-flex items-center gap-1 text-pa-primary font-label-md text-label-md font-mono">{{ tenant.slug }}</span>
-                  <span class="text-pa-outline-variant">·</span>
-                  <span class="font-body-sm text-body-sm text-pa-on-surface-variant">Registrado el {{ tenant.createdAt | date: 'dd MMMM, yyyy' }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-space-xs">
-              <button
-                type="button"
-                disabled
-                title="Plan / suscripción: la API de plataforma no expone planes"
-                class="inline-flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-pa-surface-container-high text-pa-on-surface font-label-md text-label-md transition-all shadow-sm opacity-40 cursor-not-allowed"
-              >
-                <span class="material-symbols-outlined text-[18px]">tune</span>
-                <span>Editar Plan</span>
-              </button>
-              <button
-                type="button"
-                disabled
-                title="Suspensión: pendiente de endpoint en la API de plataforma"
-                class="inline-flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-pa-error-container text-pa-on-error-container font-label-md text-label-md transition-all shadow-sm opacity-40 cursor-not-allowed"
-              >
-                <span class="material-symbols-outlined text-[18px]">pause_circle</span>
-                <span>Suspender</span>
-              </button>
-              <button
-                type="button"
-                disabled
-                title="Impersonación: pendiente de endpoint en la API de plataforma"
-                class="inline-flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-pa-primary text-pa-on-primary font-label-md text-label-md transition-all shadow-sm opacity-40 cursor-not-allowed"
-              >
-                <span class="material-symbols-outlined text-[18px]">switch_account</span>
-                <span>Impersonate Owner</span>
-              </button>
-            </div>
+      @if (loading()) {
+        <span class="sk" style="height:120px;margin:16px 0"></span>
+        <div class="kpis">@for (i of [1, 2, 3, 4]; track i) { <span class="sk" style="height:110px"></span> }</div>
+      } @else if (error()) {
+        <div class="empty" style="margin-top:16px">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          <strong>No se pudo cargar el negocio</strong>
+          <p>{{ error() }}</p>
+          <button class="btn" (click)="load()">Reintentar</button>
+        </div>
+      } @else if (tenant()) {
+        @let t = tenant()!;
+        <section class="hero">
+          <span class="logo" [style.background]="t.branding?.primaryColor || null">
+            @if (t.branding?.logoUrl) { <img [src]="t.branding!.logoUrl" alt="" /> } @else { {{ initials(t.tradeName) }} }
+          </span>
+          <div class="hero-text">
+            <div class="title-row"><h1>{{ t.tradeName }}</h1><span class="chip" [attr.data-tone]="t.status">{{ statusLabel(t.status) }}</span></div>
+            <p class="sub">{{ t.legalName }} · {{ businessTypeLabel(t.businessType) }} · {{ countryName(t.countryCode) }} · registrado {{ relativeTime(t.createdAt) }}</p>
           </div>
-
-          <!-- Tabbed Navigation -->
-          <div class="flex items-center gap-space-xs overflow-x-auto pb-1 mt-space-xs">
-            @for (tab of tabs; track tab.key) {
-              <button
-                type="button"
-                (click)="selectTab(tab)"
-                [title]="tab.pending ? 'Sección sin datos: la API de plataforma aún no la expone' : null"
-                class="px-space-md py-2.5 rounded-lg font-label-md text-label-md flex items-center gap-2 shrink-0 transition-colors"
-                [class.bg-pa-surface-container-lowest]="activeTab() === tab.key"
-                [class.text-pa-primary]="activeTab() === tab.key"
-                [class.font-semibold]="activeTab() === tab.key"
-                [class.shadow-sm]="activeTab() === tab.key"
-                [class.text-pa-on-surface-variant]="activeTab() !== tab.key"
-                [class.hover:text-pa-on-surface]="activeTab() !== tab.key"
-                [class.hover:bg-pa-surface-container-high]="activeTab() !== tab.key"
-              >
-                <span class="material-symbols-outlined text-[18px]">{{ tab.icon }}</span>
-                <span>{{ tab.label }}</span>
-              </button>
+          <div class="hero-actions">
+            <a class="btn" [href]="'/b/' + t.slug" target="_blank" rel="noopener"><span class="material-symbols-outlined" aria-hidden="true">open_in_new</span> Página pública</a>
+            @if (t.status === 'active') {
+              <button class="btn btn-danger" (click)="askStatus('suspended')"><span class="material-symbols-outlined" aria-hidden="true">block</span> Suspender</button>
+            } @else if (t.status === 'suspended' || t.status === 'provisioning') {
+              <button class="btn btn-primary" (click)="askStatus('active')"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Activar</button>
             }
           </div>
         </section>
 
-        @if (activePendingTab(); as pendingTab) {
-          <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm border border-dashed border-pa-outline-variant flex flex-col items-center gap-space-sm text-center">
-            <span class="material-symbols-outlined text-[36px] text-pa-outline">{{ pendingTab.icon }}</span>
-            <h2 class="font-headline-sm text-headline-sm text-pa-on-surface">{{ pendingTab.label }}</h2>
-            <p class="font-body-md text-body-md text-pa-on-surface-variant max-w-xl">
-              La API de plataforma expone únicamente el catálogo de tenants
-              (<code class="font-mono text-pa-primary">GET /admin/tenants</code>). Esta sección se mostrará
-              cuando exista su endpoint correspondiente.
-            </p>
-          </div>
-        } @else {
-          <!-- Top Metric Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
-            <div class="p-space-md bg-pa-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Antigüedad</span>
-                <div class="w-8 h-8 rounded-lg bg-pa-surface-container flex items-center justify-center text-pa-primary">
-                  <span class="material-symbols-outlined text-[18px]">event_upcoming</span>
-                </div>
-              </div>
-              <div class="mt-space-md">
-                <div class="flex items-baseline gap-space-xs">
-                  <span class="font-headline-lg text-headline-lg text-pa-on-surface">{{ ageInDays() }}</span>
-                  <span class="font-label-md text-label-md text-pa-on-surface-variant font-medium">días</span>
-                </div>
-                <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">{{ relativeTime(tenant.createdAt) }}</p>
-              </div>
+        @if (pendingStatus(); as next) {
+          <form class="card confirm" (ngSubmit)="confirmStatus()">
+            <h2>{{ next === 'suspended' ? 'Suspender ' + t.tradeName : 'Activar ' + t.tradeName }}</h2>
+            <p class="muted">{{ next === 'suspended'
+              ? 'El propietario y su equipo dejarán de poder entrar al panel en menos de un minuto. Sus datos se conservan.'
+              : 'El propietario y su equipo podrán volver a entrar al panel.' }}</p>
+            <div class="field">
+              <label for="reason">Motivo (queda en la auditoría)</label>
+              <textarea id="reason" class="input" name="reason" [(ngModel)]="reason" required minlength="3" maxlength="300" placeholder="Ej.: falta de pago, solicitud del propietario…"></textarea>
             </div>
-            <div class="p-space-md bg-pa-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Estado</span>
-                <div class="w-8 h-8 rounded-lg bg-pa-surface-container flex items-center justify-center text-pa-secondary">
-                  <span class="material-symbols-outlined text-[18px]">verified</span>
-                </div>
-              </div>
-              <div class="mt-space-md">
-                <div class="flex items-baseline gap-space-xs">
-                  <span class="font-title-md text-title-md text-pa-on-surface font-semibold">{{ statusLabel(tenant.status) }}</span>
-                </div>
-                <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">Ciclo de vida de la instancia</p>
-              </div>
+            @if (actionError(); as e) { <p class="err" role="alert">{{ e }}</p> }
+            <div class="confirm-actions">
+              <button type="button" class="btn" (click)="pendingStatus.set(null)">Cancelar</button>
+              <button type="submit" class="btn" [class.btn-danger]="next === 'suspended'" [class.btn-primary]="next === 'active'" [disabled]="saving() || reason.trim().length < 3">
+                {{ saving() ? 'Guardando…' : (next === 'suspended' ? 'Suspender negocio' : 'Activar negocio') }}
+              </button>
             </div>
-            <div class="p-space-md bg-pa-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">País</span>
-                <div class="w-8 h-8 rounded-lg bg-pa-surface-container flex items-center justify-center text-pa-primary">
-                  <span class="material-symbols-outlined text-[18px]">public</span>
-                </div>
-              </div>
-              <div class="mt-space-md">
-                <div class="flex items-baseline gap-space-xs">
-                  <span class="font-title-md text-title-md text-pa-on-surface font-semibold">{{ countryName(tenant.countryCode) }}</span>
-                </div>
-                <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">Código ISO: {{ tenant.countryCode }}</p>
-              </div>
-            </div>
-            <div class="p-space-md bg-pa-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Tipo de Negocio</span>
-                <div class="w-8 h-8 rounded-lg bg-pa-surface-container flex items-center justify-center text-pa-tertiary">
-                  <span class="material-symbols-outlined text-[18px]">category</span>
-                </div>
-              </div>
-              <div class="mt-space-md">
-                <div class="flex items-baseline gap-space-xs">
-                  <span class="font-title-md text-title-md text-pa-on-surface font-semibold">{{ businessTypeLabel(tenant.businessType) }}</span>
-                </div>
-                <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">Identificador: {{ tenant.slug }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main Content 2-Column Inspector Split (2/3 vs 1/3) -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
-            <div class="lg:col-span-8 flex flex-col gap-space-lg">
-              <!-- Datos Legales & Contacto -->
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm">
-                <div class="flex items-center justify-between pb-space-md">
-                  <div class="flex items-center gap-space-xs">
-                    <span class="material-symbols-outlined text-pa-primary text-[20px]">corporate_fare</span>
-                    <h2 class="font-headline-md text-headline-md text-pa-on-surface">Datos Legales &amp; Contacto Corporativo</h2>
-                  </div>
-                  <button
-                    type="button"
-                    disabled
-                    title="Edición de ficha: pendiente de endpoint en la API de plataforma"
-                    class="text-pa-primary font-label-md text-label-md font-semibold flex items-center gap-1 opacity-40 cursor-not-allowed"
-                  >
-                    <span class="material-symbols-outlined text-[16px]">edit</span>
-                    <span>Editar Ficha</span>
-                  </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-xs">
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant">Razón Social</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-semibold mt-1">{{ tenant.legalName }}</span>
-                    <span class="font-data-tabular text-data-tabular text-pa-on-surface-variant mt-0.5">Nombre comercial: {{ tenant.tradeName }}</span>
-                  </div>
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant">Contacto Registrado</span>
-                    <div class="flex items-center gap-space-sm mt-1">
-                      <div class="w-8 h-8 rounded-full bg-pa-secondary flex items-center justify-center text-pa-on-secondary font-label-md font-semibold">
-                        {{ initials(tenant.tradeName) }}
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="font-title-md text-title-md text-pa-on-surface font-semibold">{{ tenant.tradeName }}</span>
-                        <span class="font-body-sm text-body-sm text-pa-on-surface-variant">Propietario del tenant</span>
-                      </div>
-                    </div>
-                    <span class="font-data-tabular text-data-tabular text-pa-on-surface-variant mt-2">Teléfono: {{ tenant.phone || 'no registrado' }}</span>
-                  </div>
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant">Identificadores de Instancia</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-semibold mt-1 font-mono truncate">{{ tenant.slug }}</span>
-                    <span class="font-data-tabular text-data-tabular text-pa-on-surface-variant mt-0.5">UUID: {{ tenant.id }}</span>
-                  </div>
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant">Ubicación &amp; Registro</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-semibold mt-1">{{ countryName(tenant.countryCode) }}</span>
-                    <span class="font-body-sm text-body-sm text-pa-on-surface-variant mt-0.5">
-                      Alta en la plataforma: {{ tenant.createdAt | date: 'dd MMMM, yyyy' }}
-                    </span>
-                    <span class="font-label-sm text-label-sm text-pa-primary mt-space-xs">{{ ageInDays() }} días en la red</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Branding -->
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm">
-                <div class="flex items-center justify-between pb-space-md">
-                  <div class="flex items-center gap-space-xs">
-                    <span class="material-symbols-outlined text-pa-primary text-[20px]">palette</span>
-                    <h2 class="font-headline-md text-headline-md text-pa-on-surface">Branding &amp; Presencia en Canales</h2>
-                  </div>
-                  <span class="font-label-sm text-label-sm bg-pa-surface-container px-2.5 py-1 rounded-full text-pa-on-surface-variant font-medium">White-Label</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant mb-space-sm">Identidad Gráfica</span>
-                    <div class="h-28 w-full rounded-lg overflow-hidden relative shadow-sm mb-space-sm bg-pa-surface-container-high flex items-center justify-center">
-                      @if (tenant.branding?.logoUrl) {
-                        <img class="w-full h-full object-cover" [src]="tenant.branding?.logoUrl" [alt]="tenant.tradeName" />
-                      } @else {
-                        <span class="material-symbols-outlined text-[36px] text-pa-outline">image_not_supported</span>
-                      }
-                    </div>
-                    <div class="flex items-center justify-between text-body-sm">
-                      <span class="font-label-sm text-label-sm text-pa-on-surface-variant">Logo:</span>
-                      <span class="font-mono font-data-tabular text-data-tabular text-pa-on-surface">
-                        {{ tenant.branding?.logoUrl ? 'configurado' : 'no configurado' }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant mb-space-sm">Color Primario</span>
-                    <div class="h-28 w-full rounded-lg overflow-hidden relative shadow-sm mb-space-sm bg-pa-surface-container-high flex items-center justify-center">
-                      <span
-                        class="w-16 h-16 rounded-xl shadow-md"
-                        [style.background-color]="tenant.branding?.primaryColor || '#e4e2de'"
-                      ></span>
-                    </div>
-                    <div class="flex items-center justify-between text-body-sm">
-                      <span class="font-label-sm text-label-sm text-pa-on-surface-variant">Valor:</span>
-                      <span class="font-mono font-data-tabular text-data-tabular text-pa-on-surface">
-                        {{ tenant.branding?.primaryColor || '—' }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="flex flex-col p-space-md bg-pa-surface rounded-lg">
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant mb-space-sm">Canales</span>
-                    <div class="flex flex-col gap-space-sm flex-1 justify-center">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="material-symbols-outlined text-[18px] text-pa-primary">public</span>
-                          <span class="font-title-md text-title-md text-pa-on-surface">Reserva Pública</span>
-                        </div>
-                        <span class="w-2 h-2 rounded-full bg-pa-outline-variant"></span>
-                      </div>
-                      <p class="font-body-sm text-body-sm text-pa-on-surface-variant">
-                        La plataforma no expone el estado de integraciones por tenant.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Infraestructura -->
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-space-sm pb-space-md">
-                  <div class="flex items-center gap-space-xs">
-                    <span class="material-symbols-outlined text-pa-primary text-[20px]">dns</span>
-                    <div>
-                      <h2 class="font-headline-md text-headline-md text-pa-on-surface">Infraestructura &amp; Salud de Base de Datos</h2>
-                      <p class="font-body-sm text-body-sm text-pa-on-surface-variant">Instancia aislada dedicada a este tenant</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    (click)="store.refresh()"
-                    [disabled]="store.loading()"
-                    title="Refrescar métricas"
-                    class="p-1.5 rounded-lg bg-pa-surface-container hover:bg-pa-surface-container-high text-pa-on-surface-variant transition-colors"
-                  >
-                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="store.loading()">refresh</span>
-                  </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-space-sm mb-space-md">
-                  <div class="p-space-md bg-pa-surface rounded-lg flex flex-col">
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant uppercase font-semibold">Tenant ID</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-mono truncate mt-1">{{ tenant.id }}</span>
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant mt-1">Identificador en la plataforma</span>
-                  </div>
-                  <div class="p-space-md bg-pa-surface rounded-lg flex flex-col">
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant uppercase font-semibold">Subdominio</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-mono truncate mt-1">{{ tenant.slug }}</span>
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant mt-1">Host derivado del slug</span>
-                  </div>
-                  <div class="p-space-md bg-pa-surface rounded-lg flex flex-col">
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant uppercase font-semibold">Conexión API</span>
-                    <span class="font-title-md text-title-md font-semibold mt-1" [class.text-pa-primary]="!store.offline()" [class.text-pa-error]="store.offline()">
-                      {{ store.offline() ? 'Offline' : 'Conectada' }}
-                    </span>
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant mt-1">
-                      {{ store.lastSyncedAt() ? 'Sync ' + syncLabel() : 'Sin sincronizar' }}
-                    </span>
-                  </div>
-                  <div class="p-space-md bg-pa-surface rounded-lg flex flex-col">
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant uppercase font-semibold">Aislamiento</span>
-                    <span class="font-title-md text-title-md text-pa-on-surface font-semibold mt-1">1 tenant</span>
-                    <span class="font-label-sm text-label-sm text-pa-on-surface-variant mt-1">Instancia dedicada</span>
-                  </div>
-                </div>
-                <div class="p-space-md bg-pa-surface rounded-lg flex flex-wrap items-center justify-between gap-space-md">
-                  <div class="flex items-center gap-space-md">
-                    <div class="w-10 h-10 rounded-full bg-pa-surface-container-high flex items-center justify-center text-pa-primary">
-                      <span class="material-symbols-outlined text-[20px]">cloud_sync</span>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="font-title-md text-title-md text-pa-on-surface font-semibold">Métricas de base de datos no expuestas</span>
-                      <span class="font-body-sm text-body-sm text-pa-on-surface-variant">
-                        Tamaño en disco, pool de conexiones y backups requieren un endpoint dedicado por tenant.
-                      </span>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-space-xs">
-                    <button
-                      type="button"
-                      disabled
-                      title="Snapshot manual: pendiente de endpoint en la API de plataforma"
-                      class="px-space-md py-1.5 rounded-lg bg-pa-surface-container-high text-pa-on-surface font-label-md text-label-md opacity-40 cursor-not-allowed"
-                    >
-                      Ejecutar Snapshot Manual
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="lg:col-span-4 flex flex-col gap-space-lg">
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm">
-                <div class="flex items-center justify-between pb-space-sm">
-                  <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Estado de la Instancia</span>
-                  <span class="font-label-sm text-label-sm bg-pa-surface-container px-2.5 py-0.5 rounded-full font-semibold text-pa-on-surface-variant">
-                    {{ statusLabel(tenant.status) }}
-                  </span>
-                </div>
-                <div class="mt-space-xs">
-                  <h3 class="font-headline-md text-headline-md text-pa-on-surface">{{ tenant.tradeName }}</h3>
-                  <div class="flex items-baseline gap-1 mt-1">
-                    <span class="font-headline-lg text-headline-lg text-pa-primary">{{ ageInDays() }}</span>
-                    <span class="font-body-md text-body-md text-pa-on-surface-variant">días en la plataforma</span>
-                  </div>
-                  <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-1">
-                    Registrado el {{ tenant.createdAt | date: 'dd MMMM, yyyy' }} ({{ relativeTime(tenant.createdAt) }}).
-                  </p>
-                </div>
-                <div class="flex flex-col gap-space-xs mt-space-md p-space-md bg-pa-surface rounded-lg">
-                  <div class="flex items-center justify-between text-body-sm">
-                    <span class="text-pa-on-surface-variant">País:</span>
-                    <span class="font-semibold text-pa-on-surface">{{ countryName(tenant.countryCode) }}</span>
-                  </div>
-                  <div class="flex items-center justify-between text-body-sm">
-                    <span class="text-pa-on-surface-variant">Tipo:</span>
-                    <span class="font-semibold text-pa-on-surface">{{ businessTypeLabel(tenant.businessType) }}</span>
-                  </div>
-                  <div class="flex items-center justify-between text-body-sm">
-                    <span class="text-pa-on-surface-variant">Estado API:</span>
-                    <span class="inline-flex items-center gap-1 font-semibold" [class.text-pa-primary]="!store.offline()" [class.text-pa-error]="store.offline()">
-                      <span class="w-1.5 h-1.5 rounded-full" [class.bg-pa-primary]="!store.offline()" [class.bg-pa-error]="store.offline()"></span>
-                      {{ store.offline() ? 'No disponible' : 'Operativa' }}
-                    </span>
-                  </div>
-                </div>
-                <a
-                  routerLink="/platform-admin/negocios"
-                  class="w-full mt-space-md py-2 rounded-lg bg-pa-secondary text-pa-on-secondary hover:bg-pa-tertiary font-label-md text-label-md transition-all shadow-sm text-center"
-                >
-                  Volver al directorio
-                </a>
-              </div>
-
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm border border-dashed border-pa-outline-variant">
-                <div class="flex items-center justify-between pb-space-md">
-                  <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Suscripción &amp; Cuotas</span>
-                  <span class="material-symbols-outlined text-[18px] text-pa-on-surface-variant">data_usage</span>
-                </div>
-                <p class="font-body-md text-body-md text-pa-on-surface-variant">
-                  La API de plataforma no expone plan, MRR, límites de uso ni facturación por tenant.
-                  Esta sección se completará cuando exista su endpoint.
-                </p>
-              </div>
-
-              <div class="bg-pa-surface-container-lowest p-space-lg rounded-xl shadow-sm border border-dashed border-pa-outline-variant flex flex-col">
-                <div class="flex items-center justify-between pb-space-sm">
-                  <div class="flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[18px] text-pa-primary">history_toggle_off</span>
-                    <span class="font-label-sm text-label-sm uppercase tracking-wider text-pa-on-surface-variant font-semibold">Bitácora Reciente</span>
-                  </div>
-                </div>
-                <div class="relative pl-4 space-y-space-md mt-space-sm before:content-[''] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-pa-surface-container-high">
-                  <div class="relative flex flex-col gap-0.5">
-                    <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-pa-primary ring-4 ring-pa-surface-container-lowest"></div>
-                    <div class="flex items-center justify-between text-label-sm">
-                      <span class="font-semibold text-pa-on-surface">Tenant registrado</span>
-                      <span class="text-pa-on-surface-variant font-mono">{{ tenant.createdAt | date: 'dd MMM, HH:mm' }}</span>
-                    </div>
-                    <p class="font-body-sm text-body-sm text-pa-on-surface-variant">
-                      Alta de “{{ tenant.tradeName }}” en el catálogo multi-tenant.
-                    </p>
-                  </div>
-                  <div class="relative flex flex-col gap-0.5">
-                    <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-pa-surface-container-highest ring-4 ring-pa-surface-container-lowest"></div>
-                    <div class="flex items-center justify-between text-label-sm">
-                      <span class="font-semibold text-pa-on-surface">Última sincronización</span>
-                      <span class="text-pa-on-surface-variant font-mono">{{ syncLabel() }}</span>
-                    </div>
-                    <p class="font-body-sm text-body-sm text-pa-on-surface-variant">
-                      Consulta de la ficha desde la consola de Super Admin.
-                    </p>
-                  </div>
-                </div>
-                <p class="font-body-sm text-body-sm text-pa-on-surface-variant mt-space-md">
-                  El historial completo de auditoría requiere un endpoint dedicado.
-                </p>
-              </div>
-            </div>
-          </div>
+          </form>
         }
-      } @else if (store.loading()) {
-        <div class="flex flex-col gap-space-md pt-space-md">
-          <div class="h-6 w-64 rounded bg-pa-surface-container animate-pulse"></div>
-          <div class="h-32 rounded-xl bg-pa-surface-container animate-pulse"></div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
-            @for (card of [1, 2, 3, 4]; track card) {
-              <div class="h-28 rounded-xl bg-pa-surface-container animate-pulse"></div>
-            }
-          </div>
-        </div>
-      } @else {
-        <div class="bg-pa-surface-container-lowest rounded-xl p-space-xl flex flex-col items-center gap-space-sm text-center">
-          <span class="material-symbols-outlined text-[40px] text-pa-outline">domain_disabled</span>
-          <h1 class="font-headline-md text-headline-md text-pa-on-surface">Tenant no encontrado</h1>
-          <p class="font-body-md text-body-md text-pa-on-surface-variant max-w-xl">
-            @if (store.offline()) {
-              No hay conexión con la API de plataforma, por lo que no se puede resolver el tenant.
-            } @else {
-              El tenant <span class="font-mono text-pa-primary">{{ tenantId() }}</span> no está en los
-              {{ store.tenants().length }} registros cargados. La API expone un máximo de
-              {{ store.filters().limit }} instancias por consulta.
-            }
-          </p>
-          <div class="flex items-center gap-space-sm mt-space-sm">
-            <a
-              routerLink="/platform-admin/negocios"
-              class="bg-pa-surface-container hover:bg-pa-surface-container-high text-pa-on-surface px-space-md py-2 rounded-lg font-label-md text-label-md"
-            >
-              Volver al directorio
-            </a>
-            <button
-              type="button"
-              (click)="store.refresh()"
-              class="bg-pa-primary hover:bg-pa-primary-container text-pa-on-primary px-space-md py-2 rounded-lg font-label-md text-label-md"
-            >
-              Reintentar
+        @if (notice(); as n) { <div class="alert ok" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span class="grow">{{ n }}</span></div> }
+
+        <div class="tabs" role="tablist" aria-label="Secciones del negocio">
+          @for (tab of tabs; track tab.id) {
+            <button role="tab" class="tab" [class.on]="active() === tab.id" [attr.aria-selected]="active() === tab.id" (click)="active.set(tab.id)">
+              <span class="material-symbols-outlined" aria-hidden="true">{{ tab.icon }}</span>{{ tab.label }}
+              @if (tab.count !== undefined) { <b>{{ tab.count(t) }}</b> }
             </button>
-          </div>
+          }
         </div>
+
+        @switch (active()) {
+          @case ('resumen') {
+            <section class="kpis" aria-label="Uso del negocio">
+              @for (k of usageKpis(); track k.label) {
+                <article class="kpi">
+                  <div class="kpi-top"><span class="kpi-label">{{ k.label }}</span><span class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">{{ k.icon }}</span></span></div>
+                  <strong class="kpi-value">{{ k.value }}</strong>
+                  <p class="kpi-detail">{{ k.detail }}</p>
+                </article>
+              }
+            </section>
+            <div class="two">
+              <section class="card">
+                <h2>Datos del negocio</h2>
+                <dl class="facts">
+                  <div><dt>Nombre comercial</dt><dd>{{ t.tradeName }}</dd></div>
+                  <div><dt>Razón social</dt><dd>{{ t.legalName }}</dd></div>
+                  <div><dt>Slug</dt><dd>/{{ t.slug }}</dd></div>
+                  <div><dt>Tipo</dt><dd>{{ businessTypeLabel(t.businessType) }}</dd></div>
+                  <div><dt>Ubicación</dt><dd>{{ locationText() }}</dd></div>
+                  <div><dt>WhatsApp</dt><dd>{{ t.whatsapp || '—' }}</dd></div>
+                  <div><dt>Teléfono</dt><dd>{{ t.phone || '—' }}</dd></div>
+                  <div><dt>Moneda · Zona horaria</dt><dd>{{ t.currencyCode }} · {{ t.timezone }}</dd></div>
+                  <div><dt>Reservas online</dt><dd>{{ t.branding?.publicBookingEnabled ? 'Activadas' : 'Desactivadas' }}</dd></div>
+                </dl>
+              </section>
+              <section class="card">
+                <h2>Propietario</h2>
+                @if (t.owner) {
+                  <div class="ent owner"><span class="avatar">{{ initials(t.owner.name) }}</span><span><strong>{{ t.owner.name }}</strong><small>{{ t.owner.email }}</small></span></div>
+                  <a class="btn" [href]="'mailto:' + t.owner.email"><span class="material-symbols-outlined" aria-hidden="true">mail</span> Escribir al propietario</a>
+                } @else {
+                  <p class="muted">Este negocio no tiene propietario asignado.</p>
+                }
+                @if (t.branding?.description) { <h2 class="mt">Descripción</h2><p class="muted">{{ t.branding!.description }}</p> }
+                @if (socialLinks().length) {
+                  <h2 class="mt">Redes</h2>
+                  <ul class="social">@for (s of socialLinks(); track s.key) { <li><b>{{ s.key }}</b> {{ s.value }}</li> }</ul>
+                }
+              </section>
+            </div>
+          }
+          @case ('sedes') {
+            @if (!t.branches.length) {
+              <div class="empty"><span class="material-symbols-outlined" aria-hidden="true">location_off</span><strong>Sin sedes</strong><p>El negocio aún no tiene sedes creadas.</p></div>
+            } @else {
+              <div class="branches">
+                @for (b of t.branches; track b.id) {
+                  <article class="card">
+                    <div class="card-head">
+                      <div><h2>{{ b.name }}</h2><p>{{ b.code }}</p></div>
+                      <span class="chip" [attr.data-tone]="b.status">{{ b.status === 'active' ? 'Activa' : 'Inactiva' }}</span>
+                    </div>
+                    <p class="line"><span class="material-symbols-outlined" aria-hidden="true">location_on</span>{{ joinText(b.address, b.city) || 'Sin dirección' }}</p>
+                    <p class="line"><span class="material-symbols-outlined" aria-hidden="true">call</span>{{ b.phone || 'Sin teléfono' }}</p>
+                    <ul class="hours" aria-label="Horario">
+                      @for (d of hoursOf(b.operatingHours); track d.day) { <li [class.closed]="!d.value"><span>{{ d.day }}</span><b>{{ d.value || 'Cerrado' }}</b></li> }
+                    </ul>
+                  </article>
+                }
+              </div>
+            }
+          }
+          @case ('equipo') {
+            <div class="two">
+              <section class="card">
+                <h2>Accesos al panel</h2>
+                <p class="muted small">Cuentas con membresía en este negocio</p>
+                <ul class="people">
+                  @for (m of t.members; track m.email) {
+                    <li class="ent">
+                      <span class="avatar">{{ initials(m.name) }}</span>
+                      <span><strong>{{ m.name }}</strong><small>{{ m.email }} · último acceso {{ relativeTime(m.lastLoginAt) }}</small></span>
+                      <span class="role">{{ roleName(m.role) }}</span>
+                    </li>
+                  } @empty { <li class="muted">Sin cuentas asociadas.</li> }
+                </ul>
+              </section>
+              <section class="card">
+                <h2>Equipo de atención</h2>
+                <p class="muted small">Barberos y personal que aparece en la agenda</p>
+                <ul class="people">
+                  @for (s of t.staff; track s.id) {
+                    <li class="ent">
+                      <span class="avatar">{{ initials(s.displayName) }}</span>
+                      <span><strong>{{ s.displayName }}</strong><small>{{ s.branchName || 'Sin sede' }} · {{ s.isBookable ? 'Recibe reservas' : 'No recibe reservas' }}</small></span>
+                      <span class="chip" [attr.data-tone]="s.status === 'active' ? 'active' : 'inactive'">{{ s.status === 'active' ? 'Activo' : 'Inactivo' }}</span>
+                    </li>
+                  } @empty { <li class="muted">Sin personal registrado.</li> }
+                </ul>
+              </section>
+            </div>
+          }
+          @case ('auditoria') {
+            <section class="card">
+              <h2>Historial</h2>
+              <p class="muted small">Acciones de administración sobre este negocio</p>
+              @if (!t.audit.length) {
+                <p class="muted">Aún no hay eventos registrados.</p>
+              } @else {
+                <ol class="timeline">
+                  @for (e of t.audit; track e.id) {
+                    <li>
+                      <span class="dot" aria-hidden="true"></span>
+                      <div>
+                        <strong>{{ actionLabel(e.action) }}</strong>
+                        <small class="muted">{{ shortDate(e.createdAt) }} · {{ relativeTime(e.createdAt) }}{{ metaOf(e.metadata).actorEmail ? ' · por ' + metaOf(e.metadata).actorEmail : '' }}</small>
+                        @if (metaOf(e.metadata).reason) { <p>“{{ metaOf(e.metadata).reason }}”</p> }
+                      </div>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+          }
+        }
       }
     </div>
   `,
+  styles: [PA_STYLES, `
+    .back { align-items: center; border-radius: 8px; color: var(--muted); display: inline-flex; font-size: 14px; font-weight: 600; gap: 6px; text-decoration: none; }
+    .back:hover { color: var(--copper); }
+    .hero { align-items: center; background: linear-gradient(135deg, #17100c, #3a2416); border-radius: 22px; color: #f6eee4; display: flex; flex-wrap: wrap; gap: 18px; margin: 16px 0 18px; padding: clamp(18px, 3vw, 28px); }
+    .logo { align-items: center; background: rgba(224,154,104,.25); border-radius: 18px; color: #ffdbca; display: flex; flex: none; font: 800 24px 'Plus Jakarta Sans', sans-serif; height: 72px; justify-content: center; overflow: hidden; width: 72px; }
+    .logo img { height: 100%; object-fit: cover; width: 100%; }
+    .hero-text { flex: 1; min-width: 240px; }
+    .title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
+    .hero .sub { color: #d9cdc1; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .hero-actions .btn:not(.btn-primary):not(.btn-danger) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: #f6eee4; }
+    .confirm { border-color: #ecc3a6; margin-bottom: 16px; }
+    .confirm .muted { margin: 6px 0 14px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+    .tabs { border-bottom: 1px solid var(--line); display: flex; gap: 4px; margin-bottom: 18px; overflow-x: auto; }
+    .tab { align-items: center; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; display: inline-flex; flex: none; font: 600 15px 'Plus Jakarta Sans', sans-serif; gap: 6px; margin-bottom: -1px; min-height: 46px; padding: 0 14px; }
+    .tab b { background: #f1ece4; border-radius: 999px; color: var(--ink); font-size: 12px; padding: 1px 8px; }
+    .tab.on { border-bottom-color: var(--copper); color: var(--ink); }
+    .tab.on .material-symbols-outlined { color: var(--copper); }
+    .two { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .facts { display: grid; gap: 0; margin: 12px 0 0; }
+    .facts div { border-bottom: 1px solid #f0ebe3; display: flex; gap: 12px; justify-content: space-between; padding: 10px 0; }
+    .facts div:last-child { border-bottom: 0; }
+    .facts dt { color: var(--muted); font-size: 14px; }
+    .facts dd { font-weight: 600; margin: 0; text-align: right; }
+    .owner { margin: 14px 0; }
+    .mt { margin-top: 20px; }
+    .social { list-style: none; margin: 8px 0 0; padding: 0; }
+    .social li { padding: 4px 0; }
+    .social b { color: var(--muted); display: inline-block; min-width: 90px; text-transform: capitalize; }
+    .branches { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .line { align-items: center; color: var(--muted); display: flex; gap: 8px; margin: 6px 0; }
+    .hours { display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); list-style: none; margin: 14px 0 0; padding: 0; }
+    .hours li { background: var(--paper); border-radius: 10px; display: flex; font-size: 13px; justify-content: space-between; padding: 6px 10px; }
+    .hours li.closed { color: var(--muted-2); }
+    .hours b { font-variant-numeric: tabular-nums; }
+    .small { font-size: 14px; margin: 2px 0 12px; }
+    .people { display: grid; gap: 6px; list-style: none; margin: 0; padding: 0; }
+    .people li.ent { border-radius: 12px; padding: 8px; }
+    .people li.ent > span:nth-child(2) { flex: 1; min-width: 0; }
+    .role { background: var(--copper-soft); border-radius: 999px; color: #74361f; font-size: 12px; font-weight: 700; padding: 3px 10px; white-space: nowrap; }
+    .timeline { list-style: none; margin: 8px 0 0; padding: 0; }
+    .timeline li { display: flex; gap: 14px; padding: 10px 0; position: relative; }
+    .timeline li:not(:last-child)::after { background: var(--line); bottom: -10px; content: ''; left: 5px; position: absolute; top: 26px; width: 2px; }
+    .dot { background: var(--copper); border: 3px solid var(--copper-soft); border-radius: 50%; flex: none; height: 12px; margin-top: 5px; width: 12px; }
+    .timeline strong { display: block; }
+    .timeline small { display: block; font-size: 13px; }
+    .timeline p { background: var(--paper); border-radius: 10px; margin: 6px 0 0; padding: 8px 10px; }
+  `],
 })
 export class PlatformAdminTenantDetailComponent implements OnInit {
-  readonly store = inject(PlatformAdminStore)
   private route = inject(ActivatedRoute)
+  private api = inject(PlatformAdminApi)
+  private store = inject(PlatformAdminStore)
 
-  readonly tenantId = toSignal(this.route.paramMap.pipe(map((params) => params.get('id') ?? '')), {
-    initialValue: '',
-  })
+  readonly tenant = signal<TenantDetail | null>(null)
+  readonly loading = signal(true)
+  readonly error = signal<string | null>(null)
+  readonly active = signal<Tab>('resumen')
+  readonly pendingStatus = signal<'active' | 'suspended' | null>(null)
+  readonly saving = signal(false)
+  readonly actionError = signal<string | null>(null)
+  readonly notice = signal<string | null>(null)
+  reason = ''
 
-  readonly activeTab = signal('resumen')
-
-  readonly currentTenant = computed(() => this.store.tenantById(this.tenantId()))
-
-  readonly tabs: DetailTab[] = [
-    { key: 'resumen', label: '1. Resumen', icon: 'analytics', pending: false },
-    { key: 'sucursales', label: '2. Sucursales & Mapa', icon: 'location_on', pending: true },
-    { key: 'equipo', label: '3. Equipo & Roles', icon: 'group', pending: true },
-    { key: 'facturacion', label: '4. Facturación & Uso', icon: 'credit_card', pending: true },
-    { key: 'base-datos', label: '5. Base de Datos', icon: 'database', pending: true },
-    { key: 'auditoria', label: '6. Logs de Auditoría', icon: 'history', pending: true },
+  readonly tabs: { id: Tab; label: string; icon: string; count?: (t: TenantDetail) => number }[] = [
+    { id: 'resumen', label: 'Resumen', icon: 'insights' },
+    { id: 'sedes', label: 'Sedes', icon: 'location_on', count: (t) => t.branches.length },
+    { id: 'equipo', label: 'Equipo y accesos', icon: 'group', count: (t) => t.members.length + t.staff.length },
+    { id: 'auditoria', label: 'Auditoría', icon: 'history', count: (t) => t.audit.length },
   ]
 
-  readonly activePendingTab = computed(() =>
-    this.tabs.find((tab) => tab.key === this.activeTab() && tab.pending) ?? null
-  )
+  readonly usageKpis = computed(() => {
+    const u = this.tenant()?.usage
+    if (!u) return []
+    return [
+      { label: 'Citas (30 días)', value: String(u.appointments30d), detail: `${u.appointmentsTotal} en total · última ${relativeTime(u.lastAppointmentAt)}`, icon: 'event_available' },
+      { label: 'Ingresos (30 días)', value: formatMoney(u.revenue30d), detail: 'Citas completadas', icon: 'payments' },
+      { label: 'Clientes', value: String(u.customers), detail: 'Registrados en el negocio', icon: 'person' },
+      { label: 'Catálogo y equipo', value: `${u.services} · ${u.staff}`, detail: `servicios · personas activas · ${u.branches} sede${u.branches === 1 ? '' : 's'}`, icon: 'content_cut' },
+    ]
+  })
+
+  readonly locationText = computed(() => {
+    const t = this.tenant()
+    const b = t?.branches[0]
+    const l = t?.location
+    return [b?.address ?? l?.address, b?.city ?? l?.city].filter(Boolean).join(', ') || '—'
+  })
+
+  readonly socialLinks = computed(() => Object.entries(this.tenant()?.branding?.socialLinks ?? {}).map(([key, value]) => ({ key, value })))
+
+  readonly initials = initials
+  readonly businessTypeLabel = businessTypeLabel
+  readonly countryName = countryName
+  readonly relativeTime = relativeTime
+  readonly shortDate = shortDate
+  readonly statusLabel = statusLabel
 
   ngOnInit(): void {
-    this.store.load()
+    this.load()
   }
 
-  selectTab(tab: DetailTab): void {
-    this.activeTab.set(tab.key)
+  load(): void {
+    const id = this.route.snapshot.paramMap.get('id') ?? ''
+    this.loading.set(true)
+    this.error.set(null)
+    this.api.getTenant(id).subscribe({
+      next: (res) => {
+        this.tenant.set(res.data)
+        this.loading.set(false)
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'No se pudo cargar el negocio'))
+        this.loading.set(false)
+      },
+    })
   }
 
-  ageInDays(): number {
-    const tenant = this.currentTenant()
-    return tenant ? tenantAgeInDays(tenant) : 0
+  askStatus(status: 'active' | 'suspended'): void {
+    this.reason = ''
+    this.actionError.set(null)
+    this.notice.set(null)
+    this.pendingStatus.set(status)
   }
 
-  statusLabel(status: TenantStatus): string {
-    return TENANT_STATUS_LABELS[status]
+  confirmStatus(): void {
+    const t = this.tenant()
+    const next = this.pendingStatus()
+    if (!t || !next || this.reason.trim().length < 3) return
+    this.saving.set(true)
+    this.actionError.set(null)
+    this.api.setTenantStatus(t.id, next, this.reason.trim()).subscribe({
+      next: () => {
+        this.saving.set(false)
+        this.pendingStatus.set(null)
+        this.store.patchTenant(t.id, { status: next })
+        this.notice.set(next === 'suspended' ? 'Negocio suspendido. El cambio quedó en la auditoría.' : 'Negocio activado. El cambio quedó en la auditoría.')
+        this.load()
+      },
+      error: (err) => {
+        this.saving.set(false)
+        this.actionError.set(apiErrorMessage(err, 'No se pudo cambiar el estado'))
+      },
+    })
   }
 
-  syncLabel(): string {
-    const syncedAt = this.store.lastSyncedAt()
-    return syncedAt ? syncedAt.toLocaleTimeString() : '—'
+  hoursOf(hours: Record<string, string> | null): { day: string; value: string | null }[] {
+    return DAY_ORDER.map((d) => ({ day: DAY_LABEL[d], value: hours?.[d] ?? null }))
   }
 
-  initials = initials
-  relativeTime = relativeTime
-  countryName = countryName
-  businessTypeLabel = businessTypeLabel
-  statusChipClass = statusChipClass
-  statusDotClass = statusDotClass
+  joinText(...parts: (string | null | undefined)[]): string {
+    return parts.filter(Boolean).join(', ')
+  }
+
+  roleName(role: string): string {
+    return ROLE_NAMES[role] ?? role
+  }
+
+  actionLabel(action: string): string {
+    return AUDIT_ACTION_LABELS[action] ?? action
+  }
+
+  metaOf(raw: string | null): { reason?: string; actorEmail?: string } {
+    if (!raw) return {}
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
 }

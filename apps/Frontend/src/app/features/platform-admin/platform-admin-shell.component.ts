@@ -1,407 +1,137 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
-import { CommonModule } from '@angular/common'
-import { FormsModule } from '@angular/forms'
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
+import { filter } from 'rxjs'
 import { ROLE_LABELS, Role } from '@navaja/shared'
+import { AuthService } from '../../core/auth/auth.service'
 import { PlatformAdminStore } from './platform-admin.store'
+import { initials } from './platform-admin.view-helpers'
 
 interface NavItem {
   label: string
   icon: string
-  path?: string
-  pending?: boolean
+  path: string
+  exact: boolean
 }
 
 @Component({
   selector: 'app-platform-admin-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="platform-shell">
-      <aside class="sidebar" [class.open]="menuOpen()">
-        <div class="sidebar-header">
-          <div class="brand">
-            <div class="brand-icon">✂</div>
-            <div class="brand-text">
-              <p class="brand-name">BarberShop</p>
-              <p class="brand-sub">Management System</p>
-            </div>
-          </div>
-          <button class="close-menu" (click)="menuOpen.set(false)" aria-label="Cerrar menú"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+    <div class="shell">
+      <aside class="side" [class.open]="menuOpen()" aria-label="Menú de la consola">
+        <div class="glow" aria-hidden="true"></div>
+        <div class="side-top">
+          <a routerLink="/platform-admin" class="brand">
+            <span class="brand-mark" aria-hidden="true"><span class="material-symbols-outlined">content_cut</span></span>
+            <span class="brand-text">BarberShop<small>Consola SaaS</small></span>
+          </a>
+          <button class="icon-btn close" (click)="menuOpen.set(false)" aria-label="Cerrar menú"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
 
-        <nav class="sidebar-nav">
-          <div class="nav-section">
-            <div class="nav-section-title">Consola de Plataforma</div>
-            <div class="nav-group">
-              @for (item of primaryNav; track item.label) {
-                <a
-                  [routerLink]="item.path"
-                  routerLinkActive="active"
-                  [routerLinkActiveOptions]="{ exact: true }"
-                  class="nav-item"
-                >
-                  <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
-                  <span class="nav-label">{{ item.label }}</span>
-                </a>
+        <nav class="nav">
+          <p class="nav-title">Plataforma</p>
+          @for (item of nav; track item.path) {
+            <a class="nav-item" [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact }" #rla="routerLinkActive" [attr.aria-current]="rla.isActive ? 'page' : null">
+              <span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+              @if (item.path === '/platform-admin/negocios' && store.totalTenants() !== null) {
+                <span class="count">{{ store.totalTenants() }}</span>
               }
-            </div>
-          </div>
-
-          <div class="nav-section">
-            <div class="nav-section-title">Próximamente</div>
-            <div class="nav-group">
-              @for (item of pendingNav; track item.label) {
-                <span class="nav-item nav-item-pending" [title]="item.label">
-                  <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
-                  <span class="nav-label">{{ item.label }}</span>
-                  <span class="nav-badge">Pronto</span>
-                </span>
-              }
-            </div>
-          </div>
+            </a>
+          }
+          <a class="nav-cta" routerLink="/platform-admin/negocios/nuevo">
+            <span class="material-symbols-outlined" aria-hidden="true">add_business</span> Agregar negocio
+          </a>
         </nav>
 
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-avatar">{{ userInitials }}</div>
-            <div class="user-details">
-              <p class="user-name">{{ store.viewer()?.name || 'Plataforma' }}</p>
-              <p class="user-role">{{ roleLabel() }}</p>
-            </div>
+        <div class="side-foot">
+          <div class="me">
+            <span class="me-avatar" aria-hidden="true">{{ userInitials() }}</span>
+            <div class="me-text"><strong>{{ store.viewer()?.name || 'Administrador' }}</strong><small>{{ roleLabel() }}</small></div>
           </div>
+          <button class="icon-btn" (click)="onLogout()" aria-label="Cerrar sesión" title="Cerrar sesión"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button>
         </div>
       </aside>
 
-      @if (menuOpen()) {
-        <div class="overlay" (click)="menuOpen.set(false)"></div>
-      }
+      @if (menuOpen()) { <div class="overlay" (click)="menuOpen.set(false)" aria-hidden="true"></div> }
 
       <div class="main">
         <header class="topbar">
-          <button class="hamburger" (click)="menuOpen.set(true)" aria-label="Abrir menú"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
-          <div class="topbar-right">
-            <div class="admin-info">
-              <span class="admin-role">Administrador de Plataforma</span>
-            </div>
-            <div class="user-actions">
-              <div class="user-actions-info">
-                <span class="user-display-name">{{ store.viewer()?.name || 'Super Administrador' }}</span>
-                <span class="user-email">{{ store.viewer()?.email || 'admin@barbershop.local' }}</span>
-              </div>
-              <div class="user-actions-avatar">{{ userInitials }}</div>
-            </div>
-            <button class="logout-btn" (click)="onLogout()" title="Cerrar sesión">
-              <span class="material_symbols-outlined">logout</span>
-            </button>
-          </div>
+          <button class="icon-btn hamburger" (click)="menuOpen.set(true)" aria-label="Abrir menú"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
+          <span class="top-title">Consola de plataforma</span>
+          <span class="status" [class.off]="store.offline()">
+            <i aria-hidden="true"></i>{{ store.offline() ? 'API no disponible' : 'API conectada' }}
+          </span>
         </header>
-        <main class="content">
-          <router-outlet />
-        </main>
+        <main class="content"><router-outlet /></main>
       </div>
     </div>
   `,
   styles: [`
-    .platform-shell {
-      display: flex;
-      min-height: 100vh;
-      background: #fafaf8;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      color: #2d2d2d;
-    }
+    :host { display: block; }
+    .shell { background: #fbf7ef; color: #1c1c16; display: flex; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+    .material-symbols-outlined { font-size: 20px; line-height: 1; }
+    a:focus-visible, button:focus-visible { outline: 3px solid #e09a68; outline-offset: 2px; }
 
-    /* Sidebar */
-    .sidebar {
-      width: 264px;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #e5e7eb;
-      background: white;
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      z-index: 30;
-      transition: transform 0.3s ease;
-    }
+    .side { background: #17100c; bottom: 0; color: #f6eee4; display: flex; flex-direction: column; left: 0; overflow: hidden; position: fixed; top: 0; width: 272px; z-index: 40; transition: transform .3s ease; }
+    .glow { background: radial-gradient(320px 260px at 80% 0%, rgba(196,112,63,.35), transparent 70%); inset: 0; pointer-events: none; position: absolute; }
+    .side > *:not(.glow) { position: relative; }
+    .side-top { align-items: center; display: flex; justify-content: space-between; padding: 22px 18px 18px; }
+    .brand { align-items: center; color: inherit; display: flex; gap: 10px; text-decoration: none; }
+    .brand-mark { align-items: center; background: linear-gradient(135deg, #e09a68, #c4703f); border-radius: 10px; color: #17100c; display: flex; height: 38px; justify-content: center; width: 38px; }
+    .brand-text { display: flex; flex-direction: column; font: 700 20px/1 'Vollkorn', serif; }
+    .brand-text small { color: #e09a68; font: 700 11px/1.5 'Plus Jakarta Sans', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+
+    .nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 8px 12px; }
+    .nav-title { color: #a99a8c; font-size: 12px; font-weight: 700; letter-spacing: .14em; margin: 8px 10px; text-transform: uppercase; }
+    .nav-item { align-items: center; border-radius: 12px; color: #d9cdc1; display: flex; font-size: 15px; font-weight: 600; gap: 12px; min-height: 44px; padding: 0 12px; text-decoration: none; transition: background .2s, color .2s; }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+    .nav-item.active { background: rgba(224,154,104,.16); color: #ffdbca; }
+    .nav-item.active .material-symbols-outlined { color: #e09a68; }
+    .count { background: rgba(255,255,255,.1); border-radius: 999px; font-size: 12px; margin-left: auto; padding: 2px 8px; }
+    .nav-cta { align-items: center; border: 1px dashed rgba(224,154,104,.5); border-radius: 12px; color: #ffdbca; display: flex; font-size: 14px; font-weight: 700; gap: 10px; margin-top: 14px; min-height: 44px; padding: 0 12px; text-decoration: none; }
+    .nav-cta:hover { background: rgba(224,154,104,.12); }
+
+    .side-foot { align-items: center; border-top: 1px solid rgba(255,255,255,.08); display: flex; gap: 10px; padding: 16px 14px; }
+    .me { align-items: center; display: flex; flex: 1; gap: 10px; min-width: 0; }
+    .me-avatar { align-items: center; background: rgba(224,154,104,.2); border-radius: 50%; color: #ffdbca; display: flex; flex: none; font-size: 13px; font-weight: 800; height: 38px; justify-content: center; width: 38px; }
+    .me-text { min-width: 0; }
+    .me-text strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .me-text small { color: #b9ab9e; display: block; font-size: 12px; }
+    .icon-btn { align-items: center; background: none; border: 0; border-radius: 10px; color: inherit; cursor: pointer; display: flex; height: 40px; justify-content: center; width: 40px; }
+    .icon-btn:hover { background: rgba(255,255,255,.08); }
+    .close, .hamburger { display: none; }
+
+    .main { flex: 1; margin-left: 272px; min-width: 0; }
+    .topbar { align-items: center; background: rgba(251,247,239,.85); backdrop-filter: blur(10px); border-bottom: 1px solid #e6dccc; display: flex; gap: 12px; height: 60px; padding: 0 clamp(16px, 3vw, 32px); position: sticky; top: 0; z-index: 20; }
+    .top-title { color: #5e5149; font-size: 14px; font-weight: 600; }
+    .status { align-items: center; color: #146c43; display: inline-flex; font-size: 13px; font-weight: 700; gap: 6px; margin-left: auto; }
+    .status i { background: currentColor; border-radius: 50%; height: 8px; width: 8px; }
+    .status.off { color: #8c1d12; }
+    .overlay { background: rgba(0,0,0,.45); inset: 0; position: fixed; z-index: 30; }
+
     @media (max-width: 1023px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
+      .side { transform: translateX(-100%); }
+      .side.open { transform: none; }
+      .main { margin-left: 0; }
+      .close, .hamburger { display: flex; }
+      .hamburger { color: #2a1b12; }
+      .hamburger:hover { background: #f1ece4; }
     }
-
-    /* Sidebar Header */
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 16px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #b87333;
-      color: white;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .brand-name {
-      font-family: 'DM Serif Display', serif;
-      font-size: 18px;
-      color: #2d2d2d;
-    }
-    .brand-sub {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.22em;
-      color: #6b7280;
-      margin-top: 2px;
-    }
-    .close-menu {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 18px;
-      color: #6b7280;
-      cursor: pointer;
-    }
-    @media (max-width: 1023px) { .close-menu { display: block; } }
-
-    /* Nav */
-    .sidebar-nav {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 12px;
-    }
-    .nav-section { margin-bottom: 24px; }
-    .nav-section:last-child { margin-bottom: 0; }
-    .nav-section-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: #6f6760;
-      padding: 0 12px 8px;
-    }
-    .nav-group { display: flex; flex-direction: column; gap: 4px; }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      color: #6b7280;
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-    .nav-item:hover {
-      background: #f3f4f6;
-      color: #374151;
-    }
-    .nav-item.active {
-      background: rgba(184, 115, 51, 0.1);
-      color: #8c4029;
-      font-weight: 600;
-    }
-    .nav-icon {
-      font-size: 19px;
-      min-width: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .nav-label { flex: 1; }
-    .nav-badge {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      background: #e5e7eb;
-      color: #6b7280;
-      padding: 2px 8px;
-      border-radius: 12px;
-    }
-    .nav-item-pending {
-      cursor: not-allowed;
-    }
-
-    /* Footer */
-    .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid #e5e7eb;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      background: white;
-      border-radius: 12px;
-    }
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(184, 115, 51, 0.15);
-      color: #8c4029;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .user-details { flex: 1; min-width: 0; }
-    .user-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: #2d2d2d;
-    }
-    .user-role {
-      font-size: 11px;
-      color: #6b7280;
-    }
-
-    /* Overlay */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 20;
-    }
-    @media (min-width: 1024px) { .overlay { display: none; } }
-
-    /* Main Layout */
-    .main {
-      flex: 1;
-      margin-left: 264px;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (max-width: 1023px) { .main { margin-left: 0; } }
-
-    /* Topbar */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      padding: 0 24px;
-      border-bottom: 1px solid #e5e7eb;
-      background: white;
-    }
-    .hamburger {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 20px;
-      color: #2d2d2d;
-      cursor: pointer;
-    }
-    @media (max-width: 1023px) { .hamburger { display: block; } }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .admin-info {
-      display: flex;
-      align-items: center;
-    }
-    .admin-role {
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      background: #b87333;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-    }
-    .user-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .user-actions-info {
-      display: flex;
-      flex-direction: column;
-      text-align: right;
-    }
-    .user-display-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: #2d2d2d;
-    }
-    .user-email {
-      font-size: 11px;
-      color: #6f6760;
-    }
-    .user-actions-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #b87333;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .logout-btn {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f3f4f6;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #6b7280;
-      transition: all 0.2s ease;
-    }
-    .logout-btn:hover {
-      background: #e5e7eb;
-      color: #374151;
-    }
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-    }
-  `]
+    @media (prefers-reduced-motion: reduce) { .side { transition: none; } }
+  `],
 })
 export class PlatformAdminShellComponent implements OnInit {
-  menuOpen = signal(false)
+  readonly menuOpen = signal(false)
   readonly store = inject(PlatformAdminStore)
   private router = inject(Router)
+  private auth = inject(AuthService)
 
-  readonly primaryNav: NavItem[] = [
-    { label: 'Dashboard', icon: 'dashboard', path: '/platform-admin' },
-    { label: 'Negocios Registrados', icon: 'domain', path: '/platform-admin/negocios' },
-    { label: 'Clientes', icon: 'people', path: '/platform-admin/clientes' },
-    { label: 'Agregar Negocio', icon: 'add_circle', path: '/platform-admin/negocios/nuevo' },
-  ]
-
-  readonly pendingNav: NavItem[] = [
-    { label: 'Servicios', icon: 'category', pending: true },
-    { label: 'Citas Globales', icon: 'calendar_today', pending: true },
-    { label: 'Caja Central', icon: 'payments', pending: true },
-    { label: 'Detalle de Negocio', icon: 'business_center', pending: true },
-    { label: 'Jobs de Aprovisionamiento', icon: 'hourglass_empty', pending: true },
-    { label: 'Auditoría y Logs', icon: 'receipt_long', pending: true },
-    { label: 'Configuración', icon: 'settings', pending: true },
+  readonly nav: NavItem[] = [
+    { label: 'Resumen', icon: 'space_dashboard', path: '/platform-admin', exact: true },
+    { label: 'Negocios registrados', icon: 'storefront', path: '/platform-admin/negocios', exact: false },
+    { label: 'Propietarios', icon: 'groups', path: '/platform-admin/clientes', exact: false },
   ]
 
   readonly roleLabel = computed(() => {
@@ -409,23 +139,21 @@ export class PlatformAdminShellComponent implements OnInit {
     return role ? ROLE_LABELS[role] ?? role : 'Plataforma'
   })
 
-  get userInitials(): string {
-    const name = this.store.viewer()?.name || 'SA'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  readonly userInitials = computed(() => initials(this.store.viewer()?.name || 'Admin'))
+
+  constructor() {
+    // Close the mobile drawer after navigating.
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => this.menuOpen.set(false))
   }
 
   ngOnInit(): void {
     this.store.load()
   }
 
-  onSearch(term: string): void {
-    this.store.setSearch(term)
-    if (!this.router.url.endsWith('/negocios')) {
-      this.router.navigate(['/platform-admin/negocios'])
-    }
-  }
-
   onLogout(): void {
-    this.router.navigate(['/login'])
+    this.auth.logout().subscribe({
+      complete: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login']),
+    })
   }
 }

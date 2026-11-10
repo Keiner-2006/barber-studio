@@ -2,6 +2,7 @@ import { Component, OnDestroy } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { OnboardingStore } from '../onboarding.store'
+import { ONB_STYLES } from '../onboarding.ui'
 import { OnboardingApi } from '../onboarding.api'
 import { BusinessType } from '../onboarding.models'
 import { environment } from '../../../../environments/environment'
@@ -14,18 +15,18 @@ import { environment } from '../../../../environments/environment'
     <section class="step-card">
       <div class="step-header">
         <span class="step-badge">
-          <span class="material-symbols-outlined text-sm">badge</span>
-          Paso 2 de {{ store.totalSteps }} · Datos Fundamentales
+          <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+          Paso 2 de {{ store.totalSteps }} · Tu negocio
         </span>
-        <h2>Configura la identidad de tu barbería o estudio</h2>
-        <p>Elige cómo se verá tu negocio y personaliza el enlace de tu perfil público.</p>
+        <h2>¿Cómo se llama tu barbería?</h2>
+        <p>Así te encontrarán tus clientes. El enlace será tu página pública de reservas.</p>
       </div>
 
       <form (ngSubmit)="onContinue()" class="step-form">
     <div class="form-grid">
           <div class="form-group">
             <label for="tradeName">
-              Nombre Comercial del Atelier
+              Nombre comercial
               <span class="required">Requerido</span>
             </label>
             <div class="input-wrap">
@@ -44,7 +45,7 @@ import { environment } from '../../../../environments/environment'
 
           <div class="form-group">
             <label for="legalName">
-              Razón Social / Registro DIAN
+              Razón social
               <span class="required">Requerido</span>
             </label>
             <div class="input-wrap">
@@ -64,7 +65,7 @@ import { environment } from '../../../../environments/environment'
 
         <div class="form-group">
           <label for="countryCode">
-            País de Operación
+            País
             <span class="required">Requerido</span>
           </label>
           <div class="input-wrap">
@@ -76,7 +77,7 @@ import { environment } from '../../../../environments/environment'
               required
             >
               @for (country of countries; track country.code) {
-                <option [value]="country.code">{{ country.flag }} {{ country.name }}</option>
+                <option [value]="country.code">{{ country.name }}</option>
               }
             </select>
           </div>
@@ -85,7 +86,6 @@ import { environment } from '../../../../environments/environment'
 
         <div class="form-group slug-group">
           <label for="slug">
-            <span class="material-symbols-outlined text-sm">link</span>
             Enlace público de tu negocio
             <span class="required">Requerido</span>
           </label>
@@ -105,7 +105,7 @@ import { environment } from '../../../../environments/environment'
               aria-describedby="slug-info slug-status"
             />
             <span class="slug-status" id="slug-status" [class.slug-error]="store.slugAvailability() === 'taken' || store.slugAvailability() === 'invalid' || store.slugAvailability() === 'error'" *ngIf="business().slug">
-              <span class="material-symbols-outlined text-xs">
+              <span class="material-symbols-outlined" aria-hidden="true">
                 {{ store.slugAvailability() === 'available' ? 'check_circle' : store.slugAvailability() === 'checking' ? 'sync' : store.slugAvailability() === 'taken' || store.slugAvailability() === 'invalid' || store.slugAvailability() === 'error' ? 'error' : 'info' }}
               </span>
               {{ slugStatusText }}
@@ -120,8 +120,8 @@ import { environment } from '../../../../environments/environment'
         </div>
 
         <div class="form-group">
-          <label>Tipo de Negocio & Enfoque Operativo</label>
-          <div class="business-types">
+          <span class="field-label" id="type-label">Tipo de negocio</span>
+          <div class="business-types" role="group" aria-labelledby="type-label">
             @for (type of businessTypes; track type.value) {
               <button
                 type="button"
@@ -140,7 +140,7 @@ import { environment } from '../../../../environments/environment'
 
         <div class="form-group">
           <label for="bio">
-            Descripción y Manifiesto de Marca
+            Descripción
             <span class="char-count">{{ business().description.length }} / 320</span>
           </label>
           <textarea
@@ -151,67 +151,30 @@ import { environment } from '../../../../environments/environment'
             rows="3"
             maxlength="320"
           ></textarea>
-          <span class="hint">Se mostrará en la cabecera de tu página pública y resúmenes de Google Business.</span>
+          <span class="hint">Aparece en tu página pública. Cuenta qué te hace distinto.</span>
         </div>
       </form>
     </section>
   `,
-  styles: [`
-    .step-card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 3px 20px #4a2e1b0d; }
-    .step-header { margin-bottom: 28px; }
-    .step-badge { display: inline-flex; align-items: center; gap: 6px; color: #944928; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-    .step-header h2 { color: #412311; font: 700 28px/1.1 'Vollkorn', serif; margin: 8px 0; }
-    .step-header p { color: #50443e; font-size: 14px; margin: 0; }
-    .step-form { display: flex; flex-direction: column; gap: 20px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { color: #412311; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: space-between; }
-    .required { color: #944928; font-size: 12px; font-weight: 600; }
-    .optional { color: #50443e; font-size: 12px; font-weight: 400; }
-    .input-wrap { display: flex; align-items: center; position: relative; }
-    .input-wrap .material-symbols-outlined { position: absolute; left: 12px; color: #50443e; font-size: 18px; user-select: none; }
-    .input-wrap input { width: 100%; padding: 12px 14px 12px 38px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-    .input-wrap input:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
-    .hint { font-size: 11px; color: #50443e; }
-    .slug-group { background: #f5f0e8; border-radius: 8px; padding: 16px; }
-    .slug-input { background: white; border: 1px solid #e6e2d9; border-radius: 8px; overflow: hidden; }
-    .slug-input .material-symbols-outlined { position: static; margin: 0; }
-    .slug-prefix { display: flex; align-items: center; gap: 6px; background: #f5f0e8; padding: 12px; font-size: 13px; color: #50443e; white-space: nowrap; border-right: 1px solid #e6e2d9; }
-    .slug-input input { flex: 1; padding: 12px; border: none; font-size: 14px; font-weight: 700; color: #944928; }
-    .slug-input input:focus { outline: none; box-shadow: none; }
-    .slug-status { display: flex; align-items: center; gap: 4px; color: #4D7C5D; font-size: 12px; font-weight: 600; padding-right: 12px; white-space: nowrap; }
-    .slug-status.slug-error { color: #b42318; }
-    .slug-info { display: flex; justify-content: space-between; font-size: 11px; color: #50443e; }
-    .slug-preview { color: #944928; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
-    .business-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .type-card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 8px; background: #f5f0e8; cursor: pointer; transition: all .2s; border: 2px solid transparent; font: inherit; text-align: left; color: inherit; width: 100%; }
-    .type-card:hover { background: #e6e2d9; }
-    .type-card:focus-visible { outline: 2px solid #944928; outline-offset: 2px; }
-    .type-card.selected { border-color: #944928; background: #fdf9f0; }
-    .type-card .material-symbols-outlined { color: #944928; font-size: 24px; }
-    .type-title { font-weight: 700; color: #412311; font-size: 14px; }
-    .type-desc { font-size: 11px; color: #50443e; }
-    textarea { width: 100%; padding: 12px 14px; border: 1px solid #e6e2d9; border-radius: 8px; font-size: 14px; resize: none; box-sizing: border-box; }
-    textarea:focus { outline: none; border-color: #944928; box-shadow: 0 0 0 3px #94492822; }
-    .char-count { font-size: 11px; color: #50443e; font-weight: 400; }
-    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .business-types { grid-template-columns: 1fr 1fr; } }
-    .input-wrap select {
-      width: 100%;
-      padding: 12px 14px 12px 38px;
-      border: 1px solid #e6e2d9;
-      border-radius: 8px;
-      font-size: 14px;
-      background: white;
-      cursor: pointer;
-      box-sizing: border-box;
-      appearance: none;
-    }
-    .input-wrap select:focus {
-      outline: none;
-      border-color: #944928;
-      box-shadow: 0 0 0 3px #94492822;
-    }
+  styles: [ONB_STYLES, `
+    .slug-group { background: var(--paper); border-radius: 18px; padding: 18px; }
+    .slug-input input { color: var(--copper); font-weight: 700; padding-left: 12px; }
+    .slug-status { align-items: center; color: var(--green); display: flex; flex: none; font-size: 13px; font-weight: 700; gap: 4px; padding: 0 12px; white-space: nowrap; }
+    .slug-status .material-symbols-outlined { font-size: 18px; }
+    .slug-status.slug-error { color: var(--red); }
+    .slug-info { color: var(--muted-2); font-size: 13px; }
+    .slug-preview { color: var(--copper); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+    .business-types { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+    .type-card { background: #fff; border: 1.5px solid var(--line); border-radius: 16px; color: inherit; cursor: pointer; display: flex; flex-direction: column; font: inherit; gap: 6px; padding: 16px; text-align: left; transition: border-color .2s, box-shadow .2s, transform .2s; width: 100%; }
+    .type-card:hover { border-color: #d8c4ae; transform: translateY(-1px); }
+    .type-card.selected { background: var(--copper-soft); border-color: #c4703f; box-shadow: 0 0 0 3px rgba(196,112,63,.15); }
+    .type-card .material-symbols-outlined { color: var(--copper); font-size: 26px; }
+    .type-title { color: var(--ink); font-size: 15px; font-weight: 700; }
+    .type-desc { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .char-count { color: var(--muted-2); font-size: 13px; font-weight: 600; }
+    @media (max-width: 900px) { .business-types { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 480px) { .business-types { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { .type-card { transition: none; } }
   `],
 })
 export class OnboardingStepIdentityComponent implements OnDestroy {

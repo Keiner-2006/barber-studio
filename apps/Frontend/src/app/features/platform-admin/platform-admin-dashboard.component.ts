@@ -1,298 +1,189 @@
 import { Component, OnInit, computed, inject } from '@angular/core'
-import { CommonModule } from '@angular/common'
-import { RouterLink } from '@angular/router'
+import { Router, RouterLink } from '@angular/router'
 import { PlatformAdminStore } from './platform-admin.store'
-import {
-  TENANT_STATUS_LABELS,
-  TenantStatus,
-} from './platform-admin.models'
-import {
-  businessTypeLabel,
-  countryName,
-  relativeTime,
-  statusChipClass,
-  statusDotClass,
-} from './platform-admin.view-helpers'
+import { PA_STYLES } from './platform-admin.ui'
+import { businessTypeLabel, countryName, initials, relativeTime, statusLabel } from './platform-admin.view-helpers'
 
 @Component({
   selector: 'app-platform-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   template: `
-    <div class="dashboard">
-      <div class="dashboard-header">
+    <div class="pa">
+      <header class="head">
         <div>
-          <p class="greeting-label">Consola de Administración</p>
-          <h1 class="greeting">BarberShop Management System<span class="accent">.</span></h1>
-          <p class="subtitle">Panel de control de la plataforma multi-tenant</p>
+          <p class="eyebrow">{{ today }}</p>
+          <h1>Hola{{ firstName() ? ', ' + firstName() : '' }}<em>.</em></h1>
+          <p class="sub">Así va la plataforma: negocios registrados, su estado y la actividad reciente.</p>
         </div>
-        <button class="primary-button" (click)="store.refresh()" [disabled]="store.loading()">
-          <span *ngIf="!store.loading(); else loadingSpinner" class="material-symbols-outlined" style="font-size:16px">sync</span>
-          <ng-template #loadingSpinner><span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite">sync</span></ng-template>
-          {{ store.loading() ? 'Sincronizando...' : 'Actualizar Datos' }}
-        </button>
-      </div>
+        <div class="actions">
+          <button class="btn" (click)="store.refresh()" [disabled]="store.loading()">
+            <span class="material-symbols-outlined" aria-hidden="true">refresh</span> Actualizar
+          </button>
+          <a class="btn btn-primary" routerLink="/platform-admin/negocios/nuevo">
+            <span class="material-symbols-outlined" aria-hidden="true">add_business</span> Agregar negocio
+          </a>
+        </div>
+      </header>
 
-      @if (store.error(); as message) {
-        <div class="error-banner">
-          <span class="material-symbols-outlined">error</span>
-          {{ message }}
-          <button class="dismiss-btn" (click)="store.clearError()" aria-label="Cerrar aviso"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      @if (store.error(); as error) {
+        <div class="alert error" role="alert">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span><span class="grow">{{ error }}</span>
+          <button (click)="store.clearError()" aria-label="Cerrar aviso"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
       }
 
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Negocios Registrados</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">storefront</span></div>
-          </div>
-          <div class="kpi-value">{{ store.totalNegocios() ?? '—' }}</div>
-          <div class="kpi-detail">{{ store.loading() ? 'Cargando...' : (store.offline() ? 'Sin conexión' : store.negocios().length + ' registros') }}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Activos</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">check_circle</span></div>
-          </div>
-          <div class="kpi-value">{{ store.metrics().activeNegocios }}</div>
-           <div class="kpi-trend positive">
-            {{ ((store.metrics().activeRatio * 100) | number:'1.0-0') }}% activos
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">En Provisioning</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">autorenew</span></div>
-          </div>
-          <div class="kpi-value">{{ store.metrics().provisioningNegocios }}</div>
-          <div class="kpi-detail">Cola de aprovisionamiento activa</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Suspendidos</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">warning</span></div>
-          </div>
-          <div class="kpi-value">{{ store.metrics().suspendedNegocios }}</div>
-          <div class="kpi-trend negative">Requiere atención</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Países</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">public</span></div>
-          </div>
-          <div class="kpi-value">{{ store.countryDistribution().length }}</div>
-          <div class="kpi-detail">Cobertura geográfica</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Último Sync</span>
-            <div class="kpi-icon"><span class="material-symbols-outlined">cloud_sync</span></div>
-          </div>
-          <div class="kpi-value" style="font-size:18px">
-            {{ store.lastSyncedAt() ? (store.lastSyncedAt() | date:'HH:mm:ss') : '—' }}
-          </div>
-          <div class="kpi-detail">{{ store.offline() ? 'API offline' : 'Conectado' }}</div>
-        </div>
-      </div>
+      <section class="kpis" aria-label="Indicadores">
+        @for (k of kpis(); track k.label) {
+          <article class="kpi">
+            <div class="kpi-top"><span class="kpi-label">{{ k.label }}</span><span class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">{{ k.icon }}</span></span></div>
+            @if (store.loading() && store.totalTenants() === null) { <span class="sk" style="height:34px;width:50%"></span> }
+            @else { <strong class="kpi-value">{{ k.value }}</strong> }
+            <p class="kpi-detail">{{ k.detail }}</p>
+          </article>
+        }
+      </section>
 
-      <div class="content-grid">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3>Distribución por Estado</h3>
-              <p>Conteos reales del servidor</p>
-            </div>
+      <div class="grid">
+        <section class="card">
+          <div class="card-head">
+            <div><h2>Negocios recientes</h2><p>Últimos registros en la plataforma</p></div>
+            <a class="link" routerLink="/platform-admin/negocios">Ver todos <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
           </div>
-          <div class="card-body">
-            @if (store.loading()) {
-              <div class="loading">Cargando...</div>
-            } @else if (store.totalTenants() === 0 || store.totalTenants() === null) {
-              <div class="empty-state">
-                <span class="material-symbols-outlined" style="font-size:36px">search_off</span>
-                <p>Sin datos de plataforma para graficar.</p>
-              </div>
-            } @else {
-              <div class="status-bars">
-                @for (slice of store.statusDistribution(); track slice.status) {
-                  <div class="status-bar-row">
-                    <div class="status-bar-info">
-                      <span class="status-bar-label">{{ slice.label }}</span>
-                      <span class="status-bar-count">{{ slice.count }} ({{ (slice.ratio * 100) | number:'1.0-1' }}%)</span>
-                    </div>
-                    <div class="status-bar-track">
-                      <div class="status-bar-fill" [class]="slice.barClass" [style.width.%]="slice.ratio * 100"></div>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3>Pipeline de Provisioning</h3>
-              <p>Tenants en curso</p>
-            </div>
-            <span class="badge-pending">{{ store.provisioningQueue().length }} activos</span>
-          </div>
-          <div class="card-body">
-            @if (store.provisioningQueue().length === 0) {
-              <div class="empty-state">
-                <p>No hay aprovisionamientos en curso</p>
-              </div>
-            } @else {
-              <div class="provisioning-list">
-                @for (tenant of store.provisioningQueue(); track tenant.id) {
-                  <div class="provisioning-item">
-                    <div class="provisioning-icon"><span class="material-symbols-outlined">sync</span></div>
-                    <div class="provisioning-info">
-                      <span class="provisioning-name">{{ tenant.tradeName }}</span>
-                      <span class="provisioning-meta">{{ tenant.slug }} · {{ relativeTime(tenant.createdAt) }}</span>
-                    </div>
-                    <span class="badge-pending">Provisioning</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h3>Negocios Recientes</h3>
-            <p>Los últimos estudios registrados en la plataforma</p>
-          </div>
-          <a routerLink="/platform-admin/negocios" class="link-button">Ver todos →</a>
-        </div>
-        <div class="card-body" style="padding:0">
-          @if (store.recentNegocios().length === 0) {
-            <div class="empty-state">
-              <p>Sin negocios registrados</p>
+          @if (store.loading() && !store.tenants().length) {
+            @for (i of [1, 2, 3]; track i) { <span class="sk" style="height:58px;margin-bottom:8px"></span> }
+          } @else if (!store.recentTenants().length) {
+            <div class="empty">
+              <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+              <strong>Aún no hay negocios</strong>
+              <p>Cuando una barbería se inscriba aparecerá aquí.</p>
             </div>
           } @else {
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Negocio</th>
-                  <th>Dueño</th>
-                  <th>Ubicación</th>
-                  <th>Tipo</th>
-                  <th>Estado</th>
-                  <th>Registro</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (negocio of store.recentNegocios(); track negocio.id; let i = $index) {
-                  <tr>
-                    <td>
-                      <div class="tenant-name">
-                        <span class="tenant-initial" [class]="i === 0 ? 'primary' : ''">{{ i + 1 }}</span>
-                        <div>
-                          <span class="tenant-title">{{ negocio.tradeName }}</span>
-                          <span class="tenant-slug">{{ negocio.slug }}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div *ngIf="negocio.owner; else noOwner" class="tenant-owner">
-                        <span class="tenant-owner-name">{{ negocio.owner.name }}</span>
-                        <span class="tenant-owner-email">{{ negocio.owner.email }}</span>
-                      </div>
-                      <ng-template #noOwner><span class="text-pa-on-surface-variant">—</span></ng-template>
-                    </td>
-                    <td>{{ countryName(negocio.countryCode) }}</td>
-                    <td>{{ businessTypeLabel(negocio.businessType) }}</td>
-                    <td><span class="status-badge" [class]="statusChipClass(negocio.status)">{{ negocio.status }}</span></td>
-                    <td class="date-cell">{{ negocio.createdAt | date:'dd MMM yyyy' }}</td>
-                  </tr>
+            <ul class="list">
+              @for (t of store.recentTenants(); track t.id) {
+                <li>
+                  <button class="row" (click)="open(t.id)">
+                    <span class="ent">
+                      <span class="avatar" [style.background]="t.branding?.primaryColor || null" [class.has-color]="!!t.branding?.primaryColor">
+                        @if (t.branding?.logoUrl) { <img [src]="t.branding!.logoUrl" alt="" /> } @else { {{ initials(t.tradeName) }} }
+                      </span>
+                      <span><strong>{{ t.tradeName }}</strong><small>{{ businessTypeLabel(t.businessType) }} · {{ t.city || countryName(t.countryCode) }}</small></span>
+                    </span>
+                    <span class="row-end">
+                      <span class="chip" [attr.data-tone]="t.status">{{ statusLabel(t.status) }}</span>
+                      <small class="muted">{{ relativeTime(t.createdAt) }}</small>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <div class="side">
+          <section class="card">
+            <div class="card-head"><div><h2>Estado de los negocios</h2><p>{{ store.totalTenants() ?? 0 }} en total</p></div></div>
+            <ul class="bars">
+              @for (s of store.statusDistribution(); track s.status) {
+                @if (s.count > 0 || s.status === 'active' || s.status === 'suspended') {
+                  <li>
+                    <div class="bar-meta"><span class="chip" [attr.data-tone]="s.status">{{ s.label }}</span><b>{{ s.count }}</b></div>
+                    <div class="track"><div class="fill" [attr.data-tone]="s.status" [style.width.%]="s.ratio * 100"></div></div>
+                  </li>
                 }
-              </tbody>
-            </table>
+              }
+            </ul>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><div><h2>Por país</h2><p>Dónde están los negocios</p></div></div>
+            @if (!store.countryDistribution().length) {
+              <p class="muted" style="margin:0">Sin datos todavía.</p>
+            } @else {
+              <ul class="bars">
+                @for (c of store.countryDistribution(); track c.code) {
+                  <li>
+                    <div class="bar-meta"><span>{{ countryName(c.code) }}</span><b>{{ c.count }}</b></div>
+                    <div class="track"><div class="fill" [style.width.%]="c.ratio * 100"></div></div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          @if (store.suspendedTenants().length) {
+            <section class="card attention">
+              <div class="card-head"><div><h2>Requieren atención</h2><p>Negocios suspendidos</p></div></div>
+              <ul class="list compact">
+                @for (t of store.suspendedTenants(); track t.id) {
+                  <li><a class="mini" [routerLink]="['/platform-admin/negocios', t.id]">{{ t.tradeName }} <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></a></li>
+                }
+              </ul>
+            </section>
           }
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-    .dashboard { padding: 32px; max-width: 1400px; margin: 0 auto; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
-    .greeting-label { font-size: 13px; color: #574238; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .greeting { font-family: 'DM Serif Display', serif; font-size: 36px; color: #1b1c1a; margin: 0; }
-    .accent { color: #8c4029; }
-    .subtitle { font-size: 14px; color: #574238; margin-top: 8px; }
-    .primary-button { padding: 12px 20px; background: #b87333; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-    .primary-button:hover { background: #a06028; }
-    .primary-button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error-banner { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin-bottom: 24px; color: #dc2626; font-size: 14px; }
-    .dismiss-btn { margin-left: auto; background: none; border: none; color: #dc2626; cursor: pointer; font-size: 16px; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
-    .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .kpi-label { font-size: 13px; color: #574238; font-weight: 500; }
-    .kpi-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 8px; color: #8c4029; }
-    .kpi-icon .material-symbols-outlined { font-size: 18px; }
-    .kpi-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: #1b1c1a; }
-    .kpi-trend { font-size: 12px; margin-top: 4px; font-weight: 500; }
-    .kpi-trend.positive { color: #22c55e; }
-    .kpi-trend.negative { color: #dc2626; }
-    .kpi-detail { font-size: 12px; color: #574238; margin-top: 4px; }
-    .content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 24px; }
-    @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
-    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb; }
-    .card-header h3 { font-family: 'DM Serif Display', serif; font-size: 16px; color: #1b1c1a; margin: 0 0 4px; }
-    .card-header p { font-size: 12px; color: #574238; margin: 0; }
-    .card-body { padding: 20px; }
-    .link-button { font-size: 13px; color: #8c4029; text-decoration: none; font-weight: 500; }
-    .link-button:hover { text-decoration: underline; }
-    .status-bars { display: flex; flex-direction: column; gap: 16px; }
-    .status-bar-row { display: flex; flex-direction: column; gap: 6px; }
-    .status-bar-info { display: flex; justify-content: space-between; align-items: center; }
-    .status-bar-label { font-size: 13px; color: #1b1c1a; font-weight: 500; }
-    .status-bar-count { font-size: 12px; color: #574238; font-family: 'Plus Jakarta Sans', monospace; }
-    .status-bar-track { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
-    .status-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
-    .badge-pending { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #fef3c7; color: #92400e; font-weight: 600; }
-    .loading { padding: 40px; text-align: center; color: #574238; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; color: #574238; gap: 12px; }
-    .empty-state p { font-size: 14px; margin: 0; }
-    .provisioning-list { display: flex; flex-direction: column; gap: 12px; }
-    .provisioning-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fafaf8; border-radius: 8px; }
-    .provisioning-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #8c4029; }
-    .provisioning-info { flex: 1; display: flex; flex-direction: column; }
-    .provisioning-name { font-size: 13px; font-weight: 500; color: #1b1c1a; }
-    .provisioning-meta { font-size: 11px; color: #574238; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    .data-table th { background: #f9fafb; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #574238; }
-    .data-table td { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #1b1c1a; }
-    .data-table tbody tr:last-child td { border-bottom: none; }
-    .data-table tbody tr:hover { background: #fafaf8; }
-    .tenant-name { display: flex; align-items: center; gap: 12px; }
-    .tenant-initial { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; background: #b87333; }
-    .tenant-initial:not(.primary) { background: #e5e7eb; color: #6b7280; }
-    .tenant-title { font-weight: 500; color: #1b1c1a; display: block; }
-    .tenant-slug { font-size: 11px; color: #574238; font-family: monospace; }
-    .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
-    .date-cell { font-size: 12px; color: #574238; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  `]
+  styles: [PA_STYLES, `
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+    .side { align-content: start; display: grid; gap: 20px; }
+    .link { align-items: center; color: var(--copper); display: inline-flex; flex: none; font-size: 14px; font-weight: 700; gap: 4px; text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+    .list { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+    .row { align-items: center; background: none; border: 0; border-radius: 12px; color: inherit; cursor: pointer; display: flex; font: inherit; gap: 12px; justify-content: space-between; padding: 10px; text-align: left; width: 100%; }
+    .row:hover { background: #fcf9f4; }
+    .row .ent > span:last-child { min-width: 0; }
+    .row-end { align-items: flex-end; display: flex; flex: none; flex-direction: column; gap: 4px; }
+    .row-end small { font-size: 12px; }
+    .avatar.has-color { color: #fff; }
+    .bars { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+    .bar-meta { align-items: center; display: flex; font-size: 14px; justify-content: space-between; margin-bottom: 6px; }
+    .bar-meta b { font-variant-numeric: tabular-nums; }
+    .track { background: #f1ece4; border-radius: 4px; height: 10px; overflow: hidden; }
+    .fill { background: var(--copper); border-radius: 0 4px 4px 0; height: 100%; min-width: 2px; transition: width .4s ease; }
+    .fill[data-tone='active'] { background: #1f8a57; }
+    .fill[data-tone='provisioning'] { background: #c98500; }
+    .fill[data-tone='suspended'] { background: #c0392b; }
+    .fill[data-tone='deleting'], .fill[data-tone='deleted'] { background: #8a837b; }
+    .attention { border-color: #f2bdb8; }
+    .mini { align-items: center; border-radius: 10px; display: flex; font-weight: 600; justify-content: space-between; padding: 8px 10px; text-decoration: none; }
+    .mini:hover { background: var(--red-bg); }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+  `],
 })
 export class PlatformAdminDashboardComponent implements OnInit {
   readonly store = inject(PlatformAdminStore)
+  private router = inject(Router)
+
+  readonly today = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  readonly firstName = computed(() => this.store.viewer()?.name?.split(' ')[0] ?? '')
+
+  readonly kpis = computed(() => {
+    const counts = this.store.countsByStatus()
+    const total = this.store.totalTenants() ?? 0
+    const active = counts.active ?? 0
+    return [
+      { label: 'Negocios registrados', value: String(total), detail: `${this.store.countryDistribution().length || 0} países`, icon: 'storefront' },
+      { label: 'Activos', value: String(active), detail: total ? `${Math.round((active / total) * 100)}% del total` : 'Sin negocios aún', icon: 'verified' },
+      { label: 'Nuevos (30 días)', value: String(this.store.newLast30d()), detail: 'Inscritos el último mes', icon: 'trending_up' },
+      { label: 'Suspendidos', value: String(counts.suspended ?? 0), detail: 'Sin acceso al panel', icon: 'block' },
+    ]
+  })
+
+  readonly initials = initials
+  readonly businessTypeLabel = businessTypeLabel
+  readonly countryName = countryName
+  readonly relativeTime = relativeTime
+  readonly statusLabel = statusLabel
 
   ngOnInit(): void {
     this.store.load()
   }
 
-  relativeTime = relativeTime
-  statusChipClass = statusChipClass
-  statusDotClass = statusDotClass
-  businessTypeLabel = businessTypeLabel
-  countryName = countryName
+  open(id: string): void {
+    this.router.navigate(['/platform-admin/negocios', id])
+  }
 }
