@@ -49,3 +49,8 @@ __v0_jsx-dev-runtime.ts
 .v0-trash/
 .vercel/
 stitch_barbershop_landing_and_login/
+
+# Local AI tooling and generated graphs
+.claude/
+graphify-out/
+apps/graphify-out/
