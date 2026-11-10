@@ -9,6 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { TenantContextService } from '../../shared/tenancy/tenant-context.service';
 import { RequestContextService } from '../../shared/tenancy/request-context.service';
 import { RoleResolverService, RoleCategory } from '../../shared/auth/role-resolver.service';
+import { AppError } from '../../shared/errors/app-error';
 import { IS_PUBLIC_KEY, PUBLIC_ROUTE_KEY } from '../decorators/public.decorator';
 import { EXPECTED_FLOW_KEY } from '../decorators/expected-flow.decorator';
 
@@ -55,7 +56,8 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      if (error instanceof UnauthorizedException || error instanceof ForbiddenException) {
+      // Typed app errors (TENANT_REQUIRED 400, tenant unavailable 403) must reach the client as-is.
+      if (error instanceof UnauthorizedException || error instanceof ForbiddenException || error instanceof AppError) {
         throw error;
       }
       throw new UnauthorizedException('No autenticado');

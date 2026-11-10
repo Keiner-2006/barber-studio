@@ -38,10 +38,15 @@ export class TenantsController {
     const tenantRepo = this.dataSource.getRepository(PlatformTenantEntity);
     const tenant = await tenantRepo.findOne({ where: { id: tenantId } });
 
-    const list = await this.getBranches.execute(tenantId);
-    const branches: Array<Record<string, unknown>> = (list || [])
-      .map((branch: any) => (typeof branch?.toPlain === 'function' ? branch.toPlain() : branch))
-      .filter((branch: any) => !branch?.status || branch.status === 'active');
+    let branches: Array<Record<string, unknown>> = [];
+    try {
+      const list = await this.getBranches.execute(tenantId);
+      branches = (list || [])
+        .map((b: any) => (typeof b?.toPlain === 'function' ? b.toPlain() : b))
+        .filter((b: any) => !b?.status || b.status === 'active');
+    } catch {
+      branches = [];
+    }
 
     return {
       role,

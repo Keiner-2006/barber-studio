@@ -35,7 +35,7 @@ export class StaffController {
               p.avatar_url AS "avatarUrl", p.commission_rate AS "commissionRate",
               p.is_bookable AS "isBookable", p.status, u.email,
               (SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id
-                WHERE ur.user_id = p.user_id AND ur.tenant_id = p.tenant_id
+                WHERE ur.user_id = p.user_id
                 ORDER BY ur.created_at LIMIT 1) AS role
          FROM staff_profiles p
          LEFT JOIN users u ON u.id = p.user_id

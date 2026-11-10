@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnauthorizedException, ForbiddenException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AUTH_DATA_SOURCE } from '../../../../shared/db/database.module';
 import { PlatformTenantEntity, TenantStatusEnum, BusinessTypeEnum } from '../../../auth/drivers/persistence/platform-tenant.entity';
@@ -25,6 +25,20 @@ export class OnboardingProvisioningService {
   async provision(dto: CreateOnboardingDto, actorEmail: string, idempotencyKey?: string): Promise<ProvisionResult> {
     if (!actorEmail) {
       throw new UnauthorizedException('Se requiere una sesión autenticada para crear el negocio');
+    }
+
+    const actor = await this.dataSource.getRepository(PlatformUserEntity).findOne({ where: { email: actorEmail } });
+    if (actor?.status === PlatformUserStatusEnum.BLOCKED) {
+      throw new ForbiddenException('Tu cuenta está bloqueada. Contacta al soporte de la plataforma.');
+    }
+    if (actor) {
+      // A SaaS admin onboarding a business would silently become its owner (how admin@saas.com ended up owning El Tano).
+      const adminGrants = await this.dataSource.getRepository(PlatformMembershipEntity).count({
+        where: { userId: actor.id, role: PlatformMembershipRoleEnum.PLATFORM_ADMIN, status: 'active' },
+      });
+      if (adminGrants > 0) {
+        throw new ForbiddenException('Los administradores de la plataforma no pueden inscribir negocios a su nombre. Usa la consola de plataforma.');
+      }
     }
 
     if (idempotencyKey) {
@@ -102,7 +116,8 @@ export class OnboardingProvisioningService {
           platformUser.lastName = dto.account.lastName;
           platformUser.phone = dto.account.phone ?? platformUser.phone;
           platformUser.whatsapp = dto.account.whatsapp ?? platformUser.whatsapp;
-          platformUser.status = PlatformUserStatusEnum.ACTIVE;
+          // Only an invited user is activated here; never lift a block.
+          if (platformUser.status === PlatformUserStatusEnum.INVITED) platformUser.status = PlatformUserStatusEnum.ACTIVE;
         }
         const savedUser = await userRepoTx.save(platformUser);
 

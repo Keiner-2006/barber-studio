@@ -1,12 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { PLATFORM_DATA_SOURCE, AUTH_DATA_SOURCE } from '../db/database.module';
+import { AUTH_DATA_SOURCE } from '../db/database.module';
 import { PlatformUserEntity } from '../../modules/auth/drivers/persistence/platform-user.entity';
 import { PlatformMembershipEntity } from '../../modules/auth/drivers/persistence/platform-membership.entity';
-import { PlatformTenantEntity } from '../../modules/auth/drivers/persistence/platform-tenant.entity';
-import { UserEntity } from '../../modules/auth/drivers/persistence/user.entity';
-import { UserRoleEntity } from '../../modules/auth/drivers/persistence/user-role.entity';
-import { RoleEntity } from '../../modules/auth/drivers/persistence/role.entity';
+import { ValidationError } from '../errors/app-error';
 
 export type UserRole =
   | 'owner'
@@ -33,27 +30,26 @@ export interface ResolvedUserRole {
   category: RoleCategory | null;
   platformUserId?: string;
   localUserId?: string;
+  tenantId?: string | null;
 }
+
+/** Raised when a user belongs to several tenants and the request did not say which one. */
+export class TenantRequiredError extends ValidationError {
+  constructor() {
+    super('Tu cuenta pertenece a varios negocios. Indica el negocio (tenantId) para continuar.', { code: 'TENANT_REQUIRED' });
+  }
+}
+
+const PLATFORM_ROLES: readonly string[] = ROLE_CATEGORIES.platform_member;
 
 @Injectable()
 export class RoleResolverService {
   private readonly platformUserRepo: Repository<PlatformUserEntity>;
   private readonly platformMembershipRepo: Repository<PlatformMembershipEntity>;
-  private readonly platformTenantRepo: Repository<PlatformTenantEntity>;
-  private readonly userRepo: Repository<UserEntity>;
-  private readonly userRoleRepo: Repository<UserRoleEntity>;
-  private readonly roleRepo: Repository<RoleEntity>;
 
-  constructor(
-    @Inject(PLATFORM_DATA_SOURCE) private readonly platformDataSource: DataSource,
-    @Inject(AUTH_DATA_SOURCE) private readonly authDataSource: DataSource,
-  ) {
+  constructor(@Inject(AUTH_DATA_SOURCE) private readonly authDataSource: DataSource) {
     this.platformUserRepo = this.authDataSource.getRepository(PlatformUserEntity);
     this.platformMembershipRepo = this.authDataSource.getRepository(PlatformMembershipEntity);
-    this.platformTenantRepo = this.authDataSource.getRepository(PlatformTenantEntity);
-    this.userRepo = this.platformDataSource.getRepository(UserEntity);
-    this.userRoleRepo = this.platformDataSource.getRepository(UserRoleEntity);
-    this.roleRepo = this.platformDataSource.getRepository(RoleEntity);
   }
 
   getRoleCategory(role: string): RoleCategory | null {
@@ -65,86 +61,48 @@ export class RoleResolverService {
     return null;
   }
 
-  private async createTenantDataSource(tenantId: string): Promise<DataSource | null> {
-    const tenant = await this.platformTenantRepo.findOne({ where: { id: tenantId } });
-    if (!tenant?.databaseName || !tenant.databaseHost) {
-      return null;
-    }
-    return new DataSource({
-      type: 'postgres',
-      host: tenant.databaseHost,
-      port: 5432,
-      username: 'postgres',
-      password: 'postgres',
-      database: tenant.databaseName,
-      schema: 'public',
-      synchronize: false,
-      logging: false,
-      entities: [UserEntity, RoleEntity, UserRoleEntity],
-    } as any);
-  }
-
+  /**
+   * Deterministic membership selection (spec D2):
+   * - only active memberships; tenant roles also need an active tenant, platform roles must have tenant_id NULL
+   * - filtered by expectedFlow when given
+   * - tenantId given → that tenant's membership (platform roles never match a tenantId)
+   * - no tenantId → exactly one candidate is used; more than one throws TenantRequiredError (never "pick first")
+   *
+   * Dedicated per-tenant databases are intentionally not read here: the previous code connected to them with
+   * hard-coded postgres/postgres credentials. All tenants currently live in the shared database.
+   */
   async resolveUserRole(
     email: string,
     tenantId?: string,
     expectedFlow?: RoleCategory,
   ): Promise<ResolvedUserRole> {
-    if (tenantId) {
-      const tenantDataSource = await this.createTenantDataSource(tenantId);
-      if (tenantDataSource) {
-        try {
-          await tenantDataSource.initialize();
-          const userRepoT = tenantDataSource.getRepository(UserEntity);
-          const userRoleRepoT = tenantDataSource.getRepository(UserRoleEntity);
-          const roleRepoT = tenantDataSource.getRepository(RoleEntity);
-
-          const user = await userRepoT.findOne({ where: { email } });
-          if (user) {
-            const userRoles = await userRoleRepoT.find({ where: { userId: user.id } });
-            for (const ur of userRoles) {
-              const role = await roleRepoT.findOne({ where: { id: ur.roleId } });
-              if (role?.name && (!expectedFlow || this.validateRoleForFlow(role.name, expectedFlow))) {
-                await tenantDataSource.destroy();
-                return {
-                  role: role.name,
-                  category: this.getRoleCategory(role.name),
-                  localUserId: user.id,
-                };
-              }
-            }
-          }
-          await tenantDataSource.destroy();
-        } catch {
-          try { await tenantDataSource.destroy(); } catch {}
-        }
-      }
-    }
-
     const platformUser = await this.platformUserRepo.findOne({ where: { email } });
-    if (!platformUser) {
+    if (!platformUser || platformUser.status !== 'active') {
       return { role: null, category: null };
     }
 
     const memberships = await this.platformMembershipRepo.find({
-      where: {
-        userId: platformUser.id,
-        status: 'active',
-        ...(tenantId ? { tenantId } : {}),
-      },
+      where: { userId: platformUser.id, status: 'active' },
+      relations: ['tenant'],
     });
-    const membership = memberships.find(
-      (candidate) =>
-        !expectedFlow || this.validateRoleForFlow(candidate.role, expectedFlow),
-    );
-    if (membership) {
-      return {
-        role: membership.role,
-        category: this.getRoleCategory(membership.role),
-        platformUserId: platformUser.id,
-      };
-    }
 
-    return { role: null, category: null };
+    const candidates = memberships.filter((m) => {
+      if (expectedFlow && !this.validateRoleForFlow(m.role, expectedFlow)) return false;
+      if (PLATFORM_ROLES.includes(m.role)) return !m.tenantId && !tenantId;
+      if (m.tenant?.status !== 'active') return false;
+      return !tenantId || m.tenantId === tenantId;
+    });
+
+    if (candidates.length > 1) throw new TenantRequiredError();
+    const membership = candidates[0];
+    if (!membership) return { role: null, category: null };
+
+    return {
+      role: membership.role,
+      category: this.getRoleCategory(membership.role),
+      platformUserId: platformUser.id,
+      tenantId: membership.tenantId,
+    };
   }
 
   validateRoleForFlow(

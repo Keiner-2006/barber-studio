@@ -2,17 +2,12 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { PLATFORM_DATA_SOURCE, AUTH_DATA_SOURCE } from '../db/database.module';
 import { RequestContextService, RequestContext } from './request-context.service';
-import { RoleResolverService, RoleCategory } from '../auth/role-resolver.service';
+import { RoleResolverService, RoleCategory, TenantRequiredError } from '../auth/role-resolver.service';
 import { AuthService } from '../auth/auth.service';
 import { ForbiddenError } from '../errors/app-error';
 import crypto from 'crypto';
 import { PlatformUserEntity } from '../../modules/auth/drivers/persistence/platform-user.entity';
 import { PlatformMembershipEntity } from '../../modules/auth/drivers/persistence/platform-membership.entity';
-import { PlatformTenantEntity } from '../../modules/auth/drivers/persistence/platform-tenant.entity';
-import { UserEntity } from '../../modules/auth/drivers/persistence/user.entity';
-import { UserRoleEntity } from '../../modules/auth/drivers/persistence/user-role.entity';
-import { RoleEntity } from '../../modules/auth/drivers/persistence/role.entity';
-import { StaffProfileEntity } from '../../modules/branches/drivers/persistence/staff-profile.entity';
 
 interface SessionUser {
   id: string;
@@ -49,7 +44,6 @@ export class TenantContextService {
 
   private readonly platformUserRepo: Repository<PlatformUserEntity>;
   private readonly platformMembershipRepo: Repository<PlatformMembershipEntity>;
-  private readonly platformTenantRepo: Repository<PlatformTenantEntity>;
 
   constructor(
     @Inject(PLATFORM_DATA_SOURCE) private readonly platformDataSource: DataSource,
@@ -60,7 +54,6 @@ export class TenantContextService {
   ) {
     this.platformUserRepo = this.authDataSource.getRepository(PlatformUserEntity);
     this.platformMembershipRepo = this.authDataSource.getRepository(PlatformMembershipEntity);
-    this.platformTenantRepo = this.authDataSource.getRepository(PlatformTenantEntity);
   }
 
   private getSessionToken(session: SessionData): string {
@@ -95,25 +88,6 @@ export class TenantContextService {
     }
   }
 
-  private async createTenantDataSource(tenantId: string): Promise<DataSource | null> {
-    const tenant = await this.platformTenantRepo.findOne({ where: { id: tenantId } });
-    if (!tenant?.databaseName || !tenant.databaseHost) {
-      return null;
-    }
-    return new DataSource({
-      type: 'postgres',
-      host: tenant.databaseHost,
-      port: 5432,
-      username: 'postgres',
-      password: 'postgres',
-      database: tenant.databaseName,
-      schema: 'public',
-      synchronize: false,
-      logging: false,
-      entities: [UserEntity, RoleEntity, UserRoleEntity, StaffProfileEntity],
-    } as any);
-  }
-
   async resolveIdentity(
     headers: Record<string, string | undefined>,
     session: SessionData,
@@ -125,13 +99,15 @@ export class TenantContextService {
     if (cached) return cached;
 
     const platformUser = await this.platformUserRepo.findOne({ where: { email: session.user.email } });
-    if (!platformUser) return null;
+    if (!platformUser || platformUser.status !== 'active') return null;
 
-    const platformAdmin = await this.platformMembershipRepo.findOne({
-      where: { userId: platformUser.id, role: 'platform_admin' as any },
+    const memberships = await this.platformMembershipRepo.find({
+      where: { userId: platformUser.id, status: 'active' } as any,
+      relations: ['tenant'],
     });
 
-    if (platformAdmin) {
+    // Global platform admin (spec D1, option A): an ACTIVE platform_admin grant with tenant_id NULL.
+    if (memberships.some((m) => m.role === 'platform_admin' && !m.tenantId)) {
       const identity: ResolvedIdentity = {
         tenantId: '',
         tenantStatus: 'active',
@@ -145,29 +121,23 @@ export class TenantContextService {
       return identity;
     }
 
-    const membership = requestedTenantId
-      ? await this.platformMembershipRepo.findOne({
-          where: {
-            userId: platformUser.id,
-            tenantId: requestedTenantId,
-            status: 'active',
-          } as any,
-          relations: ['tenant'],
-        })
-      : await this.platformMembershipRepo.findOne({
-          where: { userId: platformUser.id, status: 'active' } as any,
-          relations: ['tenant'],
-        });
+    // Deterministic tenant membership (spec D2): never "pick first" when several tenants match.
+    const candidates = memberships.filter(
+      (m) =>
+        !!m.tenantId &&
+        m.tenant?.status === 'active' &&
+        (!requestedTenantId || m.tenantId === requestedTenantId) &&
+        (!expectedFlow || this.roleResolver.validateRoleForFlow(m.role, expectedFlow)),
+    );
+    if (candidates.length > 1) throw new TenantRequiredError();
+    const membership = candidates[0];
+    if (!membership) return null;
 
-    if (!membership?.tenant || membership.tenant.status !== 'active') return null;
-
-    const isPlatformAdmin = membership.role === 'platform_admin';
-
-    if (expectedFlow && !isPlatformAdmin) {
-      const identity = await this.roleResolver.resolveUserRole(session.user.email, requestedTenantId);
-      if (!identity.role || !this.roleResolver.validateRoleForFlow(identity.role, expectedFlow)) {
-        return null;
-      }
+    // Dedicated tenant databases are not supported yet (the old path used hard-coded postgres/postgres
+    // credentials). Refuse instead of silently reading the shared database for such a tenant.
+    if (membership.tenant.databaseHost || membership.tenant.databaseName) {
+      this.logger.error(`Tenant ${membership.tenant.id} points to a dedicated database; dedicated DBs are not supported yet`);
+      throw new ForbiddenError('Este negocio no está disponible temporalmente.');
     }
 
     const identity: ResolvedIdentity = {
@@ -180,37 +150,8 @@ export class TenantContextService {
       platformUserId: platformUser.id,
       localUserId: null,
       userRole: membership.role,
-      isPlatformAdmin: membership.role === 'platform_admin',
+      isPlatformAdmin: false,
     };
-
-    try {
-      const tenantDataSource = await this.createTenantDataSource(identity.tenantId);
-      if (tenantDataSource) {
-        await tenantDataSource.initialize();
-        try {
-          const userRepoT = tenantDataSource.getRepository(UserEntity);
-          const userRoleRepoT = tenantDataSource.getRepository(UserRoleEntity);
-          const roleRepoT = tenantDataSource.getRepository(RoleEntity);
-
-          const user = await userRepoT.findOne({ where: { email: session.user.email } });
-          if (user) {
-            const userRoles = await userRoleRepoT.find({ where: { userId: user.id } as any });
-            for (const ur of userRoles) {
-              const role = await roleRepoT.findOne({ where: { id: ur.roleId } });
-              if (role?.name) {
-                identity.localUserId = user.id;
-                identity.userRole = role.name;
-                break;
-              }
-            }
-          }
-        } finally {
-          await tenantDataSource.destroy();
-        }
-      }
-    } catch {
-      // Tenant DB may not be provisioned yet; fall back to platform identity.
-    }
 
     this.setCachedIdentity(cacheKey, identity);
     return identity;
@@ -222,7 +163,8 @@ export class TenantContextService {
     sessionUserId: string
   ): Promise<RequestContext> {
     const localUserId = identity.localUserId || sessionUserId;
-    let staffId: string | undefined;
+    // shortcut: staffId is only resolvable once dedicated tenant DBs exist; shared-DB tenants never had it.
+    const staffId: string | undefined = undefined;
 
     if (identity.isPlatformAdmin && !identity.tenantId) {
       return {
@@ -234,26 +176,6 @@ export class TenantContextService {
         ipAddress: headers['x-forwarded-for']?.split(',')[0]?.trim(),
         userAgent: headers['user-agent'],
       };
-    }
-
-    if (localUserId && identity.tenantId) {
-      try {
-        const tenantDataSource = await this.createTenantDataSource(identity.tenantId);
-        if (tenantDataSource) {
-          await tenantDataSource.initialize();
-          try {
-            const staffRepo = tenantDataSource.getRepository(StaffProfileEntity);
-            const staff = await staffRepo.findOne({
-              where: { userId: localUserId, tenantId: identity.tenantId } as any,
-            });
-            staffId = staff?.id;
-          } finally {
-            await tenantDataSource.destroy();
-          }
-        }
-      } catch {
-        // Staff profile may not exist for this user
-      }
     }
 
     return {
