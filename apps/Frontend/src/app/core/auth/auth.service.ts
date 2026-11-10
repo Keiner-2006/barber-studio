@@ -38,7 +38,9 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
       })
     }
-    if (this.currentSession()) {
+    if (this.currentSession() && this.isPlatformRole(this.currentUser()?.role)) {
+      this.tenantService.clear()
+    } else if (this.currentSession()) {
       this.tenantService.load().subscribe({
         next: () => this.syncRoleFromTenant(),
         error: () => {
@@ -56,6 +58,10 @@ export class AuthService {
     tenantId?: string,
     expectedRole: LoginExpectedRole = 'company_member'
   ): Observable<LoginResponse> {
+    if (expectedRole === 'platform_admin') {
+      this.tenantService.clear()
+    }
+
     const loginTenantId =
       expectedRole === 'platform_admin' ? undefined : tenantId ?? this.tenantService.tenantId() ?? undefined
     const body: LoginRequest = {
@@ -74,19 +80,21 @@ export class AuthService {
         }
       }),
       switchMap((response) =>
-        this.tenantService.load().pipe(
-          map(() => {
-            this.syncRoleFromTenant()
-            const user = this.currentUser() ?? response.user
-            const authenticatedResponse = { ...response, user }
-            this.saveToStorage(authenticatedResponse)
-            return authenticatedResponse
-          }),
-          catchError(() => {
-            this.clearSession()
-            return throwError(() => new Error('No se pudo cargar la información del estudio'))
-          })
-        )
+        this.isPlatformRole(response.user?.role)
+          ? of(response)
+          : this.tenantService.load().pipe(
+              map(() => {
+                this.syncRoleFromTenant()
+                const user = this.currentUser() ?? response.user
+                const authenticatedResponse = { ...response, user }
+                this.saveToStorage(authenticatedResponse)
+                return authenticatedResponse
+              }),
+              catchError(() => {
+                this.clearSession()
+                return throwError(() => new Error('No se pudo cargar la información del estudio'))
+              })
+            )
       )
     )
   }
@@ -143,6 +151,10 @@ export class AuthService {
   private syncRoleFromTenant(): void {
     const role = this.tenantService.role()
     const user = this.currentUser()
+    if (this.isPlatformRole(user?.role)) {
+      this.tenantService.clear()
+      return
+    }
     if (!role || !user || user.role === role) return
 
     const updatedUser = { ...user, role }
@@ -150,6 +162,10 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('navaja_user', JSON.stringify(updatedUser))
     }
+  }
+
+  private isPlatformRole(role: User['role']): boolean {
+    return role === 'platform_admin' || role === 'platform_support'
   }
 
   private saveToStorage(response: LoginResponse): void {
