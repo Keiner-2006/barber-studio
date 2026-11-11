@@ -112,6 +112,15 @@ export class AgendaStore {
   }
 
   loadStaff(onComplete?: () => void): void {
+    if (this.isBarber()) {
+      const id = this.tenantService.staffId()
+      this._myStaffId.set(id)
+      this._staff.set(id ? { [id]: { displayName: this.authService.user()?.name ?? 'Barbero' } } : {})
+      this._staffList.set([])
+      onComplete?.()
+      return
+    }
+
     this.staffApi.getStaff().subscribe({
       next: (list) => {
         const map: StaffMap = {}
@@ -183,8 +192,8 @@ export class AgendaStore {
     })
   }
 
-  completeAppointment(id: string): void {
-    this.agendaApi.updateStatus(id, 'complete').subscribe({
+  completeAppointment(id: string, status: 'in_service' | 'completed'): void {
+    this.agendaApi.updateStatus(id, status).subscribe({
       next: (updated) => {
         this._appointments.update((appts) =>
           appts.map((a) => (a.id === updated.id ? updated : a))
@@ -194,6 +203,7 @@ export class AgendaStore {
   }
 
   openNewBooking(): void {
+    if (!this.canCreateBookings()) return
     this.loadStaff()
     this.loadCustomers()
     this.loadServices()
@@ -227,6 +237,7 @@ export class AgendaStore {
   }
 
   async createBooking(): Promise<void> {
+    if (!this.canCreateBookings()) return
     if (!this._bookingStaffId() || !this._bookingServiceId() || !this._bookingCustomerId() || !this._bookingDate() || !this._bookingTime()) {
       return
     }

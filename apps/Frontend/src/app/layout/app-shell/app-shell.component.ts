@@ -489,7 +489,7 @@ export class AppShellComponent {
       [ROLES.ADMIN]: ['/dashboard', '/agenda', '/staff', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
       [ROLES.APP]: ['/dashboard', '/agenda', '/staff', '/customers', '/catalog', '/inventory', '/purchasing', '/cash', '/reports'],
       [ROLES.RECEPTION]: ['/dashboard', '/agenda', '/customers', '/catalog', '/cash'],
-      [ROLES.BARBER]: ['/dashboard', '/agenda', '/customers', '/catalog'],
+      [ROLES.BARBER]: ['/agenda', '/customers', '/catalog'],
       [ROLES.INVENTORY_MANAGER]: ['/dashboard', '/inventory', '/purchasing'],
       [ROLES.ACCOUNTANT]: ['/dashboard', '/reports', '/cash'],
     }

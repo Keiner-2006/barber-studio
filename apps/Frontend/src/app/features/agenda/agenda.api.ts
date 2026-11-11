@@ -15,8 +15,8 @@ export class AgendaApi {
         staffId: params.staffId,
         customerId: params.customerId,
         status: params.status,
-        from: params.from,
-        to: params.to,
+        startsAtFrom: params.from,
+        startsAtTo: params.to,
         cursor: params.cursor,
         limit: params.limit ? String(params.limit) : undefined,
       })
@@ -33,7 +33,7 @@ export class AgendaApi {
 
   updateStatus(id: string, action: string, reason?: string): Observable<Appointment> {
     return this.api
-      .patch<ApiResponse<Appointment>>(`/appointments/${id}`, { action, reason })
+      .patch<ApiResponse<Appointment>>(`/appointments/${id}`, { status: action === 'complete' ? 'completed' : action })
       .pipe(map((r) => r.data))
   }
 

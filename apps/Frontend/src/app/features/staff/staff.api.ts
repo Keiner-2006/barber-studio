@@ -9,11 +9,13 @@ export class StaffApi {
   constructor(private api: ApiClient) {}
 
   getStaff(): Observable<StaffMember[]> {
-    return this.api.get<ApiResponse<StaffMember[]>>('/staff').pipe(map((r) => r.data))
+    return this.api.get<ApiResponse<(StaffMember & { email?: string })[]>>('/staff').pipe(
+      map((r) => r.data.map(member => ({ ...member, userEmail: member.userEmail || member.email || '' })))
+    )
   }
 
   createStaff(input: CreateStaffInput): Observable<StaffMember> {
-    return this.api.post<ApiResponse<StaffMember>>('/staff', input).pipe(map((r) => r.data))
+    return this.api.post<ApiResponse<StaffMember>>('/staff', input).pipe(map((r) => ({ ...r.data, userEmail: r.data.userEmail || input.email })))
   }
 
   updateStaff(id: string, input: UpdateStaffInput): Observable<StaffMember> {

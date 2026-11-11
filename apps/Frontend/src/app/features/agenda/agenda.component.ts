@@ -99,12 +99,11 @@ import { ROLE_LABELS } from '@navaja/shared'
                     </td>
                     <td class="actions-cell">
                       @if (store.isBarber()) {
-                        <button
-                          class="action-button"
-                          (click)="store.completeAppointment(appt.id)"
-                          [disabled]="appt.rawStatus === 'completed' || appt.rawStatus === 'cancelled'">
-                          {{ appt.rawStatus === 'completed' ? 'Completada' : 'Completar' }}
-                        </button>
+                        @if (appt.rawStatus === 'checked_in') {
+                          <button class="action-button" (click)="store.completeAppointment(appt.id, 'in_service')">Iniciar servicio</button>
+                        } @else if (appt.rawStatus === 'in_service') {
+                          <button class="action-button" (click)="store.completeAppointment(appt.id, 'completed')">Finalizar servicio</button>
+                        }
                       } @else {
                         <select class="action-select" (change)="store.changeStatus(appt.id, $event)">
                           <option value="">Cambiar estado</option>

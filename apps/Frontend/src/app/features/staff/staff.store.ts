@@ -50,7 +50,7 @@ export class StaffStore {
     this._loading.set(true)
     this.api.updateStaff(id, input).subscribe({
       next: (staff) => {
-        this._staff.update((s) => s.map((m) => (m.id === id ? staff : m)))
+        this._staff.update((s) => s.map((m) => (m.id === id ? { ...m, ...staff } : m)))
         this._loading.set(false)
       },
       error: (err) => {

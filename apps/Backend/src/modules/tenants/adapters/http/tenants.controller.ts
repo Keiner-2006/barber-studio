@@ -9,6 +9,7 @@ import { DataSource } from 'typeorm';
 import { AuthGuard } from '../../../../common/guards/auth.guard';
 import { RequestContext } from '../../../../common/decorators/request-context.decorator';
 import { AUTH_DATA_SOURCE } from '../../../../shared/db/database.module';
+import { permissionsForRole } from '../../../../shared/auth/access-policy';
 import { PlatformTenantEntity } from '../../../auth/drivers/persistence/platform-tenant.entity';
 import { GetBranchesUseCase } from '../../../branches/domain/use-cases/get-branches.use-case';
 
@@ -28,11 +29,12 @@ export class TenantsController {
   async getMyTenant(
     @RequestContext('tenantId') tenantId: string | undefined,
     @RequestContext('userRole') userRole: string | undefined,
+    @RequestContext('staffId') staffId?: string,
   ) {
     const role = userRole || null;
 
     if (!tenantId) {
-      return { role, tenant: null, branches: [] };
+      return { role, permissions: permissionsForRole(role ?? ''), staffId: null, tenant: null, branches: [] };
     }
 
     const tenantRepo = this.dataSource.getRepository(PlatformTenantEntity);
@@ -50,6 +52,8 @@ export class TenantsController {
 
     return {
       role,
+      permissions: permissionsForRole(role ?? ''),
+      staffId: staffId ?? null,
       tenant: tenant
         ? {
             id: tenant.id,

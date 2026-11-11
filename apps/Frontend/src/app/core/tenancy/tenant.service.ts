@@ -12,12 +12,16 @@ export class TenantService {
   private currentBranch = signal<Branch | null>(null)
   private availableBranches = signal<Branch[]>([])
   private currentRole = signal<Role | null>(null)
+  private currentStaffId = signal<string | null>(null)
+  private currentPermissions = signal<string[]>([])
   private selectedTenantId = signal<string | null>(null)
 
   readonly tenant = this.currentTenant.asReadonly()
   readonly branch = this.currentBranch.asReadonly()
   readonly branches = this.availableBranches.asReadonly()
   readonly role = this.currentRole.asReadonly()
+  readonly staffId = this.currentStaffId.asReadonly()
+  readonly permissions = this.currentPermissions.asReadonly()
   readonly tenantId = this.selectedTenantId.asReadonly()
 
   constructor(private api: ApiClient) {
@@ -35,6 +39,9 @@ export class TenantService {
     }
 
     if (changed) {
+      this.currentRole.set(null)
+      this.currentStaffId.set(null)
+      this.currentPermissions.set([])
       this.currentTenant.set(null)
       this.currentBranch.set(null)
       this.availableBranches.set([])
@@ -51,6 +58,8 @@ export class TenantService {
         tap((resp) => {
           const role = Object.values(ROLES).find((candidate) => candidate === resp.data.role) ?? null
           this.currentRole.set(role)
+          this.currentStaffId.set(resp.data.staffId ?? null)
+          this.currentPermissions.set(resp.data.permissions ?? [])
 
           if (role === 'platform_admin' || role === 'platform_support' || !resp.data.tenant) {
             this.currentTenant.set(null)
@@ -89,6 +98,8 @@ export class TenantService {
             this.currentBranch.set(null)
             this.availableBranches.set([])
             this.currentRole.set(null)
+            this.currentStaffId.set(null)
+            this.currentPermissions.set([])
           }
           return throwError(() => err)
         })
@@ -110,6 +121,8 @@ export class TenantService {
   }
 
   clear(): void {
+    this.currentStaffId.set(null)
+    this.currentPermissions.set([])
     this.currentTenant.set(null)
     this.currentBranch.set(null)
     this.availableBranches.set([])

@@ -94,7 +94,7 @@ export class TenantContextService {
     requestedTenantId: string,
     expectedFlow?: RoleCategory
   ): Promise<ResolvedIdentity | null> {
-    const cacheKey = `${this.getSessionToken(session)}:${requestedTenantId || '*'}`;
+    const cacheKey = `${this.getSessionToken(session)}:${requestedTenantId || '*'}:${expectedFlow || '*'}`;
     const cached = this.getCachedIdentity(cacheKey);
     if (cached) return cached;
 
@@ -140,6 +140,12 @@ export class TenantContextService {
       throw new ForbiddenError('Este negocio no está disponible temporalmente.');
     }
 
+    const localUsers = await this.platformDataSource.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND lower(email) = lower($2) AND status = 'active'`,
+      [membership.tenant.id, session.user.email],
+    );
+    if (localUsers.length > 1) throw new ForbiddenError('Identidad de usuario ambigua');
+
     const identity: ResolvedIdentity = {
       tenantId: membership.tenant.id,
       tenantStatus: membership.tenant.status,
@@ -148,7 +154,7 @@ export class TenantContextService {
         databaseSecretRef: membership.tenant.databaseSecretRef,
       }),
       platformUserId: platformUser.id,
-      localUserId: null,
+      localUserId: localUsers[0]?.id ?? null,
       userRole: membership.role,
       isPlatformAdmin: false,
     };
@@ -163,8 +169,16 @@ export class TenantContextService {
     sessionUserId: string
   ): Promise<RequestContext> {
     const localUserId = identity.localUserId || sessionUserId;
-    // shortcut: staffId is only resolvable once dedicated tenant DBs exist; shared-DB tenants never had it.
-    const staffId: string | undefined = undefined;
+    let staffId: string | undefined;
+    if (identity.userRole === 'barber') {
+      if (!identity.localUserId) throw new ForbiddenError('No tienes un usuario activo en este negocio');
+      const profiles = await this.platformDataSource.query(
+        `SELECT id FROM staff_profiles WHERE tenant_id = $1 AND user_id = $2 AND status = 'active'`,
+        [identity.tenantId, identity.localUserId],
+      );
+      if (profiles.length !== 1) throw new ForbiddenError('No tienes un perfil de barbero activo y único en este negocio');
+      staffId = profiles[0].id;
+    }
 
     if (identity.isPlatformAdmin && !identity.tenantId) {
       return {
@@ -232,7 +246,7 @@ export class TenantContextService {
     const session = await this.authService.getSession(new globalThis.Headers(headers as any));
     if (!session) return;
 
-    const cacheKey = `${this.getSessionToken(session)}:${tenantId}`;
+    const cacheKey = `${this.getSessionToken(session)}:${tenantId}:*`;
     const cached = this.getCachedIdentity(cacheKey);
     if (cached) return;
 

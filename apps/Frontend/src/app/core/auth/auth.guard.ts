@@ -52,6 +52,7 @@ export class AuthGuard implements CanActivate {
 
     // Send each role to its own area: platform staff to the SaaS console, the rest to the studio.
     if (userRole && PLATFORM_ROLES.includes(userRole)) return this.router.createUrlTree(['/platform-admin'])
+    if (userRole === 'barber') return this.router.createUrlTree(['/agenda'])
     if (userRole === 'customer') return this.router.createUrlTree(['/booking'])
     if (userRole && COMPANY_MEMBER_ROLES.includes(userRole)) return this.router.createUrlTree(['/dashboard'])
     return this.router.createUrlTree(['/login'])

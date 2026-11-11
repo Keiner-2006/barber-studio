@@ -26,11 +26,11 @@ import { CreateProduct } from './inventory.models'
       <div class="stats-grid">
         <div class="stat-card">
           <p class="stat-label">Valor en inventario</p>
-          <p class="stat-value">{{ store.totalStockValue() | currency:'MXN':'symbol':'1.0-0':'es-MX' }}</p>
+          <p class="stat-value">{{ store.totalStockValue() | currency:store.currency():'symbol':'1.0-0' }}</p>
         </div>
         <div class="stat-card">
           <p class="stat-label">Productos activos</p>
-          <p class="stat-value">{{ store.products().length }}</p>
+          <p class="stat-value">{{ store.activeProductCount() }}</p>
         </div>
         <div class="stat-card">
           <p class="stat-label">Por reponer</p>
@@ -38,7 +38,9 @@ import { CreateProduct } from './inventory.models'
         </div>
       </div>
 
-      @if (store.loading()) {
+      @if (store.error()) {
+        <div role="alert">{{ store.error() }}</div>
+      } @else if (store.loading()) {
         <div class="loading">Cargando inventario...</div>
       } @else if (store.products().length === 0) {
         <div class="empty-state">
@@ -52,6 +54,7 @@ import { CreateProduct } from './inventory.models'
               <th>Producto</th>
               <th>SKU</th>
               <th>Categoría</th>
+              <th>Existencias</th>
               <th>Costo</th>
               <th>Precio sugerido</th>
               <th>Estado</th>
@@ -68,8 +71,9 @@ import { CreateProduct } from './inventory.models'
                 </td>
                 <td class="mono">{{ product.sku }}</td>
                 <td>{{ product.category || '—' }}</td>
-                <td>{{ store.formatMoney(product.unitCost, 'MXN') }}</td>
-                <td>{{ product.suggestedPrice ? store.formatMoney(product.suggestedPrice, 'MXN') : '—' }}</td>
+                <td>{{ store.quantityForProduct(product.id) }} <span class="product-desc">{{ product.unit || 'unidades' }} · mínimo {{ product.minQuantity }}</span></td>
+                <td>{{ store.formatMoney(product.unitCost, store.currency()) }}</td>
+                <td>{{ product.suggestedPrice ? store.formatMoney(product.suggestedPrice, store.currency()) : '—' }}</td>
                 <td>
                   <span [class]="product.active ? 'badge-active' : 'badge-inactive'">
                     {{ product.active ? 'Activo' : 'Inactivo' }}
@@ -106,13 +110,13 @@ import { CreateProduct } from './inventory.models'
               <input [(ngModel)]="newProduct().unit" (ngModelChange)="updateField('unit', $event)" placeholder="pieza" />
             </div>
             <div class="form-group">
-              <label>Costo unitario (MXN)</label>
+              <label>Costo unitario ({{ store.currency() }})</label>
               <input type="number" step="0.01" placeholder="0.00"
                 [ngModel]="newProduct().unitCost"
                 (ngModelChange)="updateField('unitCost', $event)" />
             </div>
             <div class="form-group">
-              <label>Precio sugerido (MXN)</label>
+              <label>Precio sugerido ({{ store.currency() }})</label>
               <input type="number" step="0.01" placeholder="0.00"
                 [ngModel]="newProduct().suggestedPrice"
                 (ngModelChange)="updateField('suggestedPrice', $event)" />

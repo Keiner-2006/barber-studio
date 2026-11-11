@@ -24,6 +24,7 @@ import { PLATFORM_DATA_SOURCE } from '../../../../shared/db/database.module';
 import { ConflictError, NotFoundError, ValidationError } from '../../../../shared/errors/app-error';
 import { actorFrom, insertMovement, openSessionForBranch, tenantCurrency } from '../../../cash/domain/cash-ledger';
 import { z } from 'zod';
+import { ownStaffId, assertBarberAppointmentUpdate } from '../../../../shared/auth/barber-policy';
 
 const updateAppointmentSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'checked_in', 'in_service', 'completed', 'cancelled', 'no_show']).optional(),
@@ -72,11 +73,13 @@ export class AppointmentsController {
     @Query('status') status?: string,
     @Query('startsAtFrom') startsAtFrom?: string,
     @Query('startsAtTo') startsAtTo?: string,
+    @RequestContext('userRole') userRole?: string,
+    @RequestContext('staffId') currentStaffId?: string,
   ) {
     const appointments = await this.getAppointmentsUseCase.execute(tenantId, {
       branchId,
       customerId,
-      staffId,
+      staffId: ownStaffId(userRole ?? '', currentStaffId, staffId),
       status: status as any,
       startsAtFrom: startsAtFrom ? new Date(startsAtFrom) : undefined,
       startsAtTo: startsAtTo ? new Date(startsAtTo) : undefined,
@@ -92,9 +95,35 @@ export class AppointmentsController {
     @RequestContext('tenantId') tenantId: string,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: unknown,
+    @RequestContext('userRole') userRole?: string,
+    @RequestContext('staffId') currentStaffId?: string,
   ) {
     const parsed = updateAppointmentSchema.safeParse(body);
     if (!parsed.success) throw new ValidationError('Datos inválidos', parsed.error.flatten());
+
+    if (userRole === 'barber') {
+      const ownId = ownStaffId(userRole, currentStaffId)!;
+      return this.dataSource.transaction(async (manager) => {
+        const [appointment] = await manager.query(
+          `SELECT staff_id AS "staffId", status FROM appointments
+            WHERE tenant_id = $1 AND id = $2 AND staff_id = $3 FOR UPDATE`,
+          [tenantId, id, ownId],
+        );
+        if (!appointment) throw new NotFoundError('Cita no encontrada');
+        assertBarberAppointmentUpdate(ownId, appointment, parsed.data);
+        const [updated] = await manager.query(
+          `UPDATE appointments SET status = COALESCE($4, status), notes = COALESCE($5, notes), updated_at = now()
+            WHERE tenant_id = $1 AND id = $2 AND staff_id = $3
+            RETURNING id, tenant_id AS "tenantId", branch_id AS "branchId", customer_id AS "customerId",
+                      service_id AS "serviceId", staff_id AS "staffId", starts_at AS "startsAt", ends_at AS "endsAt",
+                      service_name_snapshot AS "serviceNameSnapshot", service_duration_snapshot AS "serviceDurationSnapshot",
+                      status, source, price_snapshot AS "priceSnapshot", currency_snapshot AS "currencySnapshot",
+                      notes, cancellation_reason AS "cancellationReason", created_at AS "createdAt", updated_at AS "updatedAt"`,
+          [tenantId, id, ownId, parsed.data.status ?? null, parsed.data.notes ?? null],
+        );
+        return updated;
+      });
+    }
 
     const appointment = await this.appointmentRepo.findById(tenantId, id);
     if (!appointment) throw new NotFoundError('Cita no encontrada');
@@ -193,7 +222,7 @@ export class AppointmentsController {
   }
 
   @Get(':id/payments')
-  @Permissions('appointments:read')
+  @Permissions('cash:read')
   @ApiOperation({ summary: 'Pagos de una cita y su saldo' })
   @ApiResponse({ status: 200, description: 'Pagos y saldo' })
   async getPayments(@RequestContext('tenantId') tenantId: string, @Param('id', new ParseUUIDPipe()) id: string) {

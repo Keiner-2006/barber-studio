@@ -8,6 +8,6 @@ export const routes: Routes = [
     path: '',
     component: DashboardComponent,
     canActivate: [AuthGuard],
-    data: { roles: ['owner', 'admin', ROLES.APP, ROLES.RECEPTION, ROLES.BARBER, ROLES.INVENTORY_MANAGER, ROLES.ACCOUNTANT] },
+    data: { roles: ['owner', 'admin', ROLES.APP, ROLES.RECEPTION, ROLES.INVENTORY_MANAGER, ROLES.ACCOUNTANT] },
   },
 ]

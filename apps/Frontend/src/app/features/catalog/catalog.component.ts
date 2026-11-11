@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core'
+import { AuthService } from '../../core/auth/auth.service'
+import { Component, inject, OnInit, signal } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { CatalogStore } from './catalog.store'
@@ -15,7 +16,7 @@ import { CatalogStore } from './catalog.store'
           <h1>Catálogo<span class="accent">.</span></h1>
           <p class="subtitle">Configura los servicios que ofrece tu barbería.</p>
         </div>
-        <button class="primary-button">+ Nuevo servicio</button>
+        @if (canManage) { <button class="primary-button">+ Nuevo servicio</button> }
       </div>
 
       <div class="search-bar">
@@ -126,6 +127,9 @@ import { CatalogStore } from './catalog.store'
     `]
 })
 export class CatalogComponent implements OnInit {
+  private authService = inject(AuthService)
+  get canManage(): boolean { return ['owner', 'admin'].includes(this.authService.user()?.role ?? '') }
+
   searchQuery = signal('')
 
   constructor(readonly store: CatalogStore) {}

@@ -31,6 +31,8 @@ export interface TenantMeResponse {
         tenant?: TenantInfo
         branches?: Branch[]
         role?: string
+        staffId?: string | null
+        permissions?: string[]
         tenants?: { id: string; legalName: string; tradeName: string; slug: string; status: string }[]
     }
 }

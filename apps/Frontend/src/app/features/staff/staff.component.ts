@@ -23,7 +23,7 @@ import { StaffMember, CreateStaffInput, UpdateStaffInput } from './staff.models'
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>Email</th>
+                <th>Correo electrónico</th>
                 <th>Rol</th>
                 <th>Comisión</th>
                 <th>Reservable</th>
@@ -35,7 +35,13 @@ import { StaffMember, CreateStaffInput, UpdateStaffInput } from './staff.models'
               @for (member of store.staff(); track member.id) {
                 <tr>
                   <td>{{ member.displayName }}</td>
-                  <td>{{ member.userEmail }}</td>
+                  <td>
+                    @if (member.userEmail) {
+                      <a [href]="'mailto:' + member.userEmail">{{ member.userEmail }}</a>
+                    } @else {
+                      <span class="text-muted">Sin correo</span>
+                    }
+                  </td>
                   <td>
                     @if (member.role) {
                       <span class="badge" [class.active]="true">{{ member.role }}</span>

@@ -1,6 +1,7 @@
 import { Component, signal, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
+import { AuthService } from '../../core/auth/auth.service'
 import { CustomersStore } from './customers.store'
 import { CreateCustomer } from './customers.models'
 
@@ -26,28 +27,30 @@ export interface CreateCustomerForm {
           <h1>Tus clientes<span class="accent">.</span></h1>
           <p class="subtitle">Conoce mejor a quienes vuelven a tu silla.</p>
         </div>
-        <button class="primary-button" (click)="openCreateDialog()">+ Nuevo cliente</button>
+        @if (!isBarber) { <button class="primary-button" (click)="openCreateDialog()">+ Nuevo cliente</button> }
       </div>
       <div class="search-bar">
         <span class="search-icon material-symbols-outlined" aria-hidden="true">search</span>
-        <input placeholder="Buscar por nombre, teléfono o correo" [(ngModel)]="searchTerm" (input)="onSearch()" />
+        <input [placeholder]="isBarber ? 'Buscar por nombre' : 'Buscar por nombre, teléfono o correo'" [(ngModel)]="searchTerm" (input)="onSearch()" />
       </div>
       @if (store.loading()) {
         <div class="loading">Cargando clientes...</div>
       } @else if (store.customers().length === 0) {
         <div class="empty-state">
           <p>No hay clientes registrados</p>
-          <p class="hint">Presiona "Nuevo cliente" para agregar uno.</p>
+          @if (!isBarber) { <p class="hint">Presiona "Nuevo cliente" para agregar uno.</p> }
         </div>
       } @else {
         <table class="customers-table">
           <thead>
             <tr>
               <th>Cliente</th>
+              @if (!isBarber) {
               <th>Contacto</th>
               <th>Visitas</th>
               <th>Total gastado</th>
               <th>Última visita</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -56,12 +59,14 @@ export interface CreateCustomerForm {
                 <td>
                   <div class="customer-name">{{ customer.firstName }} {{ customer.lastName }}</div>
                 </td>
+                @if (!isBarber) {
                 <td class="contact-cell">
                   <div>{{ customer.email || customer.phone || '—' }}</div>
                 </td>
                 <td>{{ customer.totalVisits || 0 }}</td>
                 <td>{{ store.formatMoney(customer.totalSpent, customer.currency) }}</td>
                 <td>{{ customer.lastVisitAt ? store.formatDate(customer.lastVisitAt) : '—' }}</td>
+                }
               </tr>
             }
           </tbody>
@@ -149,7 +154,9 @@ export class CustomersComponent implements OnInit {
   showCreateDialog = false
   newCustomer: CreateCustomerForm = { firstName: '', lastName: '', fullName: '', email: '', phone: '', document: '', notes: '' }
 
-  constructor(readonly store: CustomersStore) {}
+  constructor(readonly store: CustomersStore, private authService: AuthService) {}
+
+  get isBarber(): boolean { return this.authService.user()?.role === 'barber' }
 
   ngOnInit(): void {
     this.store.search()
@@ -160,6 +167,7 @@ export class CustomersComponent implements OnInit {
   }
 
   openCreateDialog(): void {
+    if (this.isBarber) return
     this.newCustomer = { firstName: '', lastName: '', fullName: '', email: '', phone: '', document: '', notes: '' }
     this.showCreateDialog = true
   }

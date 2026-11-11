@@ -1,5 +1,6 @@
 import {
   Controller,
+  Inject,
   Get,
   Post,
   Body,
@@ -19,6 +20,10 @@ import { PermissionsGuard } from '../../../../common/guards/permissions.guard';
 import { Permissions } from '../../../../common/decorators/permissions.decorator';
 import { RequestContext } from '../../../../common/decorators/request-context.decorator';
 import { z } from 'zod';
+import { DataSource } from 'typeorm';
+import { PLATFORM_DATA_SOURCE } from '../../../../shared/db/database.module';
+import { ownStaffId } from '../../../../shared/auth/barber-policy';
+import { NotFoundError } from '../../../../shared/errors/app-error';
 
 const createCustomerSchema = z.object({
   firstName: z.string().min(1, 'Nombre requerido'),
@@ -40,6 +45,7 @@ const createCustomerSchema = z.object({
 @ApiBearerAuth()
 export class CustomersController {
   constructor(
+    @Inject(PLATFORM_DATA_SOURCE) private readonly dataSource: DataSource,
     private readonly getCustomersUseCase: GetCustomersUseCase,
     private readonly searchCustomersUseCase: SearchCustomersUseCase,
     private readonly createCustomerUseCase: CreateCustomerUseCase,
@@ -54,7 +60,12 @@ export class CustomersController {
   async list(
     @RequestContext('tenantId') tenantId: string,
     @Query('search') search?: string,
+    @RequestContext('userRole') userRole?: string,
+    @RequestContext('staffId') currentStaffId?: string,
   ) {
+    if (userRole === 'barber') {
+      return this.barberCustomers(tenantId, ownStaffId(userRole, currentStaffId)!, search);
+    }
     if (search) {
       const customers = await this.searchCustomersUseCase.execute(tenantId, search);
       return customers.map((c) => c.toPlain()) ;
@@ -93,11 +104,34 @@ export class CustomersController {
   async getById(
     @RequestContext('tenantId') tenantId: string,
     @Param('id') id: string,
+    @RequestContext('userRole') userRole?: string,
+    @RequestContext('staffId') currentStaffId?: string,
   ) {
+    if (userRole === 'barber') {
+      const rows = await this.barberCustomers(tenantId, ownStaffId(userRole, currentStaffId)!, undefined, id);
+      if (!rows[0]) throw new NotFoundError('Cliente no encontrado');
+      return rows[0];
+    }
     const customer = await this.getCustomerByIdUseCase.execute(tenantId, id);
     if (!customer) {
       return { error: { code: 'NOT_FOUND', message: 'Cliente no encontrado' } };
     }
     return customer.toPlain() ;
   }
+
+  private barberCustomers(tenantId: string, staffId: string, search?: string, id?: string) {
+    // Only the identity needed to serve assigned customers; no financial/contact/consent data.
+    return this.dataSource.query(
+      `SELECT c.id, c.first_name AS "firstName", c.last_name AS "lastName", c.full_name AS "fullName"
+         FROM customers c
+        WHERE c.tenant_id = $1
+          AND EXISTS (SELECT 1 FROM appointments a
+                       WHERE a.tenant_id = c.tenant_id AND a.customer_id = c.id AND a.staff_id = $2)
+          AND ($3::text IS NULL OR c.full_name ILIKE '%' || $3 || '%')
+          AND ($4::text IS NULL OR c.id::text = $4)
+        ORDER BY c.full_name`,
+      [tenantId, staffId, search ?? null, id ?? null],
+    );
+  }
+
 }

@@ -17,6 +17,9 @@ import { Inject } from '@nestjs/common';
 import type { IProductRepository } from '../../domain/inventory.domain';
 import type { IBranchInventoryRepository } from '../../domain/inventory.domain';
 import { z } from 'zod';
+import { DataSource } from 'typeorm';
+import { PLATFORM_DATA_SOURCE } from '../../../../shared/db/database.module';
+import { ValidationError } from '../../../../shared/errors/app-error';
 
 const adjustInventorySchema = z.object({
   productId: z.string().uuid(),
@@ -34,6 +37,7 @@ const adjustInventorySchema = z.object({
 @ApiBearerAuth()
 export class InventoryController {
   constructor(
+    @Inject(PLATFORM_DATA_SOURCE) private readonly dataSource: DataSource,
     private readonly getProductsUseCase: GetProductsUseCase,
     @Inject('IProductRepository') private readonly productRepo: IProductRepository,
     @Inject('IBranchInventoryRepository') private readonly branchInventoryRepo: IBranchInventoryRepository,
@@ -61,6 +65,27 @@ export class InventoryController {
       return { error: { code: 'NOT_FOUND', message: 'Producto no encontrado' } };
     }
     return product.toPlain() ;
+  }
+
+  @Get('stock')
+  @Permissions('inventory:read')
+  @ApiOperation({ summary: 'Existencias por sede del negocio actual' })
+  async getStock(
+    @RequestContext('tenantId') tenantId: string,
+    @Query('branchId') branchId?: string,
+  ) {
+    if (branchId && !z.string().uuid().safeParse(branchId).success) {
+      throw new ValidationError('branchId inválido');
+    }
+    return this.dataSource.query(
+      `SELECT i.product_id AS "productId", i.branch_id AS "branchId", i.quantity, i.reserved,
+              i.average_cost AS "averageCost"
+         FROM branch_inventory i
+         JOIN products p ON p.id = i.product_id AND p.tenant_id = i.tenant_id
+         JOIN branches b ON b.id = i.branch_id AND b.tenant_id = i.tenant_id
+        WHERE i.tenant_id = $1 AND ($2::uuid IS NULL OR i.branch_id = $2)`,
+      [tenantId, branchId ?? null],
+    );
   }
 
   @Post('adjustments')

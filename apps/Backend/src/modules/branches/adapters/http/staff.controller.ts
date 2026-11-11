@@ -9,6 +9,8 @@ import { RequestContext } from '../../../../common/decorators/request-context.de
 import { PLATFORM_DATA_SOURCE } from '../../../../shared/db/database.module';
 import { NotFoundError, ValidationError } from '../../../../shared/errors/app-error';
 
+import { ownStaffId } from '../../../../shared/auth/barber-policy';
+
 const createStaffSchema = z.object({
   displayName: z.string().min(1),
   bio: z.string().optional(),
@@ -33,12 +35,12 @@ export class StaffController {
     const rows = await this.dataSource.query(
       `SELECT p.id, p.user_id AS "userId", p.display_name AS "displayName", p.bio,
               p.avatar_url AS "avatarUrl", p.commission_rate AS "commissionRate",
-              p.is_bookable AS "isBookable", p.status, u.email,
+              p.is_bookable AS "isBookable", p.status, u.email, u.email AS "userEmail",
               (SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id
                 WHERE ur.user_id = p.user_id
                 ORDER BY ur.created_at LIMIT 1) AS role
          FROM staff_profiles p
-         LEFT JOIN users u ON u.id = p.user_id
+         LEFT JOIN users u ON u.id = p.user_id AND u.tenant_id = p.tenant_id
         WHERE p.tenant_id = $1
         ORDER BY p.display_name`,
       [tenantId],
@@ -123,7 +125,11 @@ export class StaffController {
 
   @Get(':id/schedule')
   @Permissions('appointments:read')
-  async schedule(@RequestContext('tenantId') tenantId: string, @Param('id') id: string) {
+  async schedule(
+    @RequestContext('tenantId') tenantId: string, @Param('id') id: string,
+    @RequestContext('userRole') userRole?: string, @RequestContext('staffId') currentStaffId?: string,
+  ) {
+    ownStaffId(userRole ?? '', currentStaffId, id);
     const [profile] = await this.dataSource.query(
       `SELECT id, display_name AS "displayName", status FROM staff_profiles WHERE tenant_id = $1 AND id = $2`,
       [tenantId, id],
@@ -158,7 +164,10 @@ export class AvailabilityController {
     @Query('staffId') staffId: string,
     @Query('from') from: string,
     @Query('to') to: string,
+    @RequestContext('userRole') userRole?: string,
+    @RequestContext('staffId') currentStaffId?: string,
   ) {
+    ownStaffId(userRole ?? '', currentStaffId, staffId);
     const parsed = z.object({ staffId: z.string().uuid(), from: z.string().datetime(), to: z.string().datetime() })
       .safeParse({ staffId, from, to });
     if (!parsed.success) throw new ValidationError('staffId, from, to son requeridos');
